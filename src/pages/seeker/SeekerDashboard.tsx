@@ -24,16 +24,20 @@ import SeekerMessages from './SeekerMessages';
 import CompanyProfile from './CompanyProfile';
 
 const SeekerOverview = () => {
-    const { userPhoto, updateUserProfile, userName } = useUser();
+    const { userPhoto, updateUserProfile, userName, title, website } = useUser();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = (event) => {
+            reader.onload = async (event) => {
                 if (event.target?.result) {
-                    updateUserProfile({ photo: event.target.result as string });
+                    try {
+                        await updateUserProfile({ photo: event.target.result as string });
+                    } catch (err) {
+                        console.error("Failed to update photo:", err);
+                    }
                 }
             };
             reader.readAsDataURL(file);
@@ -128,7 +132,7 @@ const SeekerOverview = () => {
                                     <span className="text-[10px] font-black text-green-400 uppercase tracking-widest">Verified Pro</span>
                                 </div>
                             </div>
-                            <p className="text-blue-200/50 font-black text-xs uppercase tracking-[0.3em]">WordPress Expert | Web Developer | Web Designer | UI Generalist</p>
+                            <p className="text-blue-200/50 font-black text-xs uppercase tracking-[0.3em]">{title || 'Professional Headline Not Set'}</p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pt-8 border-t border-white/5">
@@ -144,8 +148,8 @@ const SeekerOverview = () => {
                             </div>
                             <div className="space-y-1">
                                 <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">Portfolio</p>
-                                <a href="#" className="text-sm font-bold text-primary flex items-center gap-2 hover:underline">
-                                    <Globe size={16} /> cyryldbitangcol.com <ExternalLink size={12} />
+                                <a href={website || '#'} className="text-sm font-bold text-primary flex items-center gap-2 hover:underline">
+                                    <Globe size={16} /> {website ? website.replace('https://', '').replace('http://', '') : 'No Portfolio Website'} <ExternalLink size={12} />
                                 </a>
                             </div>
                         </div>

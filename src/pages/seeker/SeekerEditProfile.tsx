@@ -20,19 +20,23 @@ import { useUser } from '../../context/UserContext';
 
 const SeekerEditProfile = () => {
     const navigate = useNavigate();
-    const { userPhoto, updateUserProfile, testScores, updateTestScores } = useUser();
+    const { userPhoto, userName, title, website, location, bio, updateUserProfile, testScores, updateTestScores } = useUser();
     const [activeSection, setActiveSection] = useState('general');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const proofInputRef = useRef<HTMLInputElement>(null);
     const [proofImage, setProofImage] = useState<string | null>(null);
 
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = (event) => {
+            reader.onload = async (event) => {
                 if (event.target?.result) {
-                    updateUserProfile({ photo: event.target.result as string });
+                    try {
+                        await updateUserProfile({ photo: event.target.result as string });
+                    } catch (err) {
+                        console.error("Failed to update photo:", err);
+                    }
                 }
             };
             reader.readAsDataURL(file);
@@ -171,14 +175,17 @@ const SeekerEditProfile = () => {
                                     <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] ml-1">Legal Full Name</label>
                                     <input
                                         className="w-full px-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all"
-                                        defaultValue="Cyryl Diamante Bitangcol"
+                                        value={userName}
+                                        onChange={(e) => updateUserProfile({ name: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-2.5">
                                     <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] ml-1">Professional Headline</label>
                                     <input
                                         className="w-full px-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all"
-                                        defaultValue="WordPress Expert | Web Developer | UI Generalist"
+                                        value={title}
+                                        onChange={(e) => updateUserProfile({ title: e.target.value })}
+                                        placeholder="e.g. Website Developer"
                                     />
                                 </div>
                                 <div className="space-y-2.5">
@@ -187,7 +194,9 @@ const SeekerEditProfile = () => {
                                         <Globe className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={18} />
                                         <input
                                             className="w-full pl-14 pr-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all"
-                                            defaultValue="https://cyryldbitangcol.com"
+                                            value={website}
+                                            onChange={(e) => updateUserProfile({ website: e.target.value })}
+                                            placeholder="https://yourportfolio.com"
                                         />
                                     </div>
                                 </div>
@@ -197,7 +206,9 @@ const SeekerEditProfile = () => {
                                         <MapPin className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={18} />
                                         <input
                                             className="w-full pl-14 pr-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all"
-                                            defaultValue="Manila, Philippines"
+                                            value={location}
+                                            onChange={(e) => updateUserProfile({ location: e.target.value })}
+                                            placeholder="e.g. Manila, Philippines"
                                         />
                                     </div>
                                 </div>
@@ -206,9 +217,11 @@ const SeekerEditProfile = () => {
                                     <textarea
                                         rows={6}
                                         className="w-full px-7 py-6 rounded-[32px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-medium text-sm leading-relaxed transition-all resize-none"
-                                        defaultValue="Dynamic and results-oriented professional with over 8 years of experience in high-fidelity WordPress development and UI/UX design. Specialist in building responsive, conversion-focused websites for international clients."
+                                        value={bio}
+                                        onChange={(e) => updateUserProfile({ bio: e.target.value })}
+                                        placeholder="Tell employers about your professional journey..."
                                     />
-                                    <p className="text-[10px] text-slate-300 font-bold text-right mr-4 italic">Character Count: 214 / 2000</p>
+                                    <p className="text-[10px] text-slate-300 font-bold text-right mr-4 italic">Character Count: {bio?.length || 0} / 2000</p>
                                 </div>
                             </div>
                         </div>

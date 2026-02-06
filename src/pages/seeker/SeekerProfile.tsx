@@ -19,7 +19,7 @@ import { Link } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
 
 const SeekerProfile = () => {
-    const { userPhoto, userName } = useUser();
+    const { userPhoto, userName, title, location, website, email, bio } = useUser();
 
     return (
         <div className="space-y-12 pb-24">
@@ -68,17 +68,17 @@ const SeekerProfile = () => {
                                 <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">{userName}</h1>
                                 <span className="text-[11px] font-black text-primary uppercase tracking-[0.2em] px-4 py-1.5 bg-primary/5 rounded-full border border-primary/10">Senior Associate</span>
                             </div>
-                            <p className="text-lg font-bold text-slate-500 mb-8 max-w-2xl">WordPress Expert | Web Developer | Web Designer | UI Generalist</p>
+                            <p className="text-lg font-bold text-slate-500 mb-8 max-w-2xl">{title || 'Professional Headline Not Set'}</p>
 
                             <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
                                 <span className="flex items-center gap-2 text-sm font-bold text-slate-400">
-                                    <MapPin size={16} className="text-primary" /> Manila, Philippines
+                                    <MapPin size={16} className="text-primary" /> {location || 'Location Not Set'}
                                 </span>
                                 <span className="flex items-center gap-2 text-sm font-bold text-slate-400">
-                                    <Mail size={16} className="text-primary" /> cyryl@talentpro.ph
+                                    <Mail size={16} className="text-primary" /> {email || 'Email Not Set'}
                                 </span>
                                 <span className="flex items-center gap-2 text-sm font-bold text-slate-400">
-                                    <Globe size={16} className="text-primary" /> cyryldbitangcol.com
+                                    <Globe size={16} className="text-primary" /> {website || 'No Portfolio Website'}
                                 </span>
                             </div>
                         </div>
@@ -120,7 +120,7 @@ const SeekerProfile = () => {
                             <Zap size={16} className="text-primary" /> Executive Summary
                         </h3>
                         <p className="text-lg text-slate-600 font-medium leading-[1.8] relative z-10">
-                            Dynamic and results-oriented professional with over 8 years of experience in high-fidelity WordPress development and UI/UX design. Specialist in building responsive, conversion-focused websites for international clients. Expert at process analysis and virtual administration, ensuring seamless business operations for remote-first teams.
+                            {bio || 'No professional summary provided yet.'}
                         </p>
                     </section>
 
