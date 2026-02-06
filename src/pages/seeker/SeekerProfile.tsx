@@ -104,7 +104,10 @@ const SeekerProfile = () => {
                             <div className="flex flex-wrap items-center justify-between gap-6 mb-4">
                                 <div className="flex flex-wrap items-center gap-6">
                                     <h1 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter leading-none">{userName}</h1>
-                                    <span className="text-[12px] font-black text-primary uppercase tracking-[0.25em] px-5 py-2 bg-primary/5 rounded-full border border-primary/10 shadow-sm">{experience ? `${experience} Years` : 'Associate'}</span>
+                                    <div className="flex items-center gap-2 px-5 py-2 bg-green-500/10 border border-green-500/20 rounded-full shadow-sm">
+                                        <ShieldCheck size={14} className="text-green-500" />
+                                        <span className="text-[11px] font-black text-green-600 uppercase tracking-[0.2em]">Verified Pro</span>
+                                    </div>
                                 </div>
                                 <div className="flex items-center gap-2 px-6 py-2.5 bg-slate-50 border border-slate-100 rounded-2xl shadow-sm">
                                     <Calendar size={14} className="text-slate-300" />
