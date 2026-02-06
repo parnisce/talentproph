@@ -252,17 +252,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (data.availability !== undefined) dbData.availability = data.availability;
             if (data.banner_photo !== undefined) {
                 dbData.banner_url = data.banner_photo;
-                // Some older schemas might use banner_photo directly
-                dbData.banner_photo = data.banner_photo;
             }
             if (data.resume_url !== undefined) dbData.resume_url = data.resume_url;
-            if (data.company_logo !== undefined) dbData.company_logo = data.company_logo;
             if (data.industry !== undefined) dbData.industry = data.industry;
             if (data.company_size !== undefined) dbData.company_size = data.company_size;
             if (data.founded_year !== undefined) dbData.founded_year = data.founded_year;
             if (data.about_company !== undefined) dbData.about_company = data.about_company;
             if (data.perks !== undefined) dbData.perks = data.perks;
-            if (data.subscription_plan !== undefined) dbData.subscription_plan = data.subscription_plan;
 
             // Update local state immediately for snappy UI responsiveness
             setUserProfile(prev => ({ ...prev, ...data }));

@@ -83,8 +83,8 @@ const EmployerAccount = () => {
                 facebook: profile.facebook
             });
             alert("Company profile saved successfully!");
-        } catch (error) {
-            alert("Failed to save company profile.");
+        } catch (error: any) {
+            alert("Failed to save company profile: " + (error.message || "Unknown error"));
         }
     };
 
