@@ -18,6 +18,7 @@ import {
     Target
 } from 'lucide-react';
 import CalendarView from '../../components/CalendarView';
+import { useUser } from '../../context/UserContext';
 import CreateJobPost from './CreateJobPost';
 import EmployerMessages from './EmployerMessages';
 import UpgradePlan from './UpgradePlan';
@@ -29,10 +30,21 @@ import EmployerAccount from './EmployerAccount';
 
 const EmployerOverview = () => {
     const navigate = useNavigate();
+    const { subscription_plan } = useUser();
+
+    const planLimits: Record<string, number> = {
+        'Free': 1,
+        'Starter': 1,
+        'Pro': 3,
+        'Premium': 10
+    };
+
+    const maxSlots = planLimits[subscription_plan as keyof typeof planLimits] || 1;
+
     const stats = [
-        { label: 'Active Jobs', value: '3', secondary: '/ 5 slots', icon: Briefcase, color: 'text-blue-600 bg-blue-50', trend: '+1 this week' },
-        { label: 'Total Applicants', value: '142', secondary: 'Across all posts', icon: Users, color: 'text-emerald-600 bg-emerald-50', trend: '+24% growth' },
-        { label: 'Interviewed', value: '12', secondary: 'Candidates', icon: TrendingUp, color: 'text-violet-600 bg-violet-50', trend: 'Next: Today 2PM' },
+        { label: 'Active Jobs', value: '0', secondary: `/ ${maxSlots} slots`, icon: Briefcase, color: 'text-blue-600 bg-blue-50', trend: '0 active' },
+        { label: 'Total Applicants', value: '0', secondary: 'Across all posts', icon: Users, color: 'text-emerald-600 bg-emerald-50', trend: 'Wait for applicants' },
+        { label: 'Interviewed', value: '0', secondary: 'Candidates', icon: TrendingUp, color: 'text-violet-600 bg-violet-50', trend: 'Check messages' },
     ];
 
     const recentApplicants: any[] = [];
@@ -78,9 +90,9 @@ const EmployerOverview = () => {
                             <div>
                                 <div className="flex items-center gap-3 mb-2">
                                     <span className="px-3 py-1 bg-primary/10 text-primary border border-primary/20 rounded-full text-[9px] font-black uppercase tracking-widest">Active Plan</span>
-                                    <h2 className="text-3xl font-black text-slate-900 tracking-tighter">Pro Recruiter Tier</h2>
+                                    <h2 className="text-3xl font-black text-slate-900 tracking-tighter">{subscription_plan === 'Free' ? 'Starter' : subscription_plan} Tier</h2>
                                 </div>
-                                <p className="text-slate-500 font-medium">Valid until <span className="font-bold text-slate-900">March 15, 2026</span> • Shared with 3 team members</p>
+                                <p className="text-slate-500 font-medium">Enjoying {subscription_plan} features • Upgrade to scale faster</p>
                             </div>
                         </div>
 
@@ -89,9 +101,12 @@ const EmployerOverview = () => {
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Postings Used</p>
                                 <div className="flex items-center gap-4">
                                     <div className="h-2.5 w-40 bg-slate-100 rounded-full overflow-hidden shadow-inner">
-                                        <div className="h-full bg-primary w-3/5 rounded-full" />
+                                        <div
+                                            className="h-full bg-primary rounded-full transition-all duration-1000"
+                                            style={{ width: '0%' }}
+                                        />
                                     </div>
-                                    <span className="text-sm font-black text-slate-900 tracking-tighter">3 / 5</span>
+                                    <span className="text-sm font-black text-slate-900 tracking-tighter">0 / {maxSlots}</span>
                                 </div>
                             </div>
                             <div className="h-12 w-px bg-slate-100 hidden md:block" />

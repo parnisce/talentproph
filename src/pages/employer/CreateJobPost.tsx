@@ -20,7 +20,7 @@ import { motion } from 'framer-motion';
 
 const CreateJobPost = () => {
     const navigate = useNavigate();
-    const { id, company, company_logo, location, name } = useUser();
+    const { id, company, company_logo, location, name, subscription_plan } = useUser();
     const [skills, setSkills] = useState<string[]>([]);
     const [currentSkill, setCurrentSkill] = useState('');
     const [loading, setLoading] = useState(false);
@@ -54,6 +54,30 @@ const CreateJobPost = () => {
 
         setLoading(true);
         try {
+            // Check active job limits
+            const { count, error: countError } = await supabase
+                .from('job_posts')
+                .select('*', { count: 'exact', head: true })
+                .eq('employer_id', id)
+                .eq('status', 'active');
+
+            if (countError) throw countError;
+
+            const limits: Record<string, number> = {
+                'Free': 1,
+                'Starter': 1,
+                'Pro': 3,
+                'Premium': 10
+            };
+
+            const userLimit = limits[subscription_plan as keyof typeof limits] || 1;
+
+            if (count !== null && count >= userLimit) {
+                alert(`You have reached your limit of ${userLimit} active job post(s) for the ${subscription_plan} plan. Please upgrade or deactivate an old post to continue.`);
+                navigate('/employer/upgrade');
+                return;
+            }
+
             const { error } = await supabase
                 .from('job_posts')
                 .insert([

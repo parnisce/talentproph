@@ -675,9 +675,14 @@ const EmployerAccount = () => {
                                                 <span className="px-3 py-1 bg-white/10 border border-white/20 rounded-lg text-[10px] font-black uppercase tracking-widest mb-3 inline-block">
                                                     Current Subscription
                                                 </span>
-                                                <h2 className="text-3xl font-black font-outfit tracking-tight">Pro Plan</h2>
-                                                <p className="text-white/60 font-medium text-sm mt-2">$69 / month • Renews on March 15, 2026</p>
-                                                <p className="text-white/40 text-xs mt-1 font-bold">Includes 3 Job Posts & Unlimited Views</p>
+                                                <h2 className="text-3xl font-black font-outfit tracking-tight">{userContext.subscription_plan === 'Free' ? 'Starter' : userContext.subscription_plan} Plan</h2>
+                                                <p className="text-white/60 font-medium text-sm mt-2">
+                                                    {userContext.subscription_plan === 'Free' ? 'Free forever' :
+                                                        userContext.subscription_plan === 'Pro' ? '$69 / month' : '$99 / month'} • Plan active
+                                                </p>
+                                                <p className="text-white/40 text-xs mt-1 font-bold">
+                                                    Includes {userContext.subscription_plan === 'Free' ? '1' : userContext.subscription_plan === 'Pro' ? '3' : '10'} Job Post(s)
+                                                </p>
                                             </div>
                                             <div className="flex gap-3">
                                                 <button

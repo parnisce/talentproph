@@ -2,13 +2,17 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, Zap, Crown, ShieldCheck, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useUser } from '../../context/UserContext';
 
 const UpgradePlan = () => {
     const navigate = useNavigate();
+    const user = useUser();
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
     const handleUpgrade = (plan: any) => {
-        if (plan.price === 'Free') return; // Current plan
+        if (user.subscription_plan === plan.name || (user.subscription_plan === 'Free' && plan.name === 'Starter')) {
+            return; // Current plan
+        }
         if (plan.price === 'Custom') {
             window.location.href = 'mailto:sales@talentpro.ph';
             return;
@@ -39,7 +43,7 @@ const UpgradePlan = () => {
                 'Basic Chat Functionality',
                 'Standard Support'
             ],
-            cta: 'Current Plan',
+            cta: (user.subscription_plan === 'Free' || user.subscription_plan === 'Starter') ? 'Current Plan' : 'Select Plan',
             popular: false,
             color: 'slate'
         },
@@ -56,7 +60,7 @@ const UpgradePlan = () => {
                 '1 Background Check / mo',
                 'Premium Support'
             ],
-            cta: 'Upgrade to Pro',
+            cta: user.subscription_plan === 'Pro' ? 'Current Plan' : 'Upgrade to Pro',
             popular: false,
             color: 'primary'
         },
@@ -73,7 +77,7 @@ const UpgradePlan = () => {
                 'Bulk Background Checks',
                 'White-label Options'
             ],
-            cta: 'Upgrade to Premium',
+            cta: user.subscription_plan === 'Premium' ? 'Current Plan' : 'Upgrade to Premium',
             popular: true,
             color: 'violet'
         }
