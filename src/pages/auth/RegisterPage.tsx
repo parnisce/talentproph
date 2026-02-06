@@ -1,15 +1,48 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Zap, User, Building, ArrowRight, Check } from 'lucide-react';
+import { Zap, User, Building, ArrowRight, Check, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from '../../services/supabase';
 
 const RegisterPage = () => {
     const [role, setRole] = useState<'seeker' | 'employer'>('seeker');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
 
-    const handleRegister = (e: React.FormEvent) => {
+    const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
-        navigate(role === 'employer' ? '/employer' : '/seeker');
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            const { data, error: signUpError } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: {
+                        full_name: `${firstName} ${lastName}`,
+                        role: role
+                    },
+                    emailRedirectTo: `${window.location.origin}/login`
+                }
+            });
+
+            if (signUpError) throw signUpError;
+
+            if (data.user) {
+                alert('Registration successful! Please check your email for a confirmation link.');
+                navigate('/login');
+            }
+        } catch (err: any) {
+            setError(err.message || 'An error occurred during registration');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -55,26 +88,58 @@ const RegisterPage = () => {
                         </button>
                     </div>
 
+                    {error && (
+                        <div className="mb-6 p-4 bg-rose-50 border border-rose-100 text-rose-600 text-sm font-bold rounded-2xl text-center">
+                            {error}
+                        </div>
+                    )}
+
                     <form onSubmit={handleRegister} className="space-y-8">
                         <div className="grid grid-cols-2 gap-6">
                             <div className="space-y-2.5">
                                 <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] ml-1">First Name</label>
-                                <input required className="w-full px-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all" placeholder="John" />
+                                <input
+                                    required
+                                    className="w-full px-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all"
+                                    placeholder="John"
+                                    value={firstName}
+                                    onChange={(e) => setFirstName(e.target.value)}
+                                />
                             </div>
                             <div className="space-y-2.5">
                                 <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] ml-1">Last Name</label>
-                                <input required className="w-full px-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all" placeholder="Doe" />
+                                <input
+                                    required
+                                    className="w-full px-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all"
+                                    placeholder="Doe"
+                                    value={lastName}
+                                    onChange={(e) => setLastName(e.target.value)}
+                                />
                             </div>
                         </div>
 
                         <div className="space-y-2.5">
                             <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] ml-1">Work Email Address</label>
-                            <input required type="email" className="w-full px-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all" placeholder="name@career.com" />
+                            <input
+                                required
+                                type="email"
+                                className="w-full px-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all"
+                                placeholder="name@career.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
                         </div>
 
                         <div className="space-y-2.5">
                             <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] ml-1">Secure Password</label>
-                            <input required type="password" className="w-full px-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all" placeholder="••••••••" />
+                            <input
+                                required
+                                type="password"
+                                className="w-full px-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all"
+                                placeholder="••••••••"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                            />
                         </div>
 
                         <div className="p-5 rounded-[28px] bg-slate-50/30 border border-slate-100 flex items-start gap-5 mt-4">
@@ -87,8 +152,16 @@ const RegisterPage = () => {
                             </label>
                         </div>
 
-                        <button type="submit" className="w-full bg-primary text-white py-5 rounded-[22px] text-lg font-black font-outfit shadow-2xl shadow-primary/30 hover:shadow-primary/50 transition-all group mt-6">
-                            Create My Account <ArrowRight className="inline ml-2 group-hover:translate-x-1 transition-transform" size={22} />
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full bg-primary text-white py-5 rounded-[22px] text-lg font-black font-outfit shadow-2xl shadow-primary/30 hover:shadow-primary/50 transition-all group mt-6 flex items-center justify-center gap-3 disabled:opacity-70"
+                        >
+                            {isLoading ? (
+                                <Loader2 className="animate-spin" size={24} />
+                            ) : (
+                                <>Create My Account <ArrowRight className="inline group-hover:translate-x-1 transition-transform" size={22} /></>
+                            )}
                         </button>
                     </form>
                 </div>
@@ -103,3 +176,4 @@ const RegisterPage = () => {
 };
 
 export default RegisterPage;
+

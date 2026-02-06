@@ -37,18 +37,22 @@ const EmployerAccount = () => {
         avatar: userContext.photo || ''
     });
 
-    const handleSave = () => {
-        userContext.updateUserProfile({
-            name: profile.name,
-            title: profile.title,
-            company: profile.company,
-            phone: profile.phone,
-            location: profile.location,
-            website: profile.website,
-            bio: profile.bio,
-            photo: profile.avatar
-        });
-        alert("Profile saved successfully!");
+    const handleSave = async () => {
+        try {
+            await userContext.updateUserProfile({
+                name: profile.name,
+                title: profile.title,
+                company: profile.company,
+                phone: profile.phone,
+                location: profile.location,
+                website: profile.website,
+                bio: profile.bio,
+                photo: profile.avatar
+            });
+            alert("Profile saved successfully!");
+        } catch (error) {
+            alert("Failed to save profile. Please try again.");
+        }
     };
 
     const [showAddCard, setShowAddCard] = useState(false);

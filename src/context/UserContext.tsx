@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '../services/supabase';
 
 export interface UserProfile {
+    id: string;
     name: string;
     photo: string;
     role: string;
@@ -29,100 +31,153 @@ interface UserContextType extends UserProfile {
         };
         english: string;
     };
-    updateUserProfile: (data: Partial<UserProfile>) => void;
+    updateUserProfile: (data: Partial<UserProfile>) => Promise<void>;
     updateTestScores: (scores: UserContextType['testScores']) => void;
     paymentMethods: any[];
     addPaymentMethod: (method: any) => void;
     removePaymentMethod: (id: string) => void;
+    logout: () => Promise<void>;
+    loading: boolean;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    // Initial state: try to load from localStorage, otherwise use default
+    const [loading, setLoading] = useState(true);
     const [userProfile, setUserProfile] = useState<UserProfile>(() => {
-        const saved = localStorage.getItem('talentpro_user_profile');
-        return saved ? JSON.parse(saved) : {
-            name: "Sarah Peterson",
-            photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah&backgroundColor=ffdfbf",
-            role: "employer",
-            title: "Senior Hiring Manager",
-            company: "TalentPro PH",
-            email: "sarah.peterson@talentpro.ph",
-            phone: "+1 (555) 123-4567",
-            location: "New York, USA",
-            website: "https://talentpro.ph",
-            bio: "Passionate about connecting world-class talent with innovative companies. I lead recruitment for technical and creative roles."
+        return {
+            id: "",
+            name: "",
+            photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Guest",
+            role: "seeker",
+            title: "",
+            company: "",
+            email: "",
+            phone: "",
+            location: "",
+            website: "",
+            bio: ""
         };
     });
 
-    const [testScores, setTestScores] = useState(() => {
-        const saved = localStorage.getItem('talentpro_test_scores');
-        return saved ? JSON.parse(saved) : {
-            iq: 138,
-            disc: {
-                dominance: 36,
-                influence: 24,
-                steadiness: 22,
-                compliance: 17
-            },
-            english: 'B1 (Intermediate)'
-        };
+    const [testScores, setTestScores] = useState({
+        iq: 0,
+        disc: {
+            dominance: 0,
+            influence: 0,
+            steadiness: 0,
+            compliance: 0
+        },
+        english: 'N/A'
     });
 
-    const updateUserProfile = (data: Partial<UserProfile>) => {
-        setUserProfile(prev => {
-            const updated = { ...prev, ...data };
-            try {
-                localStorage.setItem('talentpro_user_profile', JSON.stringify(updated));
-            } catch (error) {
-                console.error("Failed to save profile to localStorage:", error);
-                // Optionally alert the user if it's a quota error
+    const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+
+    const fetchProfile = async (userId: string) => {
+        try {
+            const { data } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', userId)
+                .single();
+
+            if (data) {
+                setUserProfile({
+                    id: data.id,
+                    name: data.full_name || "",
+                    photo: data.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.full_name || data.id}`,
+                    role: data.role || "seeker",
+                    title: data.title || "",
+                    company: data.company_name || "",
+                    email: data.email || "",
+                    phone: data.phone || "",
+                    location: data.location || "",
+                    website: data.website || "",
+                    bio: data.bio || ""
+                });
             }
-            return updated;
+        } catch (fetchError) {
+            console.error("Error fetching profile:", fetchError);
+        }
+    };
+
+    useEffect(() => {
+        // Initial session check
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.user) {
+                fetchProfile(session.user.id);
+            }
+            setLoading(false);
         });
+
+        // Listen for auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (session?.user) {
+                fetchProfile(session.user.id);
+            } else {
+                setUserProfile({
+                    id: "",
+                    name: "",
+                    photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Guest",
+                    role: "seeker",
+                    title: "",
+                    company: "",
+                    email: "",
+                    phone: "",
+                    location: "",
+                    website: "",
+                    bio: ""
+                });
+            }
+            setLoading(false);
+        });
+
+        return () => subscription.unsubscribe();
+    }, []);
+
+    const updateUserProfile = async (data: Partial<UserProfile>) => {
+        if (!userProfile.id) return;
+
+        try {
+            // Map our profile keys to database keys if necessary
+            const dbData: any = {};
+            if (data.name !== undefined) dbData.full_name = data.name;
+            if (data.photo !== undefined) dbData.avatar_url = data.photo;
+            if (data.title !== undefined) dbData.title = data.title;
+            if (data.company !== undefined) dbData.company_name = data.company;
+            if (data.phone !== undefined) dbData.phone = data.phone;
+            if (data.location !== undefined) dbData.location = data.location;
+            if (data.website !== undefined) dbData.website = data.website;
+            if (data.bio !== undefined) dbData.bio = data.bio;
+
+            const { error } = await supabase
+                .from('profiles')
+                .update(dbData)
+                .eq('id', userProfile.id);
+
+            if (error) throw error;
+
+            setUserProfile(prev => ({ ...prev, ...data }));
+        } catch (error) {
+            console.error("Error updating profile:", error);
+            throw error;
+        }
     };
 
     const updateTestScores = (scores: UserContextType['testScores']) => {
         setTestScores(scores);
-        try {
-            localStorage.setItem('talentpro_test_scores', JSON.stringify(scores));
-        } catch (error) {
-            console.error("Failed to save scores to localStorage:", error);
-        }
     };
 
-    // Payment Methods
-    const [paymentMethods, setPaymentMethods] = useState<any[]>(() => {
-        const saved = localStorage.getItem('talentpro_payment_methods');
-        return saved ? JSON.parse(saved) : [
-            { id: '1', brand: 'visa', last4: '4242', expiry: '12/28', name: 'Sarah Peterson', isDefault: true }
-        ];
-    });
-
     const addPaymentMethod = (method: any) => {
-        setPaymentMethods(prev => {
-            // If new method is default, remove default from others
-            const updated = method.isDefault
-                ? prev.map(p => ({ ...p, isDefault: false }))
-                : prev;
-
-            const newList = [...updated, { ...method, id: Date.now().toString() }];
-            try {
-                localStorage.setItem('talentpro_payment_methods', JSON.stringify(newList));
-            } catch (e) {
-                console.error("Failed to save payment methods", e);
-            }
-            return newList;
-        });
+        setPaymentMethods(prev => [...prev, { ...method, id: Date.now().toString() }]);
     };
 
     const removePaymentMethod = (id: string) => {
-        setPaymentMethods(prev => {
-            const newList = prev.filter(p => p.id !== id);
-            localStorage.setItem('talentpro_payment_methods', JSON.stringify(newList));
-            return newList;
-        });
+        setPaymentMethods(prev => prev.filter(p => p.id !== id));
+    };
+
+    const logout = async () => {
+        await supabase.auth.signOut();
     };
 
     return (
@@ -136,9 +191,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             updateTestScores,
             paymentMethods,
             addPaymentMethod,
-            removePaymentMethod
+            removePaymentMethod,
+            logout,
+            loading
         }}>
-            {children}
+            {!loading && children}
         </UserContext.Provider>
     );
 };
@@ -150,3 +207,4 @@ export const useUser = () => {
     }
     return context;
 };
+

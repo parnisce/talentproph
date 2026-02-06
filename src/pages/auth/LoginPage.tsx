@@ -1,17 +1,53 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Zap, Mail, Lock, ArrowRight, Github, Chrome } from 'lucide-react';
+import { Zap, Mail, Lock, ArrowRight, Github, Chrome, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from '../../services/supabase';
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (email.includes('admin')) navigate('/admin');
-        else if (email.includes('employer')) navigate('/employer');
-        else navigate('/seeker');
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+                email,
+                password
+            });
+
+            if (authError) throw authError;
+
+            if (authData.user) {
+                // Fetch user role from profiles table
+                const { data: profileData, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', authData.user.id)
+                    .single();
+
+                if (profileError) throw profileError;
+
+                // Redirect based on role
+                if (profileData.role === 'admin') {
+                    navigate('/admin');
+                } else if (profileData.role === 'employer') {
+                    navigate('/employer');
+                } else {
+                    navigate('/seeker');
+                }
+            }
+        } catch (err: any) {
+            setError(err.message || 'An error occurred during login');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -40,6 +76,12 @@ const LoginPage = () => {
                         <p className="text-slate-400 font-bold text-xs uppercase tracking-[0.2em] mt-3">Enter your professional details</p>
                     </div>
 
+                    {error && (
+                        <div className="mb-6 p-4 bg-rose-50 border border-rose-100 text-rose-600 text-sm font-bold rounded-2xl text-center">
+                            {error}
+                        </div>
+                    )}
+
                     <form onSubmit={handleLogin} className="space-y-8">
                         <div className="space-y-2.5">
                             <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] ml-1">Work Email</label>
@@ -66,14 +108,24 @@ const LoginPage = () => {
                                 <input
                                     type="password"
                                     required
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
                                     className="w-full pl-14 pr-6 py-5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all"
                                 />
                             </div>
                         </div>
 
-                        <button type="submit" className="w-full bg-primary text-white py-5 rounded-[22px] text-lg font-black font-outfit shadow-2xl shadow-primary/30 hover:shadow-primary/50 transition-all group mt-6">
-                            Sign Into Account <ArrowRight className="inline ml-2 group-hover:translate-x-1 transition-transform" size={22} />
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full bg-primary text-white py-5 rounded-[22px] text-lg font-black font-outfit shadow-2xl shadow-primary/30 hover:shadow-primary/50 transition-all group mt-6 flex items-center justify-center gap-3 disabled:opacity-70"
+                        >
+                            {isLoading ? (
+                                <Loader2 className="animate-spin" size={24} />
+                            ) : (
+                                <>Sign Into Account <ArrowRight className="inline group-hover:translate-x-1 transition-transform" size={22} /></>
+                            )}
                         </button>
                     </form>
 
@@ -103,3 +155,4 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
+
