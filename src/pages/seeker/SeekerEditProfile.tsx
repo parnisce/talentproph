@@ -4,7 +4,6 @@ import {
     ArrowLeft,
     User,
     Briefcase,
-    GraduationCap,
     Globe,
     Camera,
     Trash2,
@@ -13,14 +12,18 @@ import {
     DollarSign,
     Share2,
     Shield,
-    Upload
+    Upload,
+    Linkedin,
+    Twitter,
+    Facebook,
+    Instagram
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
 
 const SeekerEditProfile = () => {
     const navigate = useNavigate();
-    const { userPhoto, userName, title, website, location, bio, salary, education, experience, skills, updateUserProfile, testScores, updateTestScores } = useUser();
+    const { userPhoto, userName, title, website, location, bio, salary, experience, skills, linkedin, twitter, facebook, instagram, updateUserProfile, testScores, updateTestScores } = useUser();
     const [activeSection, setActiveSection] = useState('general');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const proofInputRef = useRef<HTMLInputElement>(null);
@@ -60,7 +63,6 @@ const SeekerEditProfile = () => {
         { id: 'general', label: 'General Identity', icon: User },
         { id: 'assessments', label: 'Assessment Center', icon: Shield },
         { id: 'expertise', label: 'Domain Expertise', icon: Briefcase },
-        { id: 'education', label: 'Background', icon: GraduationCap },
         { id: 'socials', label: 'Social Footprint', icon: Share2 },
     ];
 
@@ -399,32 +401,36 @@ const SeekerEditProfile = () => {
                                         />
                                     </div>
                                 </div>
-                                <div className="space-y-2.5">
-                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] ml-1">Highest Education</label>
-                                    <div className="relative group">
-                                        <GraduationCap className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={18} />
-                                        <input
-                                            type="text"
-                                            className="w-full pl-14 pr-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all"
-                                            value={education}
-                                            onChange={(e) => updateUserProfile({ education: e.target.value })}
-                                            placeholder="e.g. Bachelor's Degree"
-                                        />
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     )}
 
-                    {/* Placeholder for other sections */}
-                    {(activeSection === 'education' || activeSection === 'socials') && (
-                        <div className="bg-white rounded-[40px] border border-slate-100 p-20 shadow-sm flex flex-col items-center justify-center text-center opacity-60">
-                            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-8">
-                                <Plus size={32} className="text-slate-200" />
+                    {/* section: Socials */}
+                    {activeSection === 'socials' && (
+                        <div className="bg-white rounded-[40px] border border-slate-100 p-10 md:p-14 shadow-sm space-y-12">
+                            <h3 className="text-xl font-black text-slate-900 tracking-tight">Social Presence</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                {[
+                                    { id: 'linkedin', label: 'LinkedIn URL', icon: Linkedin, value: linkedin },
+                                    { id: 'twitter', label: 'Twitter / X URL', icon: Twitter, value: twitter },
+                                    { id: 'facebook', label: 'Facebook URL', icon: Facebook, value: facebook },
+                                    { id: 'instagram', label: 'Instagram URL', icon: Instagram, value: instagram }
+                                ].map((social) => (
+                                    <div key={social.id} className="space-y-2.5">
+                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] ml-1">{social.label}</label>
+                                        <div className="relative group">
+                                            <social.icon className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={18} />
+                                            <input
+                                                type="text"
+                                                className="w-full pl-14 pr-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all"
+                                                value={social.value}
+                                                onChange={(e) => updateUserProfile({ [social.id]: e.target.value })}
+                                                placeholder={`https://${social.id}.com/your-profile`}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
-                            <h3 className="text-lg font-black text-slate-900 mb-2">Configure {activeSection.charAt(0).toUpperCase() + activeSection.slice(1)}</h3>
-                            <p className="text-sm font-bold text-slate-400">Expand your profile by adding your {activeSection} history.</p>
-                            <button className="mt-8 px-10 py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest">Start Customizing</button>
                         </div>
                     )}
                 </div>

@@ -1,25 +1,36 @@
-import { motion } from 'framer-motion';
 import {
     Zap,
     ShieldCheck,
     Globe,
     MapPin,
     Mail,
-    Briefcase,
-    GraduationCap,
-    Instagram,
-    Twitter,
-    Linkedin,
-    Facebook,
     FileText,
-    Download,
+    ExternalLink,
+    Linkedin,
+    Twitter,
+    Facebook,
+    Instagram,
     Eye
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
 
 const SeekerProfile = () => {
-    const { userPhoto, userName, title, location, website, email, bio, salary, education, experience } = useUser();
+    const {
+        userPhoto,
+        userName,
+        title,
+        location,
+        website,
+        email,
+        bio,
+        salary,
+        experience,
+        linkedin,
+        twitter,
+        facebook,
+        instagram
+    } = useUser();
 
     return (
         <div className="space-y-12 pb-24">
@@ -95,13 +106,15 @@ const SeekerProfile = () => {
                             <p className="text-xl font-black text-slate-900">{experience || '0'} Years <span className="text-xs text-slate-400 font-bold">Total</span></p>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Education</p>
-                            <p className="text-xl font-black text-slate-900">{education || 'No'} <span className="text-xs text-slate-400 font-bold">Degree</span></p>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Verification Status</p>
+                            <div className="text-xl font-black text-green-500 flex items-center gap-2 text-sm">
+                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> Verified Pro
+                            </div>
                         </div>
                         <div className="space-y-1">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Availability</p>
-                            <div className="text-xl font-black text-green-500 flex items-center gap-2 text-sm">
-                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> Immediate
+                            <div className="text-xl font-black text-primary flex items-center gap-2 text-sm">
+                                Full-Time
                             </div>
                         </div>
                     </div>
@@ -123,129 +136,38 @@ const SeekerProfile = () => {
                             {bio || 'No professional summary provided yet.'}
                         </p>
                     </section>
-
-                    {/* Experience Timeline */}
-                    <section className="bg-white p-12 rounded-[48px] border-2 border-slate-100 shadow-sm">
-                        <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.3em] mb-12 flex items-center gap-3">
-                            <Briefcase size={16} className="text-primary" /> Work History
-                        </h3>
-                        <div className="space-y-12 relative">
-                            {/* Vertical Line */}
-                            <div className="absolute left-6 top-2 bottom-2 w-0.5 bg-slate-50" />
-
-                            {[
-                                {
-                                    role: 'Senior Web Developer & UI Generalist',
-                                    company: 'Woken Jobs',
-                                    period: '2022 - Present',
-                                    description: 'Leading the technical development and design strategy for high-traffic recruitment platforms. Implemented advanced WordPress workflows and custom React components.'
-                                },
-                                {
-                                    role: 'Strategic Virtual Assistant',
-                                    company: 'Stellar Outsourcing',
-                                    period: '2019 - 2022',
-                                    description: 'Managed executive-level calendars and business processes for US-based startups. Streamlined communication and project management using Notion and Google Workspace.'
-                                },
-                                {
-                                    role: 'Junior UI Designer',
-                                    company: 'Bright Horizon Marketing',
-                                    period: '2016 - 2019',
-                                    description: 'Collaborated with marketing teams to create brand-focused visual identities and social media content for over 50+ global clients.'
-                                }
-                            ].map((job, idx) => (
-                                <div key={idx} className="relative pl-16 group">
-                                    <div className="absolute left-4 top-1 w-4 h-4 rounded-full bg-white border-4 border-slate-100 group-hover:border-primary group-hover:scale-125 transition-all z-10" />
-                                    <div className="space-y-3">
-                                        <div className="flex flex-wrap items-center justify-between gap-4">
-                                            <h4 className="text-xl font-black text-slate-900 tracking-tight">{job.role}</h4>
-                                            <span className="px-4 py-1 bg-slate-50 border border-slate-100 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest">{job.period}</span>
-                                        </div>
-                                        <p className="text-sm font-black text-primary uppercase tracking-widest">{job.company}</p>
-                                        <p className="text-slate-500 font-medium leading-relaxed max-w-2xl">{job.description}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </section>
                 </div>
 
-                {/* Right Column: Skills & Sidebar */}
+                {/* Right Column: Socials & Sidebar */}
                 <div className="space-y-12">
-                    {/* Skills Palette */}
+                    {/* Social Footprint */}
                     <section className="bg-slate-900 p-10 rounded-[48px] text-white shadow-2xl relative overflow-hidden group">
                         <div className="absolute inset-0 bg-primary/5 opacity-50" />
-                        <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-8 relative z-10">Skill Proficiency</h3>
-                        <div className="space-y-8 relative z-10">
+                        <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-8 relative z-10">Social Footprint</h3>
+                        <div className="space-y-6 relative z-10">
                             {[
-                                { name: 'WordPress Ecosystem', level: '95%' },
-                                { name: 'UI Design (Figma)', level: '90%' },
-                                { name: 'After Effects & Motion', level: '85%' },
-                                { name: 'Backend Integration', level: '75%' },
-                                { name: 'Virtual Assistance', level: '98%' }
-                            ].map(skill => (
-                                <div key={skill.name} className="space-y-3">
-                                    <div className="flex justify-between text-[11px] font-black uppercase tracking-widest">
-                                        <span>{skill.name}</span>
-                                        <span className="text-primary">{skill.level}</span>
+                                { name: 'LinkedIn', icon: Linkedin, url: linkedin, color: 'text-[#0077b5]' },
+                                { name: 'Twitter / X', icon: Twitter, url: twitter, color: 'text-[#1da1f2]' },
+                                { name: 'Facebook', icon: Facebook, url: facebook, color: 'text-[#1877f2]' },
+                                { name: 'Instagram', icon: Instagram, url: instagram, color: 'text-[#e4405f]' }
+                            ].map(social => (
+                                <a
+                                    key={social.name}
+                                    href={social.url || '#'}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={`flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all group/item ${!social.url ? 'opacity-30 cursor-not-allowed' : ''}`}
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className={`p-2 rounded-xl bg-white/10 ${social.color}`}>
+                                            <social.icon size={18} />
+                                        </div>
+                                        <span className="text-sm font-black tracking-tight">{social.name}</span>
                                     </div>
-                                    <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                                        <motion.div
-                                            initial={{ width: 0 }}
-                                            whileInView={{ width: skill.level }}
-                                            transition={{ duration: 1, ease: "easeOut" }}
-                                            className="h-full bg-gradient-primary rounded-full"
-                                        />
-                                    </div>
-                                </div>
+                                    <ExternalLink size={14} className="text-white/20 group-hover/item:text-primary transition-colors" />
+                                </a>
                             ))}
                         </div>
-                    </section>
-
-                    {/* Education Card */}
-                    <section className="bg-white p-10 rounded-[48px] border-2 border-slate-100 shadow-sm group">
-                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-8 flex items-center gap-3">
-                            <GraduationCap size={16} className="text-primary" /> Education
-                        </h3>
-                        <div className="space-y-8">
-                            <div className="relative pl-4 border-l-2 border-slate-50 group-hover:border-primary transition-colors">
-                                <h4 className="text-sm font-black text-slate-900 tracking-tight mb-1">Bachelor of Science in Information Technology</h4>
-                                <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-2">Systems Management University</p>
-                                <p className="text-[10px] font-bold text-slate-400">Class of 2016 • Magna Cum Laude</p>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Resume / Documents */}
-                    <section className="bg-white p-10 rounded-[48px] border-2 border-slate-100 shadow-sm">
-                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-8">Attachments</h3>
-                        <div className="space-y-4">
-                            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between group hover:bg-primary/5 hover:border-primary/20 transition-all cursor-pointer">
-                                <div className="flex items-center gap-4">
-                                    <div className="bg-white p-2.5 rounded-xl text-primary shadow-sm">
-                                        <FileText size={18} />
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-black text-slate-900">Professional_CV_2026.pdf</p>
-                                        <p className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">Updated Feb 2026 • 2.4 MB</p>
-                                    </div>
-                                </div>
-                                <Download size={16} className="text-slate-300 group-hover:text-primary transition-colors" />
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Social Footprint */}
-                    <section className="flex justify-center gap-6">
-                        {[
-                            { Icon: Linkedin, href: '#' },
-                            { Icon: Twitter, href: '#' },
-                            { Icon: Facebook, href: '#' },
-                            { Icon: Instagram, href: '#' }
-                        ].map((social, idx) => (
-                            <a key={idx} href={social.href} className="w-12 h-12 bg-white border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary hover:scale-110 shadow-sm transition-all">
-                                <social.Icon size={20} />
-                            </a>
-                        ))}
                     </section>
                 </div>
             </div>

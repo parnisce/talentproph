@@ -26,6 +26,10 @@ export interface UserProfile {
     education: string;
     experience: string;
     skills: string[];
+    linkedin: string;
+    twitter: string;
+    facebook: string;
+    instagram: string;
 }
 
 interface UserContextType extends UserProfile {
@@ -76,7 +80,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             salary: "",
             education: "",
             experience: "",
-            skills: []
+            skills: [],
+            linkedin: "",
+            twitter: "",
+            facebook: "",
+            instagram: ""
         };
     });
 
@@ -110,7 +118,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     salary: data.expected_salary || "",
                     education: data.education_level || "",
                     experience: data.experience_years || "",
-                    skills: data.skills_list || []
+                    skills: data.skills_list || [],
+                    linkedin: data.linkedin_url || "",
+                    twitter: data.twitter_url || "",
+                    facebook: data.facebook_url || "",
+                    instagram: data.instagram_url || ""
                 });
             }
         } catch (fetchError) {
@@ -153,7 +165,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     salary: "",
                     education: "",
                     experience: "",
-                    skills: []
+                    skills: [],
+                    linkedin: "",
+                    twitter: "",
+                    facebook: "",
+                    instagram: ""
                 });
                 setLoading(false);
             }
@@ -183,6 +199,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (data.education !== undefined) dbData.education_level = data.education;
             if (data.experience !== undefined) dbData.experience_years = data.experience;
             if (data.skills !== undefined) dbData.skills_list = data.skills;
+            if (data.linkedin !== undefined) dbData.linkedin_url = data.linkedin;
+            if (data.twitter !== undefined) dbData.twitter_url = data.twitter;
+            if (data.facebook !== undefined) dbData.facebook_url = data.facebook;
+            if (data.instagram !== undefined) dbData.instagram_url = data.instagram;
 
             const { error } = await supabase
                 .from('profiles')
