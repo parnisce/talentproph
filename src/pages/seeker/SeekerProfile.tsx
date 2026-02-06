@@ -15,7 +15,9 @@ import {
     Award,
     Activity,
     Target,
-    MessageSquare
+    MessageSquare,
+    Calendar,
+    GraduationCap
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
@@ -36,8 +38,18 @@ const SeekerProfile = () => {
         facebook,
         instagram,
         skills,
-        testScores
+        testScores,
+        availability,
+        banner_photo,
+        education,
+        created_at
     } = useUser();
+
+    // Format member since date
+    const memberSince = created_at ? new Date(created_at).toLocaleDateString('en-US', {
+        month: 'long',
+        year: 'numeric'
+    }) : 'Join Date Untracked';
 
     return (
         <div className="space-y-12 pb-24">
@@ -60,14 +72,20 @@ const SeekerProfile = () => {
             {/* Main Premium Card */}
             <div className="bg-white rounded-[56px] border-2 border-slate-100 shadow-xl shadow-slate-200/20 overflow-hidden">
                 {/* Visual Header Banner */}
-                <div className="h-48 bg-slate-900 relative">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(0,71,255,0.15),transparent_70%)]" />
-                    <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px]" />
+                <div className="h-56 bg-slate-900 relative">
+                    {banner_photo ? (
+                        <img src={banner_photo} alt="Banner" className="absolute inset-0 w-full h-full object-cover" />
+                    ) : (
+                        <>
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(0,71,255,0.15),transparent_70%)]" />
+                            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px]" />
+                        </>
+                    )}
                 </div>
 
                 <div className="px-12 pb-16 relative">
                     {/* Avatar & Basic Info */}
-                    <div className="flex flex-col lg:flex-row gap-10 -mt-24 items-start">
+                    <div className="flex flex-col lg:flex-row gap-10 -mt-20 items-start">
                         <div className="relative group shrink-0">
                             <div className="w-48 h-48 rounded-[48px] bg-white p-2 shadow-2xl overflow-hidden ring-4 ring-white">
                                 <img
@@ -81,10 +99,16 @@ const SeekerProfile = () => {
                             </div>
                         </div>
 
-                        <div className="pt-12 lg:pt-16 flex-grow">
-                            <div className="flex flex-wrap items-center gap-4 mb-3">
-                                <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">{userName}</h1>
-                                <span className="text-[11px] font-black text-primary uppercase tracking-[0.2em] px-4 py-1.5 bg-primary/5 rounded-full border border-primary/10">{experience ? `${experience} Years` : 'Associate'}</span>
+                        <div className="pt-24 lg:pt-28 flex-grow">
+                            <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
+                                <div className="flex flex-wrap items-center gap-4">
+                                    <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">{userName}</h1>
+                                    <span className="text-[11px] font-black text-primary uppercase tracking-[0.2em] px-4 py-1.5 bg-primary/5 rounded-full border border-primary/10">{experience ? `${experience} Years` : 'Associate'}</span>
+                                </div>
+                                <div className="flex items-center gap-2 px-6 py-2 bg-slate-50 border border-slate-100 rounded-2xl">
+                                    <Calendar size={14} className="text-slate-300" />
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Member Since {memberSince}</span>
+                                </div>
                             </div>
                             <p className="text-lg font-bold text-slate-500 mb-6 max-w-2xl">{title || 'Professional Headline Not Set'}</p>
 
@@ -103,7 +127,7 @@ const SeekerProfile = () => {
                     </div>
 
                     {/* Quick Stats Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-8 pt-6 border-t border-slate-50">
+                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-8 mt-8 pt-6 border-t border-slate-50">
                         <div className="space-y-1">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Expected Salary</p>
                             <p className="text-xl font-black text-slate-900">{salary ? `$${salary}` : 'TBD'} <span className="text-xs text-slate-400 font-bold">/ mo</span></p>
@@ -113,15 +137,24 @@ const SeekerProfile = () => {
                             <p className="text-xl font-black text-slate-900">{experience || '0'} Years <span className="text-xs text-slate-400 font-bold">Total</span></p>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Verification Status</p>
-                            <div className="text-xl font-black text-green-500 flex items-center gap-2 text-sm">
-                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> Verified Pro
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Availability</p>
+                            <div className="text-xl font-black text-primary flex items-center gap-2 text-sm">
+                                {availability || 'Full-Time'}
                             </div>
                         </div>
                         <div className="space-y-1">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Availability</p>
-                            <div className="text-xl font-black text-primary flex items-center gap-2 text-sm">
-                                Full-Time
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Education</p>
+                            <div className="flex items-center gap-2">
+                                <GraduationCap size={14} className="text-primary" />
+                                <p className="text-[13px] font-black text-slate-900 uppercase">
+                                    {education || 'Incomplete'}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Verification Status</p>
+                            <div className="text-xl font-black text-green-500 flex items-center gap-2 text-sm">
+                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> Verified Pro
                             </div>
                         </div>
                     </div>

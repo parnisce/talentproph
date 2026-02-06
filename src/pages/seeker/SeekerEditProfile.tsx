@@ -23,11 +23,12 @@ import { useUser } from '../../context/UserContext';
 
 const SeekerEditProfile = () => {
     const navigate = useNavigate();
-    const { userPhoto, userName, title, website, location, bio, salary, experience, skills, linkedin, twitter, facebook, instagram, updateUserProfile, testScores, updateTestScores } = useUser();
+    const { userPhoto, userName, title, website, location, bio, salary, education, experience, skills, linkedin, twitter, facebook, instagram, availability, banner_photo, updateUserProfile, testScores, updateTestScores } = useUser();
     const [activeSection, setActiveSection] = useState('general');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const proofInputRef = useRef<HTMLInputElement>(null);
     const [proofImage, setProofImage] = useState<string | null>(null);
+    const bannerInputRef = useRef<HTMLInputElement>(null);
 
     // Local state for all form fields to ensure snappy typing without cursor jumps
     const [localProfile, setLocalProfile] = useState({
@@ -41,7 +42,10 @@ const SeekerEditProfile = () => {
         linkedin: linkedin || "",
         twitter: twitter || "",
         facebook: facebook || "",
-        instagram: instagram || ""
+        instagram: instagram || "",
+        availability: availability || "Full-Time",
+        education: education || "",
+        banner_photo: banner_photo || ""
     });
 
     // Handle local change and sync to context/database
@@ -96,11 +100,21 @@ const SeekerEditProfile = () => {
             setLocalProfile(prev => ({ ...prev, experience: experience }));
         }
 
+        if (education && localProfile.education === "") {
+            setLocalProfile(prev => ({ ...prev, education: education }));
+        }
+        if (availability && localProfile.availability === "Full-Time" && availability !== "Full-Time") {
+            setLocalProfile(prev => ({ ...prev, availability: availability }));
+        }
+        if (banner_photo && localProfile.banner_photo === "") {
+            setLocalProfile(prev => ({ ...prev, banner_photo: banner_photo }));
+        }
+
         // Sync test scores if they are currently 0/default
         if (testScores.iq !== 0 && localTestScores.iq === 0) {
             setLocalTestScores(testScores);
         }
-    }, [userName, title, bio, linkedin, twitter, facebook, instagram, location, website, salary, experience, testScores]);
+    }, [userName, title, bio, linkedin, twitter, facebook, instagram, location, website, salary, experience, testScores, education, availability, banner_photo]);
 
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -112,6 +126,25 @@ const SeekerEditProfile = () => {
                         await updateUserProfile({ photo: event.target.result as string });
                     } catch (err) {
                         console.error("Failed to update photo:", err);
+                    }
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleBannerChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                if (event.target?.result) {
+                    try {
+                        const bannerSrc = event.target.result as string;
+                        setLocalProfile(prev => ({ ...prev, banner_photo: bannerSrc }));
+                        await updateUserProfile({ banner_photo: bannerSrc });
+                    } catch (err) {
+                        console.error("Failed to update banner:", err);
                     }
                 }
             };
@@ -227,19 +260,32 @@ const SeekerEditProfile = () => {
                                 </div>
                                 <div className="space-y-4 flex-grow">
                                     <h3 className="text-xl font-black text-slate-900 tracking-tight">Identity Banner</h3>
-                                    <p className="text-sm text-slate-400 font-medium leading-relaxed max-w-md">Update your professional portrait. We recommend a high-resolution headshot with a clean background. PNG or JPG, max 5MB.</p>
-                                    <div className="flex gap-3">
+                                    <p className="text-sm text-slate-400 font-medium leading-relaxed max-w-md">Update your professional portrait. We recommend a high-resolution headshot. PNG or JPG, max 5MB.</p>
+                                    <div className="flex flex-wrap gap-3">
                                         <button
                                             onClick={() => fileInputRef.current?.click()}
                                             className="px-6 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all"
                                         >
-                                            Change Photo
+                                            Change Portrait
                                         </button>
                                         <button
-                                            onClick={() => updateUserProfile({ photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=b6e3f4" })}
-                                            className="px-6 py-2 bg-white border border-slate-100 text-rose-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-50 transition-all"
+                                            onClick={() => bannerInputRef.current?.click()}
+                                            className="px-6 py-2 bg-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all"
                                         >
-                                            Remove
+                                            Upload Banner
+                                        </button>
+                                        <input
+                                            type="file"
+                                            ref={bannerInputRef}
+                                            onChange={handleBannerChange}
+                                            className="hidden"
+                                            accept="image/*"
+                                        />
+                                        <button
+                                            onClick={() => updateUserProfile({ photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=b6e3f4" })}
+                                            className="px-6 py-2 bg-white border border-slate-100 text-rose-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-50 transition-all font-outfit"
+                                        >
+                                            Reset Identity
                                         </button>
                                     </div>
                                 </div>
@@ -264,6 +310,33 @@ const SeekerEditProfile = () => {
                                         placeholder="e.g. Website Developer"
                                         autoComplete="off"
                                     />
+                                </div>
+                                <div className="space-y-2.5">
+                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] ml-1">Highest Education Level</label>
+                                    <select
+                                        className="w-full px-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all appearance-none"
+                                        value={localProfile.education}
+                                        onChange={(e) => handleLocalChange('education', e.target.value)}
+                                    >
+                                        <option value="">Select Education</option>
+                                        <option value="I did not graduate from high school">I did not graduate from high school</option>
+                                        <option value="High school diploma">High school diploma</option>
+                                        <option value="Associates degree">Associates degree</option>
+                                        <option value="Bachelor's degree">Bachelor's degree</option>
+                                        <option value="Post-graduate degree (Masters, Doctorate, etc.)">Post-graduate degree (Masters, Doctorate, etc.)</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2.5">
+                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] ml-1">Availability Type</label>
+                                    <select
+                                        className="w-full px-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all appearance-none"
+                                        value={localProfile.availability}
+                                        onChange={(e) => handleLocalChange('availability', e.target.value)}
+                                    >
+                                        <option value="Full-Time">Full-Time (8+ hours/day)</option>
+                                        <option value="Part-Time">Part-Time (4 hours/day)</option>
+                                        <option value="Gig / Project-Based">Gig / Project-Based</option>
+                                    </select>
                                 </div>
                                 <div className="space-y-2.5">
                                     <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] ml-1">Personal Portfolio</label>
