@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
+import { supabase } from '../../services/supabase';
 import DashboardLayout from '../../components/DashboardLayout';
 import { motion } from 'framer-motion';
 import {
@@ -30,7 +32,9 @@ import EmployerAccount from './EmployerAccount';
 
 const EmployerOverview = () => {
     const navigate = useNavigate();
-    const { subscription_plan } = useUser();
+    const { id, subscription_plan } = useUser();
+    const [jobCount, setJobCount] = useState(0);
+    const [applicantCount, setApplicantCount] = useState(0);
 
     const planLimits: Record<string, number> = {
         'Free': 1,
@@ -41,9 +45,29 @@ const EmployerOverview = () => {
 
     const maxSlots = planLimits[subscription_plan as keyof typeof planLimits] || 1;
 
+    useEffect(() => {
+        if (!id) return;
+
+        const fetchData = async () => {
+            // Fetch Job Postings count
+            const { count: jCount, error: jError } = await supabase
+                .from('job_posts')
+                .select('*', { count: 'exact', head: true })
+                .eq('employer_id', id)
+                .eq('status', 'active');
+
+            if (!jError) setJobCount(jCount || 0);
+
+            // Fetch Applicants count (mocked for now until applications table ready, or placeholder)
+            // setApplicantCount(0); 
+        };
+
+        fetchData();
+    }, [id]);
+
     const stats = [
-        { label: 'Active Jobs', value: '0', secondary: `/ ${maxSlots} slots`, icon: Briefcase, color: 'text-blue-600 bg-blue-50', trend: '0 active' },
-        { label: 'Total Applicants', value: '0', secondary: 'Across all posts', icon: Users, color: 'text-emerald-600 bg-emerald-50', trend: 'Wait for applicants' },
+        { label: 'Active Jobs', value: jobCount.toString(), secondary: `/ ${maxSlots} slots`, icon: Briefcase, color: 'text-blue-600 bg-blue-50', trend: `${jobCount} live now` },
+        { label: 'Total Applicants', value: applicantCount.toString(), secondary: 'Across all posts', icon: Users, color: 'text-emerald-600 bg-emerald-50', trend: 'Updating...' },
         { label: 'Interviewed', value: '0', secondary: 'Candidates', icon: TrendingUp, color: 'text-violet-600 bg-violet-50', trend: 'Check messages' },
     ];
 
@@ -106,7 +130,7 @@ const EmployerOverview = () => {
                                             style={{ width: '0%' }}
                                         />
                                     </div>
-                                    <span className="text-sm font-black text-slate-900 tracking-tighter">0 / {maxSlots}</span>
+                                    <span className="text-sm font-black text-slate-900 tracking-tighter">{jobCount} / {maxSlots}</span>
                                 </div>
                             </div>
                             <div className="h-12 w-px bg-slate-100 hidden md:block" />
@@ -295,8 +319,47 @@ const EmployerOverview = () => {
 
 const EmployerJobPosts = () => {
     const navigate = useNavigate();
-    const jobs: any[] = [];
+    const { id } = useUser();
+    const [jobs, setJobs] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
+    useEffect(() => {
+        if (!id) return;
+
+        const fetchJobs = async () => {
+            const { data, error } = await supabase
+                .from('job_posts')
+                .select('*')
+                .eq('employer_id', id)
+                .order('created_at', { ascending: false });
+
+            if (!error && data) {
+                // Map DB fields to UI fields if necessary
+                const mappedJobs = data.map(job => ({
+                    id: job.id,
+                    title: job.title,
+                    status: job.status === 'active' ? 'Live' : 'Paused',
+                    applicants: 0, // Placeholder
+                    newApplicants: 0, // Placeholder
+                    views: '0', // Placeholder
+                    postedDate: new Date(job.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+                    category: job.category
+                }));
+                setJobs(mappedJobs);
+            }
+            setLoading(false);
+        };
+
+        fetchJobs();
+    }, [id]);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-20">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
     return (
         <div className="space-y-10">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
@@ -313,7 +376,7 @@ const EmployerJobPosts = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-6">
-                {jobs.map((job) => (
+                {jobs.length > 0 ? jobs.map((job) => (
                     <div key={job.id} className="bg-white border-2 border-slate-50 rounded-[40px] p-8 hover:shadow-2xl hover:shadow-slate-200/50 transition-all group overflow-hidden relative">
                         {/* Status Accents */}
                         <div className={`absolute top-0 right-0 w-32 h-32 opacity-[0.03] -translate-y-1/2 translate-x-1/2 rounded-full ${job.status === 'Live' ? 'bg-emerald-500' :
@@ -381,7 +444,21 @@ const EmployerJobPosts = () => {
                             </div>
                         </div>
                     </div>
-                ))}
+                )) : (
+                    <div className="text-center py-20 bg-white border-2 border-dashed border-slate-100 rounded-[40px]">
+                        <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 mx-auto mb-4">
+                            <Briefcase size={32} />
+                        </div>
+                        <h3 className="text-lg font-black text-slate-900 tracking-tighter">No job posts yet</h3>
+                        <p className="text-slate-500 text-sm font-medium mb-8">Start growing your team by creating your first listing.</p>
+                        <button
+                            onClick={() => navigate('/employer/new-post')}
+                            className="px-8 py-3.5 bg-primary text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all inline-flex items-center gap-3"
+                        >
+                            <Plus size={18} /> Create Listing
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Vacancy Strategy Tip */}
