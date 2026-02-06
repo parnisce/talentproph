@@ -59,25 +59,48 @@ const SeekerEditProfile = () => {
         updateTestScores(newScores);
     };
 
-    // Update local state when context data arrives (mount or external update)
+    // Sync local state when context data arrives (only once or when empty)
     useEffect(() => {
-        if (userName || title || bio) { // Check for some data to avoid resetting on empty initial state
-            setLocalProfile({
-                name: userName || "",
-                title: title || "",
-                website: website || "",
-                location: location || "",
-                bio: bio || "",
-                salary: salary || "",
-                experience: experience || "",
-                linkedin: linkedin || "",
-                twitter: twitter || "",
-                facebook: facebook || "",
-                instagram: instagram || ""
-            });
+        // Only sync if local state is default/empty to avoid overwriting user typing
+        if (userName && localProfile.name === "") {
+            setLocalProfile(prev => ({ ...prev, name: userName }));
+        }
+        if (title && localProfile.title === "") {
+            setLocalProfile(prev => ({ ...prev, title: title }));
+        }
+        if (bio && localProfile.bio === "") {
+            setLocalProfile(prev => ({ ...prev, bio: bio }));
+        }
+        if (linkedin && localProfile.linkedin === "") {
+            setLocalProfile(prev => ({ ...prev, linkedin: linkedin }));
+        }
+        if (twitter && localProfile.twitter === "") {
+            setLocalProfile(prev => ({ ...prev, twitter: twitter }));
+        }
+        if (facebook && localProfile.facebook === "") {
+            setLocalProfile(prev => ({ ...prev, facebook: facebook }));
+        }
+        if (instagram && localProfile.instagram === "") {
+            setLocalProfile(prev => ({ ...prev, instagram: instagram }));
+        }
+        if (location && localProfile.location === "") {
+            setLocalProfile(prev => ({ ...prev, location: location }));
+        }
+        if (website && localProfile.website === "") {
+            setLocalProfile(prev => ({ ...prev, website: website }));
+        }
+        if (salary && localProfile.salary === "") {
+            setLocalProfile(prev => ({ ...prev, salary: salary }));
+        }
+        if (experience && localProfile.experience === "") {
+            setLocalProfile(prev => ({ ...prev, experience: experience }));
+        }
+
+        // Sync test scores if they are currently 0/default
+        if (testScores.iq !== 0 && localTestScores.iq === 0) {
             setLocalTestScores(testScores);
         }
-    }, [userName, title, website, location, bio, salary, experience, linkedin, twitter, facebook, instagram, testScores.iq]);
+    }, [userName, title, bio, linkedin, twitter, facebook, instagram, location, website, salary, experience, testScores]);
 
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];

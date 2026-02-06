@@ -10,7 +10,12 @@ import {
     Twitter,
     Facebook,
     Instagram,
-    Eye
+    Eye,
+    Star,
+    Award,
+    Activity,
+    Target,
+    MessageSquare
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
@@ -29,7 +34,9 @@ const SeekerProfile = () => {
         linkedin,
         twitter,
         facebook,
-        instagram
+        instagram,
+        skills,
+        testScores
     } = useUser();
 
     return (
@@ -74,12 +81,12 @@ const SeekerProfile = () => {
                             </div>
                         </div>
 
-                        <div className="pt-24 lg:pt-28 flex-grow">
+                        <div className="pt-12 lg:pt-16 flex-grow">
                             <div className="flex flex-wrap items-center gap-4 mb-3">
                                 <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">{userName}</h1>
                                 <span className="text-[11px] font-black text-primary uppercase tracking-[0.2em] px-4 py-1.5 bg-primary/5 rounded-full border border-primary/10">{experience ? `${experience} Years` : 'Associate'}</span>
                             </div>
-                            <p className="text-lg font-bold text-slate-500 mb-8 max-w-2xl">{title || 'Professional Headline Not Set'}</p>
+                            <p className="text-lg font-bold text-slate-500 mb-6 max-w-2xl">{title || 'Professional Headline Not Set'}</p>
 
                             <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
                                 <span className="flex items-center gap-2 text-sm font-bold text-slate-400">
@@ -96,7 +103,7 @@ const SeekerProfile = () => {
                     </div>
 
                     {/* Quick Stats Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-16 pt-12 border-t border-slate-50">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-8 pt-6 border-t border-slate-50">
                         <div className="space-y-1">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Expected Salary</p>
                             <p className="text-xl font-black text-slate-900">{salary ? `$${salary}` : 'TBD'} <span className="text-xs text-slate-400 font-bold">/ mo</span></p>
@@ -136,10 +143,109 @@ const SeekerProfile = () => {
                             {bio || 'No professional summary provided yet.'}
                         </p>
                     </section>
+
+                    {/* Core Skills Matrix */}
+                    <section className="bg-white p-12 rounded-[48px] border-2 border-slate-100 shadow-sm relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-12 opacity-5 scale-150 rotate-12 group-hover:rotate-0 transition-transform duration-1000">
+                            <Award size={120} />
+                        </div>
+                        <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.3em] mb-8 flex items-center gap-3">
+                            <Target size={16} className="text-primary" /> Core Skillset Matrix
+                        </h3>
+                        <div className="flex flex-wrap gap-3 relative z-10">
+                            {skills && skills.length > 0 ? skills.map((skill, idx) => (
+                                <div key={idx} className="px-6 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-slate-600 font-black text-[11px] uppercase tracking-widest hover:border-primary hover:text-primary hover:bg-white transition-all">
+                                    {skill}
+                                </div>
+                            )) : (
+                                <p className="text-sm font-bold text-slate-400 italic">No skills added yet.</p>
+                            )}
+                        </div>
+                    </section>
+
+                    {/* Employer Reviews Section */}
+                    <section className="bg-white p-12 rounded-[48px] border-2 border-slate-100 shadow-sm relative overflow-hidden group">
+                        <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.3em] mb-8 flex items-center gap-3">
+                            <MessageSquare size={16} className="text-primary" /> Verified Employer Reviews
+                        </h3>
+                        <div className="space-y-6">
+                            <div className="p-8 rounded-[32px] bg-slate-50/50 border border-slate-100 relative">
+                                <div className="flex items-center gap-4 mb-4">
+                                    <div className="w-12 h-12 rounded-2xl bg-slate-200" />
+                                    <div>
+                                        <p className="text-sm font-black text-slate-900">TechFlow Systems</p>
+                                        <div className="flex gap-1 text-yellow-400">
+                                            {[...Array(5)].map((_, i) => <Star key={i} size={12} fill="currentColor" />)}
+                                        </div>
+                                    </div>
+                                    <span className="ml-auto text-[10px] font-black text-slate-300 uppercase tracking-widest">Dec 2025</span>
+                                </div>
+                                <p className="text-sm text-slate-500 font-medium leading-relaxed italic">
+                                    "Exceptional attention to detail and a proactive approach to solving complex problems. Highly recommended for any senior role."
+                                </p>
+                            </div>
+
+                            <div className="p-12 rounded-[40px] border-2 border-dashed border-slate-100 flex flex-col items-center justify-center text-center opacity-40">
+                                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">More Reviews Pending Verification</p>
+                            </div>
+                        </div>
+                    </section>
                 </div>
 
                 {/* Right Column: Socials & Sidebar */}
                 <div className="space-y-12">
+                    {/* Assessment Reports */}
+                    <section className="bg-white p-10 rounded-[48px] border-2 border-slate-100 shadow-sm relative overflow-hidden group">
+                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-8 flex items-center gap-3">
+                            <Activity size={16} className="text-primary" /> Assessment Insights
+                        </h3>
+
+                        <div className="space-y-8">
+                            {/* IQ Score */}
+                            <div className="p-6 rounded-3xl bg-slate-50 border border-slate-100 group-hover:border-primary/20 transition-all">
+                                <div className="flex justify-between items-center mb-4">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">IQ Proficiency</span>
+                                    <span className="text-xl font-black text-slate-900">{testScores.iq || '--'}</span>
+                                </div>
+                                <div className="h-2 w-full bg-white rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-primary transition-all duration-1000"
+                                        style={{ width: `${(testScores.iq / 160) * 100}%` }}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* English */}
+                            <div className="p-6 rounded-3xl bg-slate-50 border border-slate-100">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 font-black">English Level</p>
+                                <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{testScores.english || 'Not Evaluated'}</p>
+                            </div>
+
+                            {/* DISC Profile */}
+                            <div className="space-y-4">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">DISC Profile Breakdown</p>
+                                {[
+                                    { k: 'Dominance', v: testScores.disc.dominance, c: 'bg-red-500' },
+                                    { k: 'Influence', v: testScores.disc.influence, c: 'bg-yellow-500' },
+                                    { k: 'Steadiness', v: testScores.disc.steadiness, c: 'bg-green-500' },
+                                    { k: 'Compliance', v: testScores.disc.compliance, c: 'bg-blue-500' }
+                                ].map((d) => (
+                                    <div key={d.k} className="space-y-2">
+                                        <div className="flex justify-between text-[10px] font-black uppercase tracking-tighter">
+                                            <span>{d.k}</span>
+                                            <span>{d.v}%</span>
+                                        </div>
+                                        <div className="h-1.5 w-full bg-slate-50 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full ${d.c} transition-all duration-1000`}
+                                                style={{ width: `${d.v}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
                     {/* Social Footprint */}
                     <section className="bg-slate-900 p-10 rounded-[48px] text-white shadow-2xl relative overflow-hidden group">
                         <div className="absolute inset-0 bg-primary/5 opacity-50" />
