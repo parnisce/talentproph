@@ -20,7 +20,7 @@ import { useUser } from '../../context/UserContext';
 
 const SeekerEditProfile = () => {
     const navigate = useNavigate();
-    const { userPhoto, updateUserPhoto, testScores, updateTestScores } = useUser();
+    const { userPhoto, updateUserProfile, testScores, updateTestScores } = useUser();
     const [activeSection, setActiveSection] = useState('general');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const proofInputRef = useRef<HTMLInputElement>(null);
@@ -32,7 +32,7 @@ const SeekerEditProfile = () => {
             const reader = new FileReader();
             reader.onload = (event) => {
                 if (event.target?.result) {
-                    updateUserPhoto(event.target.result as string);
+                    updateUserProfile({ photo: event.target.result as string });
                 }
             };
             reader.readAsDataURL(file);
@@ -157,7 +157,7 @@ const SeekerEditProfile = () => {
                                             Change Photo
                                         </button>
                                         <button
-                                            onClick={() => updateUserPhoto("https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=b6e3f4")}
+                                            onClick={() => updateUserProfile({ photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=b6e3f4" })}
                                             className="px-6 py-2 bg-white border border-slate-100 text-rose-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-50 transition-all"
                                         >
                                             Remove

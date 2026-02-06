@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Clock, MapPin, Video, Phone, Building } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin, Video, Phone, Building } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 
 interface Interview {
