@@ -86,8 +86,8 @@ const SeekerProfile = () => {
 
                 <div className="px-12 pb-16 relative">
                     {/* Avatar & Basic Info */}
-                    <div className="flex flex-col lg:flex-row gap-16 -mt-32 items-center">
-                        <div className="relative group shrink-0">
+                    <div className="flex flex-col lg:flex-row gap-16 items-start">
+                        <div className="-mt-32 relative group shrink-0">
                             <div className="w-56 h-56 rounded-[56px] bg-white p-2 shadow-2xl overflow-hidden ring-8 ring-white">
                                 <img
                                     src={userPhoto}
@@ -100,7 +100,7 @@ const SeekerProfile = () => {
                             </div>
                         </div>
 
-                        <div className="pt-6 lg:pt-8 flex-grow">
+                        <div className="lg:pt-8 flex-grow">
                             <div className="flex flex-wrap items-center justify-between gap-6 mb-4">
                                 <div className="flex flex-wrap items-center gap-6">
                                     <h1 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter leading-none">{userName}</h1>

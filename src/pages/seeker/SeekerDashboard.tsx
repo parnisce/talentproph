@@ -16,7 +16,8 @@ import {
     FileText,
     Upload,
     GraduationCap,
-    ExternalLink
+    ExternalLink,
+    Eye
 } from 'lucide-react';
 import CalendarView from '../../components/CalendarView';
 import { useUser } from '../../context/UserContext';
@@ -24,7 +25,7 @@ import SeekerMessages from './SeekerMessages';
 import CompanyProfile from './CompanyProfile';
 
 const SeekerOverview = () => {
-    const { userPhoto, updateUserProfile, userName, title, website, salary, education, skills } = useUser();
+    const { userPhoto, updateUserProfile, userName, title, website, salary, education, skills, resume_url } = useUser();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,19 +68,21 @@ const SeekerOverview = () => {
                     </div>
                 </div>
 
-                <div className="bg-primary/5 border border-primary/10 rounded-[32px] p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
-                    <div className="flex items-center gap-4">
-                        <div className="bg-primary/10 p-2.5 rounded-xl text-primary">
-                            <Zap size={20} />
+                {!resume_url && (
+                    <div className="bg-primary/5 border border-primary/10 rounded-[32px] p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+                        <div className="flex items-center gap-4">
+                            <div className="bg-primary/10 p-2.5 rounded-xl text-primary">
+                                <Zap size={20} />
+                            </div>
+                            <p className="text-[13px] font-bold text-slate-600">
+                                We've added a feature that lets you display your resume. Make sure to <span className="text-primary font-black uppercase text-[11px] tracking-wider cursor-pointer hover:underline">upload yours</span> to help employers find you faster.
+                            </p>
                         </div>
-                        <p className="text-[13px] font-bold text-slate-600">
-                            We've added a feature that lets you display your resume. Make sure to <span className="text-primary font-black uppercase text-[11px] tracking-wider cursor-pointer hover:underline">upload yours</span> to help employers find you faster.
-                        </p>
+                        <Link to="/seeker/profile/edit" className="px-6 py-2.5 bg-primary text-white rounded-xl font-black text-[11px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all shrink-0 decoration-transparent">
+                            Upload Resume
+                        </Link>
                     </div>
-                    <button className="px-6 py-2.5 bg-primary text-white rounded-xl font-black text-[11px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all shrink-0">
-                        Upload Resume
-                    </button>
-                </div>
+                )}
             </div>
 
             {/* Main Profile Identity Header */}
@@ -116,9 +119,39 @@ const SeekerOverview = () => {
                             <Link to="/seeker/profile/edit" className="w-full py-3 px-6 bg-white/5 hover:bg-white/10 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-white/5 group decoration-transparent">
                                 <FileText size={14} className="text-primary group-hover:scale-110 transition-transform" /> Edit Profile
                             </Link>
-                            <button className="w-full py-3 px-6 bg-white/5 hover:bg-white/10 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-white/5 group">
-                                <Upload size={14} className="text-secondary group-hover:scale-110 transition-transform" /> Upload CV
-                            </button>
+                            {resume_url ? (
+                                <button
+                                    onClick={() => {
+                                        try {
+                                            if (resume_url.startsWith('data:')) {
+                                                const parts = resume_url.split(',');
+                                                const byteString = atob(parts[1]);
+                                                const mimeString = parts[0].split(':')[1].split(';')[0];
+                                                const ab = new ArrayBuffer(byteString.length);
+                                                const ia = new Uint8Array(ab);
+                                                for (let i = 0; i < byteString.length; i++) {
+                                                    ia[i] = byteString.charCodeAt(i);
+                                                }
+                                                const blob = new Blob([ab], { type: mimeString });
+                                                const url = URL.createObjectURL(blob);
+                                                window.open(url, '_blank');
+                                            } else {
+                                                window.open(resume_url, '_blank');
+                                            }
+                                        } catch (e) {
+                                            console.error("Failed to open resume:", e);
+                                            window.open(resume_url, '_blank');
+                                        }
+                                    }}
+                                    className="w-full py-3 px-6 bg-primary/10 hover:bg-primary/20 text-primary rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-primary/5 group"
+                                >
+                                    <Eye size={14} className="group-hover:scale-110 transition-transform" /> View CV
+                                </button>
+                            ) : (
+                                <Link to="/seeker/profile/edit" className="w-full py-3 px-6 bg-white/5 hover:bg-white/10 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-white/5 group decoration-transparent">
+                                    <Upload size={14} className="text-secondary group-hover:scale-110 transition-transform" /> Upload CV
+                                </Link>
+                            )}
                         </div>
                     </div>
 
