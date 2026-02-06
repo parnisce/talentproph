@@ -1,4 +1,4 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 @theme {
   --color-primary: #5460f4;
@@ -43,20 +43,20 @@
 
   /* Advanced Glassmorphism */
   .glass-card {
-    @apply bg-white/10 backdrop-blur-2xl border border-white/20 rounded-[40px] p-8 shadow-[0_8px_32px_0_rgba(0, 0, 0, 0.37)];
+    @apply bg-white/10 backdrop-blur-2xl border border-white/20 rounded-[40px] p-8 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)];
   }
 
   /* Glow effects like the screenshot */
   .glow-blue {
-    @apply shadow-[0_0_50px_rgba(84, 96, 244, 0.3)];
+    @apply shadow-[0_0_50px_rgba(84,96,244,0.3)];
   }
 
   .glow-purple {
-    @apply shadow-[0_0_50px_rgba(99, 102, 241, 0.3)];
+    @apply shadow-[0_0_50px_rgba(99,102,241,0.3)];
   }
 
   .white-card {
-    @apply bg-white rounded-[40px] p-8 shadow-[0_20px_50px_rgba(0, 0, 0, 0.04)] border border-slate-100 hover:-translate-y-2 transition-all duration-500 ease-out;
+    @apply bg-white rounded-[40px] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100 hover:-translate-y-2 transition-all duration-500 ease-out;
   }
 
   .text-gradient {
