@@ -86,32 +86,32 @@ const SeekerProfile = () => {
 
                 <div className="px-12 pb-16 relative">
                     {/* Avatar & Basic Info */}
-                    <div className="flex flex-col lg:flex-row gap-10 -mt-24 items-end">
+                    <div className="flex flex-col lg:flex-row gap-16 -mt-32 items-center">
                         <div className="relative group shrink-0">
-                            <div className="w-48 h-48 rounded-[48px] bg-white p-2 shadow-2xl overflow-hidden ring-4 ring-white">
+                            <div className="w-56 h-56 rounded-[56px] bg-white p-2 shadow-2xl overflow-hidden ring-8 ring-white">
                                 <img
                                     src={userPhoto}
                                     alt="Profile"
-                                    className="w-full h-full object-cover rounded-[40px] bg-slate-50"
+                                    className="w-full h-full object-cover rounded-[48px] bg-slate-50"
                                 />
                             </div>
-                            <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-green-500 rounded-2xl border-4 border-white flex items-center justify-center text-white">
-                                <ShieldCheck size={18} strokeWidth={3} />
+                            <div className="absolute -bottom-2 -right-2 w-12 h-12 bg-green-500 rounded-3xl border-4 border-white flex items-center justify-center text-white shadow-xl">
+                                <ShieldCheck size={24} strokeWidth={3} />
                             </div>
                         </div>
 
-                        <div className="pb-4 flex-grow">
-                            <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
-                                <div className="flex flex-wrap items-center gap-4">
-                                    <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">{userName}</h1>
-                                    <span className="text-[11px] font-black text-primary uppercase tracking-[0.2em] px-4 py-1.5 bg-primary/5 rounded-full border border-primary/10">{experience ? `${experience} Years` : 'Associate'}</span>
+                        <div className="pt-6 lg:pt-8 flex-grow">
+                            <div className="flex flex-wrap items-center justify-between gap-6 mb-4">
+                                <div className="flex flex-wrap items-center gap-6">
+                                    <h1 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter leading-none">{userName}</h1>
+                                    <span className="text-[12px] font-black text-primary uppercase tracking-[0.25em] px-5 py-2 bg-primary/5 rounded-full border border-primary/10 shadow-sm">{experience ? `${experience} Years` : 'Associate'}</span>
                                 </div>
-                                <div className="flex items-center gap-2 px-6 py-2 bg-slate-50 border border-slate-100 rounded-2xl">
+                                <div className="flex items-center gap-2 px-6 py-2.5 bg-slate-50 border border-slate-100 rounded-2xl shadow-sm">
                                     <Calendar size={14} className="text-slate-300" />
                                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Member Since {memberSince}</span>
                                 </div>
                             </div>
-                            <p className="text-lg font-bold text-slate-500">{title || 'Professional Headline Not Set'}</p>
+                            <p className="text-xl font-bold text-slate-500 max-w-2xl leading-relaxed">{title || 'Professional Headline Not Set'}</p>
                         </div>
                     </div>
 
@@ -157,15 +157,35 @@ const SeekerProfile = () => {
                         <div className="space-y-1">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Resume / CV</p>
                             {resume_url ? (
-                                <a
-                                    href={resume_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors"
+                                <button
+                                    onClick={() => {
+                                        try {
+                                            if (resume_url.startsWith('data:')) {
+                                                const parts = resume_url.split(',');
+                                                const byteString = atob(parts[1]);
+                                                const mimeString = parts[0].split(':')[1].split(';')[0];
+                                                const ab = new ArrayBuffer(byteString.length);
+                                                const ia = new Uint8Array(ab);
+                                                for (let i = 0; i < byteString.length; i++) {
+                                                    ia[i] = byteString.charCodeAt(i);
+                                                }
+                                                const blob = new Blob([ab], { type: mimeString });
+                                                const url = URL.createObjectURL(blob);
+                                                window.open(url, '_blank');
+                                            } else {
+                                                window.open(resume_url, '_blank');
+                                            }
+                                        } catch (e) {
+                                            console.error("Failed to open resume:", e);
+                                            // Fallback: try opening directly
+                                            window.open(resume_url, '_blank');
+                                        }
+                                    }}
+                                    className="flex items-center gap-2 text-primary hover:text-primary/80 transition-all font-black"
                                 >
                                     <FileText size={16} />
-                                    <span className="text-sm font-black uppercase tracking-widest">View CV</span>
-                                </a>
+                                    <span className="text-sm font-black uppercase tracking-widest underline decoration-2 underline-offset-4">View CV</span>
+                                </button>
                             ) : (
                                 <p className="text-sm font-bold text-slate-300 italic">Not Uploaded</p>
                             )}
