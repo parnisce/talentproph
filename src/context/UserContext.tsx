@@ -130,7 +130,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     facebook: data.facebook_url || "",
                     instagram: data.instagram_url || "",
                     availability: data.availability || "Full-Time",
-                    banner_photo: data.banner_url || "",
+                    banner_photo: data.banner_url || data.banner_photo || "",
                     created_at: data.created_at || ""
                 });
             }
@@ -216,7 +216,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (data.facebook !== undefined) dbData.facebook_url = data.facebook;
             if (data.instagram !== undefined) dbData.instagram_url = data.instagram;
             if (data.availability !== undefined) dbData.availability = data.availability;
-            if (data.banner_photo !== undefined) dbData.banner_url = data.banner_photo;
+            if (data.banner_photo !== undefined) {
+                dbData.banner_url = data.banner_photo;
+                // Some older schemas might use banner_photo directly
+                dbData.banner_photo = data.banner_photo;
+            }
 
             // Update local state immediately for snappy UI responsiveness
             setUserProfile(prev => ({ ...prev, ...data }));

@@ -145,6 +145,7 @@ const SeekerEditProfile = () => {
                         await updateUserProfile({ banner_photo: bannerSrc });
                     } catch (err) {
                         console.error("Failed to update banner:", err);
+                        alert("Failed to save banner. Please ensure you have added the 'banner_url' column to your Supabase 'profiles' table.");
                     }
                 }
             };

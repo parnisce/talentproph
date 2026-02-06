@@ -72,7 +72,7 @@ const SeekerProfile = () => {
             {/* Main Premium Card */}
             <div className="bg-white rounded-[56px] border-2 border-slate-100 shadow-xl shadow-slate-200/20 overflow-hidden">
                 {/* Visual Header Banner */}
-                <div className="h-56 bg-slate-900 relative">
+                <div className="h-64 md:h-72 bg-slate-900 relative">
                     {banner_photo ? (
                         <img src={banner_photo} alt="Banner" className="absolute inset-0 w-full h-full object-cover" />
                     ) : (
@@ -85,7 +85,7 @@ const SeekerProfile = () => {
 
                 <div className="px-12 pb-16 relative">
                     {/* Avatar & Basic Info */}
-                    <div className="flex flex-col lg:flex-row gap-10 -mt-20 items-start">
+                    <div className="flex flex-col lg:flex-row gap-10 -mt-24 items-end">
                         <div className="relative group shrink-0">
                             <div className="w-48 h-48 rounded-[48px] bg-white p-2 shadow-2xl overflow-hidden ring-4 ring-white">
                                 <img
@@ -99,30 +99,32 @@ const SeekerProfile = () => {
                             </div>
                         </div>
 
-                        <div className="pt-24 lg:pt-28 flex-grow">
+                        <div className="pb-4 flex-grow">
                             <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
                                 <div className="flex flex-wrap items-center gap-4">
-                                    <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">{userName}</h1>
-                                    <span className="text-[11px] font-black text-primary uppercase tracking-[0.2em] px-4 py-1.5 bg-primary/5 rounded-full border border-primary/10">{experience ? `${experience} Years` : 'Associate'}</span>
+                                    <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter drop-shadow-md">{userName}</h1>
+                                    <span className="text-[11px] font-black text-white uppercase tracking-[0.2em] px-4 py-1.5 bg-black/20 backdrop-blur-md rounded-full border border-white/20">{experience ? `${experience} Years` : 'Associate'}</span>
                                 </div>
-                                <div className="flex items-center gap-2 px-6 py-2 bg-slate-50 border border-slate-100 rounded-2xl">
-                                    <Calendar size={14} className="text-slate-300" />
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Member Since {memberSince}</span>
+                                <div className="flex items-center gap-2 px-6 py-2 bg-black/20 backdrop-blur-md border border-white/10 rounded-2xl">
+                                    <Calendar size={14} className="text-white/40" />
+                                    <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">Member Since {memberSince}</span>
                                 </div>
                             </div>
-                            <p className="text-lg font-bold text-slate-500 mb-6 max-w-2xl">{title || 'Professional Headline Not Set'}</p>
+                            <p className="text-lg font-bold text-white/80 drop-shadow-sm">{title || 'Professional Headline Not Set'}</p>
+                        </div>
+                    </div>
 
-                            <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
-                                <span className="flex items-center gap-2 text-sm font-bold text-slate-400">
-                                    <MapPin size={16} className="text-primary" /> {location || 'Location Not Set'}
-                                </span>
-                                <span className="flex items-center gap-2 text-sm font-bold text-slate-400">
-                                    <Mail size={16} className="text-primary" /> {email || 'Email Not Set'}
-                                </span>
-                                <span className="flex items-center gap-2 text-sm font-bold text-slate-400">
-                                    <Globe size={16} className="text-primary" /> {website || 'No Portfolio Website'}
-                                </span>
-                            </div>
+                    <div className="mt-12">
+                        <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
+                            <span className="flex items-center gap-2 text-sm font-bold text-slate-400">
+                                <MapPin size={16} className="text-primary" /> {location || 'Location Not Set'}
+                            </span>
+                            <span className="flex items-center gap-2 text-sm font-bold text-slate-400">
+                                <Mail size={16} className="text-primary" /> {email || 'Email Not Set'}
+                            </span>
+                            <span className="flex items-center gap-2 text-sm font-bold text-slate-400">
+                                <Globe size={16} className="text-primary" /> {website || 'No Portfolio Website'}
+                            </span>
                         </div>
                     </div>
 
