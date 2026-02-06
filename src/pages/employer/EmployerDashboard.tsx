@@ -34,7 +34,7 @@ const EmployerOverview = () => {
     const navigate = useNavigate();
     const { id, subscription_plan } = useUser();
     const [jobCount, setJobCount] = useState(0);
-    const [applicantCount, setApplicantCount] = useState(0);
+    const [applicantCount] = useState(0);
 
     const planLimits: Record<string, number> = {
         'Free': 1,
