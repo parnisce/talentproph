@@ -19,7 +19,7 @@ import { Link } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
 
 const SeekerProfile = () => {
-    const { userPhoto, userName, title, location, website, email, bio } = useUser();
+    const { userPhoto, userName, title, location, website, email, bio, salary, education, experience } = useUser();
 
     return (
         <div className="space-y-12 pb-24">
@@ -66,7 +66,7 @@ const SeekerProfile = () => {
                         <div className="pt-24 lg:pt-28 flex-grow">
                             <div className="flex flex-wrap items-center gap-4 mb-3">
                                 <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">{userName}</h1>
-                                <span className="text-[11px] font-black text-primary uppercase tracking-[0.2em] px-4 py-1.5 bg-primary/5 rounded-full border border-primary/10">Senior Associate</span>
+                                <span className="text-[11px] font-black text-primary uppercase tracking-[0.2em] px-4 py-1.5 bg-primary/5 rounded-full border border-primary/10">{experience ? `${experience} Years` : 'Associate'}</span>
                             </div>
                             <p className="text-lg font-bold text-slate-500 mb-8 max-w-2xl">{title || 'Professional Headline Not Set'}</p>
 
@@ -88,15 +88,15 @@ const SeekerProfile = () => {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-16 pt-12 border-t border-slate-50">
                         <div className="space-y-1">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Expected Salary</p>
-                            <p className="text-xl font-black text-slate-900">$1,800 <span className="text-xs text-slate-400 font-bold">/ mo</span></p>
+                            <p className="text-xl font-black text-slate-900">{salary ? `$${salary}` : 'TBD'} <span className="text-xs text-slate-400 font-bold">/ mo</span></p>
                         </div>
                         <div className="space-y-1">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Experience</p>
-                            <p className="text-xl font-black text-slate-900">8 Years <span className="text-xs text-slate-400 font-bold">Total</span></p>
+                            <p className="text-xl font-black text-slate-900">{experience || '0'} Years <span className="text-xs text-slate-400 font-bold">Total</span></p>
                         </div>
                         <div className="space-y-1">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Education</p>
-                            <p className="text-xl font-black text-slate-900">Bachelor's <span className="text-xs text-slate-400 font-bold">Degree</span></p>
+                            <p className="text-xl font-black text-slate-900">{education || 'No'} <span className="text-xs text-slate-400 font-bold">Degree</span></p>
                         </div>
                         <div className="space-y-1">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Availability</p>

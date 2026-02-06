@@ -22,6 +22,10 @@ export interface UserProfile {
         compliance: number;
     };
     english: string;
+    salary: string;
+    education: string;
+    experience: string;
+    skills: string[];
 }
 
 interface UserContextType extends UserProfile {
@@ -68,7 +72,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             bio: "",
             iq: 0,
             disc: { dominance: 0, influence: 0, steadiness: 0, compliance: 0 },
-            english: "N/A"
+            english: "N/A",
+            salary: "",
+            education: "",
+            experience: "",
+            skills: []
         };
     });
 
@@ -98,7 +106,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     bio: data.bio || "",
                     iq: data.iq || 0,
                     disc: data.disc_scores || { dominance: 0, influence: 0, steadiness: 0, compliance: 0 },
-                    english: data.english_proficiency || "N/A"
+                    english: data.english_proficiency || "N/A",
+                    salary: data.expected_salary || "",
+                    education: data.education_level || "",
+                    experience: data.experience_years || "",
+                    skills: data.skills_list || []
                 });
             }
         } catch (fetchError) {
@@ -137,7 +149,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     bio: "",
                     iq: 0,
                     disc: { dominance: 0, influence: 0, steadiness: 0, compliance: 0 },
-                    english: "N/A"
+                    english: "N/A",
+                    salary: "",
+                    education: "",
+                    experience: "",
+                    skills: []
                 });
                 setLoading(false);
             }
@@ -163,6 +179,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (data.iq !== undefined) dbData.iq = data.iq;
             if (data.disc !== undefined) dbData.disc_scores = data.disc;
             if (data.english !== undefined) dbData.english_proficiency = data.english;
+            if (data.salary !== undefined) dbData.expected_salary = data.salary;
+            if (data.education !== undefined) dbData.education_level = data.education;
+            if (data.experience !== undefined) dbData.experience_years = data.experience;
+            if (data.skills !== undefined) dbData.skills_list = data.skills;
 
             const { error } = await supabase
                 .from('profiles')

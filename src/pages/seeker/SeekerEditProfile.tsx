@@ -20,7 +20,7 @@ import { useUser } from '../../context/UserContext';
 
 const SeekerEditProfile = () => {
     const navigate = useNavigate();
-    const { userPhoto, userName, title, website, location, bio, updateUserProfile, testScores, updateTestScores } = useUser();
+    const { userPhoto, userName, title, website, location, bio, salary, education, experience, skills, updateUserProfile, testScores, updateTestScores } = useUser();
     const [activeSection, setActiveSection] = useState('general');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const proofInputRef = useRef<HTMLInputElement>(null);
@@ -340,14 +340,35 @@ const SeekerEditProfile = () => {
                                     </button>
                                 </div>
                                 <div className="flex flex-wrap gap-3">
-                                    {['WordPress Specialist', 'Figma UX/UI', 'After Effects', 'Process Analysis', 'Virtual Assistant', 'React.js', 'System Architecture'].map(skill => (
+                                    {skills && skills.length > 0 ? skills.map(skill => (
                                         <div key={skill} className="flex items-center gap-2 pl-5 pr-3 py-3 bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-black text-slate-900 uppercase tracking-widest shadow-sm">
                                             {skill}
-                                            <button className="p-1 hover:text-rose-500 transition-colors">
+                                            <button
+                                                onClick={() => updateUserProfile({ skills: skills.filter(s => s !== skill) })}
+                                                className="p-1 hover:text-rose-500 transition-colors"
+                                            >
                                                 <Trash2 size={12} />
                                             </button>
                                         </div>
-                                    ))}
+                                    )) : (
+                                        <p className="text-[10px] font-bold text-slate-300 italic">No skills added yet.</p>
+                                    )}
+                                    <div className="flex gap-2 w-full mt-4">
+                                        <input
+                                            type="text"
+                                            placeholder="Add a skill (e.g. React)"
+                                            className="flex-1 px-6 py-3 rounded-xl border border-slate-100 bg-slate-50 text-[10px] font-black uppercase tracking-widest outline-none focus:border-primary transition-all"
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    const val = (e.currentTarget as HTMLInputElement).value.trim();
+                                                    if (val && !skills.includes(val)) {
+                                                        updateUserProfile({ skills: [...skills, val] });
+                                                        (e.currentTarget as HTMLInputElement).value = '';
+                                                    }
+                                                }
+                                            }}
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
@@ -357,19 +378,39 @@ const SeekerEditProfile = () => {
                                     <div className="relative group">
                                         <DollarSign className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={18} />
                                         <input
-                                            type="number"
+                                            type="text"
                                             className="w-full pl-14 pr-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all"
-                                            defaultValue="90000"
+                                            value={salary}
+                                            onChange={(e) => updateUserProfile({ salary: e.target.value })}
+                                            placeholder="e.g. 50,000"
                                         />
                                     </div>
                                 </div>
                                 <div className="space-y-2.5">
-                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] ml-1">Job Type Preference</label>
-                                    <select className="w-full px-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-black text-[13px] uppercase tracking-widest transition-all appearance-none">
-                                        <option>Full-Time (Remote)</option>
-                                        <option>Part-Time (Remote)</option>
-                                        <option>Project-Based</option>
-                                    </select>
+                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] ml-1">Years of Experience</label>
+                                    <div className="relative group">
+                                        <Briefcase className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={18} />
+                                        <input
+                                            type="number"
+                                            className="w-full pl-14 pr-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all"
+                                            value={experience}
+                                            onChange={(e) => updateUserProfile({ experience: e.target.value })}
+                                            placeholder="e.g. 5"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2.5">
+                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] ml-1">Highest Education</label>
+                                    <div className="relative group">
+                                        <GraduationCap className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={18} />
+                                        <input
+                                            type="text"
+                                            className="w-full pl-14 pr-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all"
+                                            value={education}
+                                            onChange={(e) => updateUserProfile({ education: e.target.value })}
+                                            placeholder="e.g. Bachelor's Degree"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -24,7 +24,7 @@ import SeekerMessages from './SeekerMessages';
 import CompanyProfile from './CompanyProfile';
 
 const SeekerOverview = () => {
-    const { userPhoto, updateUserProfile, userName, title, website } = useUser();
+    const { userPhoto, updateUserProfile, userName, title, website, salary, education, skills } = useUser();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,12 +138,12 @@ const SeekerOverview = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pt-8 border-t border-white/5">
                             <div className="space-y-1">
                                 <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">Expected Salary</p>
-                                <p className="text-lg font-black text-white">$1200 - $1800 <span className="text-sm font-medium text-white/40">/ mo</span></p>
+                                <p className="text-lg font-black text-white">{salary ? `$${salary}` : 'TBD'} <span className="text-sm font-medium text-white/40">/ mo</span></p>
                             </div>
                             <div className="space-y-1">
                                 <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">Education</p>
                                 <p className="text-lg font-black text-white flex items-center gap-2">
-                                    <GraduationCap size={18} className="text-primary" /> Bachelor's Degree
+                                    <GraduationCap size={18} className="text-primary" /> {education || 'Not Specified'}
                                 </p>
                             </div>
                             <div className="space-y-1">
@@ -157,11 +157,13 @@ const SeekerOverview = () => {
                         <div className="pt-8">
                             <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-4">Core Skillset Matrix</p>
                             <div className="flex flex-wrap gap-2">
-                                {['WordPress Specialist', 'Figma UX/UI', 'After Effects', 'Process Analysis', 'Virtual Assistant'].map(skill => (
+                                {skills && skills.length > 0 ? skills.map(skill => (
                                     <span key={skill} className="px-5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black text-white/70 uppercase tracking-widest hover:border-primary/50 hover:bg-primary/10 transition-all cursor-default">
                                         {skill}
                                     </span>
-                                ))}
+                                )) : (
+                                    <span className="text-[10px] font-bold text-white/30 italic">No skills listed yet</span>
+                                )}
                                 <button className="px-5 py-2.5 border border-white/5 rounded-xl text-[10px] font-black text-primary uppercase tracking-widest hover:bg-white/5 transition-all">
                                     + Add Skill
                                 </button>
