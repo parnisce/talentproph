@@ -13,6 +13,15 @@ export interface UserProfile {
     location: string;
     website: string;
     bio: string;
+    // Psychometric results
+    iq: number;
+    disc: {
+        dominance: number;
+        influence: number;
+        steadiness: number;
+        compliance: number;
+    };
+    english: string;
 }
 
 interface UserContextType extends UserProfile {
@@ -56,20 +65,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             phone: "",
             location: "",
             website: "",
-            bio: ""
+            bio: "",
+            iq: 0,
+            disc: { dominance: 0, influence: 0, steadiness: 0, compliance: 0 },
+            english: "N/A"
         };
     });
 
-    const [testScores, setTestScores] = useState({
-        iq: 0,
-        disc: {
-            dominance: 0,
-            influence: 0,
-            steadiness: 0,
-            compliance: 0
-        },
-        english: 'N/A'
-    });
 
     const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
 
@@ -93,11 +95,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     phone: data.phone || "",
                     location: data.location || "",
                     website: data.website || "",
-                    bio: data.bio || ""
+                    bio: data.bio || "",
+                    iq: data.iq || 0,
+                    disc: data.disc_scores || { dominance: 0, influence: 0, steadiness: 0, compliance: 0 },
+                    english: data.english_proficiency || "N/A"
                 });
             }
         } catch (fetchError) {
             console.error("Error fetching profile:", fetchError);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -106,8 +113,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         supabase.auth.getSession().then(({ data: { session } }) => {
             if (session?.user) {
                 fetchProfile(session.user.id);
+            } else {
+                setLoading(false);
             }
-            setLoading(false);
         });
 
         // Listen for auth changes
@@ -126,10 +134,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     phone: "",
                     location: "",
                     website: "",
-                    bio: ""
+                    bio: "",
+                    iq: 0,
+                    disc: { dominance: 0, influence: 0, steadiness: 0, compliance: 0 },
+                    english: "N/A"
                 });
+                setLoading(false);
             }
-            setLoading(false);
         });
 
         return () => subscription.unsubscribe();
@@ -149,6 +160,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (data.location !== undefined) dbData.location = data.location;
             if (data.website !== undefined) dbData.website = data.website;
             if (data.bio !== undefined) dbData.bio = data.bio;
+            if (data.iq !== undefined) dbData.iq = data.iq;
+            if (data.disc !== undefined) dbData.disc_scores = data.disc;
+            if (data.english !== undefined) dbData.english_proficiency = data.english;
 
             const { error } = await supabase
                 .from('profiles')
@@ -165,7 +179,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const updateTestScores = (scores: UserContextType['testScores']) => {
-        setTestScores(scores);
+        updateUserProfile({
+            iq: scores.iq,
+            disc: scores.disc,
+            english: scores.english
+        });
     };
 
     const addPaymentMethod = (method: any) => {
@@ -187,7 +205,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             userPhoto: userProfile.photo,
             userRole: userProfile.role,
             updateUserProfile,
-            testScores,
+            testScores: {
+                iq: userProfile.iq,
+                disc: userProfile.disc,
+                english: userProfile.english
+            },
             updateTestScores,
             paymentMethods,
             addPaymentMethod,

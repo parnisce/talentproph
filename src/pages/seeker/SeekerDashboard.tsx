@@ -308,8 +308,14 @@ const SeekerOverview = () => {
                         <div className="p-8 rounded-3xl bg-slate-900 text-white flex flex-col items-center justify-center text-center relative overflow-hidden group/en">
                             <div className="absolute inset-0 bg-primary/10 opacity-50" />
                             <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-4 relative z-10">English Proficiency</p>
-                            <div className="text-4xl font-black text-primary tracking-tighter relative z-10 group-hover/en:scale-110 transition-transform">{useUser().testScores.english.split('(')[0]}</div>
-                            <div className="text-[10px] font-bold text-white/60 relative z-10 mt-1">{useUser().testScores.english.split('(')[1].replace(')', '')}</div>
+                            <div className="text-4xl font-black text-primary tracking-tighter relative z-10 group-hover/en:scale-110 transition-transform">
+                                {useUser().testScores.english?.split('(')[0] || 'N/A'}
+                            </div>
+                            <div className="text-[10px] font-bold text-white/60 relative z-10 mt-1">
+                                {useUser().testScores.english?.includes('(')
+                                    ? useUser().testScores.english.split('(')[1].replace(')', '')
+                                    : 'Level Not Set'}
+                            </div>
                             <Globe size={48} className="absolute -bottom-4 -right-4 text-white/5 rotate-12 group-hover:rotate-0 transition-transform duration-700" />
                         </div>
                     </div>

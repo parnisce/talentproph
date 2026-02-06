@@ -160,7 +160,9 @@ const ReviewProfile = () => {
                             </div>
                             <div className="p-6 bg-slate-800/50 border border-slate-700/50 rounded-[32px] text-center backdrop-blur-sm">
                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">English</p>
-                                <p className="text-2xl font-black text-purple-400 tracking-tighter leading-9 drop-shadow-lg">{applicant.testScores.english.split(' ')[0]}</p>
+                                <p className="text-2xl font-black text-purple-400 tracking-tighter leading-9 drop-shadow-lg">
+                                    {applicant.testScores?.english?.split(' ')[0] || 'N/A'}
+                                </p>
                             </div>
                         </div>
 

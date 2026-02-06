@@ -353,9 +353,9 @@ const JobDetails = () => {
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Budgeted Compensation</p>
                             <div className="flex items-center justify-center gap-2 mb-2">
                                 <DollarSign size={24} className="text-primary" />
-                                <span className="text-4xl font-black text-slate-900 tracking-tighter">{job.salary.split(' / ')[0]}</span>
+                                <span className="text-4xl font-black text-slate-900 tracking-tighter">{job.salary?.split(' / ')[0] || 'TBD'}</span>
                             </div>
-                            <p className="text-sm font-bold text-slate-400">/{job.salary.split(' / ')[1] || 'month'}</p>
+                            <p className="text-sm font-bold text-slate-400">/{job.salary?.split(' / ')[1] || 'month'}</p>
 
                             <div className="mt-10 space-y-4">
                                 <button
