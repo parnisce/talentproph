@@ -1,0 +1,407 @@
+import { useRef } from 'react';
+import { Link, Routes, Route } from 'react-router-dom';
+import DashboardLayout from '../../components/DashboardLayout';
+import {
+    Zap,
+    ShieldCheck,
+    Globe,
+    MessageSquare,
+    Bookmark,
+    Clock,
+    Users,
+    BookOpen,
+    ChevronRight,
+    AlertTriangle,
+    Camera,
+    FileText,
+    Upload,
+    GraduationCap,
+    ExternalLink
+} from 'lucide-react';
+import CalendarView from '../../components/CalendarView';
+import { useUser } from '../../context/UserContext';
+import SeekerMessages from './SeekerMessages';
+import CompanyProfile from './CompanyProfile';
+
+const SeekerOverview = () => {
+    const { userPhoto, updateUserProfile, userName } = useUser();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                if (event.target?.result) {
+                    updateUserProfile({ photo: event.target.result as string });
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    return (
+        <div className="space-y-8 pb-20">
+            {/* Safety Alerts Section */}
+            <div className="space-y-4">
+                <div className="bg-amber-50 border border-amber-100 rounded-[32px] p-8 shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:scale-110 transition-transform duration-700">
+                        <AlertTriangle size={120} />
+                    </div>
+                    <div className="flex gap-6 items-start relative z-10">
+                        <div className="bg-amber-100 p-3 rounded-2xl text-amber-600 shrink-0">
+                            <AlertTriangle size={24} />
+                        </div>
+                        <div className="space-y-3">
+                            <h3 className="text-amber-900 font-black text-xs uppercase tracking-widest">Safety Warning: Direct Payments</h3>
+                            <p className="text-amber-800/70 text-[13px] font-medium leading-relaxed max-w-4xl">
+                                Any job that wants you to use your own money, or handle funds from someone else, purchase items, or create accounts using your name, is a most likely a scam. Notify us immediately if this is requested.
+                                <br /><br />
+                                DO NOT allow anybody else to use your TalentPro account, create secondary accounts, or use fake links. You will be banned from using our site.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-primary/5 border border-primary/10 rounded-[32px] p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+                    <div className="flex items-center gap-4">
+                        <div className="bg-primary/10 p-2.5 rounded-xl text-primary">
+                            <Zap size={20} />
+                        </div>
+                        <p className="text-[13px] font-bold text-slate-600">
+                            We've added a feature that lets you display your resume. Make sure to <span className="text-primary font-black uppercase text-[11px] tracking-wider cursor-pointer hover:underline">upload yours</span> to help employers find you faster.
+                        </p>
+                    </div>
+                    <button className="px-6 py-2.5 bg-primary text-white rounded-xl font-black text-[11px] uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all shrink-0">
+                        Upload Resume
+                    </button>
+                </div>
+            </div>
+
+            {/* Main Profile Identity Header */}
+            <div className="bg-slate-900 rounded-[48px] overflow-hidden shadow-2xl relative">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(0,71,255,0.15),transparent_70%)]" />
+                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px]" />
+
+                <div className="relative z-10 p-10 md:p-14 flex flex-col lg:flex-row gap-12 items-start lg:items-center">
+                    {/* User Photo & Basic Actions */}
+                    <div className="flex flex-col items-center gap-6 shrink-0">
+                        <div className="relative group">
+                            <div className="w-40 h-40 rounded-[48px] bg-slate-800 p-1 ring-4 ring-white/5 overflow-hidden">
+                                <img
+                                    src={userPhoto}
+                                    alt="Profile"
+                                    className="w-full h-full object-cover rounded-[44px]"
+                                />
+                            </div>
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleImageChange}
+                                className="hidden"
+                                accept="image/*"
+                            />
+                            <button
+                                onClick={() => fileInputRef.current?.click()}
+                                className="absolute -bottom-2 -right-2 p-3 bg-primary text-white rounded-2xl shadow-xl hover:scale-110 transition-transform"
+                            >
+                                <Camera size={18} />
+                            </button>
+                        </div>
+                        <div className="flex flex-col gap-2 w-full">
+                            <Link to="/seeker/profile/edit" className="w-full py-3 px-6 bg-white/5 hover:bg-white/10 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-white/5 group decoration-transparent">
+                                <FileText size={14} className="text-primary group-hover:scale-110 transition-transform" /> Edit Profile
+                            </Link>
+                            <button className="w-full py-3 px-6 bg-white/5 hover:bg-white/10 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-white/5 group">
+                                <Upload size={14} className="text-secondary group-hover:scale-110 transition-transform" /> Upload CV
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Information Grid */}
+                    <div className="flex-grow space-y-8">
+                        <div>
+                            <div className="flex flex-wrap items-center gap-4 mb-4">
+                                <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter">{userName}</h1>
+                                <div className="flex items-center gap-2 px-4 py-1.5 bg-green-500/10 border border-green-500/20 rounded-full">
+                                    <ShieldCheck size={14} className="text-green-400" />
+                                    <span className="text-[10px] font-black text-green-400 uppercase tracking-widest">Verified Pro</span>
+                                </div>
+                            </div>
+                            <p className="text-blue-200/50 font-black text-xs uppercase tracking-[0.3em]">WordPress Expert | Web Developer | Web Designer | UI Generalist</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pt-8 border-t border-white/5">
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">Expected Salary</p>
+                                <p className="text-lg font-black text-white">$1200 - $1800 <span className="text-sm font-medium text-white/40">/ mo</span></p>
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">Education</p>
+                                <p className="text-lg font-black text-white flex items-center gap-2">
+                                    <GraduationCap size={18} className="text-primary" /> Bachelor's Degree
+                                </p>
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">Portfolio</p>
+                                <a href="#" className="text-sm font-bold text-primary flex items-center gap-2 hover:underline">
+                                    <Globe size={16} /> cyryldbitangcol.com <ExternalLink size={12} />
+                                </a>
+                            </div>
+                        </div>
+
+                        <div className="pt-8">
+                            <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-4">Core Skillset Matrix</p>
+                            <div className="flex flex-wrap gap-2">
+                                {['WordPress Specialist', 'Figma UX/UI', 'After Effects', 'Process Analysis', 'Virtual Assistant'].map(skill => (
+                                    <span key={skill} className="px-5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black text-white/70 uppercase tracking-widest hover:border-primary/50 hover:bg-primary/10 transition-all cursor-default">
+                                        {skill}
+                                    </span>
+                                ))}
+                                <button className="px-5 py-2.5 border border-white/5 rounded-xl text-[10px] font-black text-primary uppercase tracking-widest hover:bg-white/5 transition-all">
+                                    + Add Skill
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Interactive Widgets Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Messages Widget */}
+                <div className="bg-white border-2 border-slate-100 rounded-[40px] p-8 shadow-sm hover:shadow-xl hover:shadow-slate-200/20 transition-all group">
+                    <div className="flex justify-between items-center mb-10 pb-6 border-b border-slate-50">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-blue-50 rounded-2xl text-primary group-hover:scale-110 transition-transform">
+                                <MessageSquare size={22} />
+                            </div>
+                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.3em]">Unread Messages</h3>
+                        </div>
+                        <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">View All</button>
+                    </div>
+                    <div className="py-12 flex flex-col items-center justify-center text-center">
+                        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6 text-slate-200">
+                            <MessageSquare size={32} />
+                        </div>
+                        <p className="text-slate-400 font-bold text-sm tracking-tight italic">You have no unread messages yet.</p>
+                    </div>
+                </div>
+
+                {/* Bookmarked Jobs Widget */}
+                <div className="bg-white border-2 border-slate-100 rounded-[40px] p-8 shadow-sm hover:shadow-xl hover:shadow-slate-200/20 transition-all group">
+                    <div className="flex justify-between items-center mb-10 pb-6 border-b border-slate-50">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-secondary/10 rounded-2xl text-secondary group-hover:scale-110 transition-transform">
+                                <Bookmark size={22} />
+                            </div>
+                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.3em]">Bookmarked Positions</h3>
+                        </div>
+                        <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">Explore Jobs</button>
+                    </div>
+                    <div className="py-12 flex flex-col items-center justify-center text-center">
+                        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6 text-slate-200">
+                            <Bookmark size={32} />
+                        </div>
+                        <p className="text-slate-400 font-bold text-sm tracking-tight">
+                            You haven't bookmarked any jobs yet.
+                            <br />
+                            <span className="text-primary font-black uppercase text-[10px] mt-2 block tracking-widest cursor-pointer hover:underline">Get started here</span>
+                        </p>
+                    </div>
+                </div>
+
+                {/* Timeproof Widget */}
+                <div className="bg-white border-2 border-slate-100 rounded-[40px] p-8 shadow-sm hover:shadow-xl hover:shadow-slate-200/20 transition-all group">
+                    <div className="flex justify-between items-center mb-10 pb-6 border-b border-slate-50">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-violet-50 rounded-2xl text-violet-500 group-hover:scale-110 transition-transform">
+                                <Clock size={22} />
+                            </div>
+                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.3em]">Time Tracking Status</h3>
+                        </div>
+                        <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">Open Tracker</button>
+                    </div>
+                    <div className="py-12 flex flex-col items-center justify-center text-center">
+                        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6 text-slate-200">
+                            <Clock size={32} />
+                        </div>
+                        <p className="text-slate-400 font-bold text-sm tracking-tight">Track your productivity with Timeproof.<br /><span className="text-primary font-black uppercase text-[10px] mt-2 block tracking-widest cursor-pointer hover:underline">What is Timeproof?</span></p>
+                    </div>
+                </div>
+
+                {/* Employers Listing Widget */}
+                <div className="bg-white border-2 border-slate-100 rounded-[40px] p-8 shadow-sm hover:shadow-xl hover:shadow-slate-200/20 transition-all group">
+                    <div className="flex justify-between items-center mb-10 pb-6 border-b border-slate-50">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-emerald-50 rounded-2xl text-emerald-500 group-hover:scale-110 transition-transform">
+                                <Users size={22} />
+                            </div>
+                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.3em]">My Employers</h3>
+                        </div>
+                        <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">View History</button>
+                    </div>
+                    <div className="space-y-4">
+                        <div className="p-5 rounded-2xl border border-slate-100 hover:border-primary/20 hover:bg-slate-50/50 transition-all flex items-center justify-between group/item">
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center font-black text-slate-400">GH</div>
+                                <div>
+                                    <p className="text-sm font-black text-slate-900">Green Horizon Inc.</p>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Active Relationship</p>
+                                </div>
+                            </div>
+                            <ChevronRight size={18} className="text-slate-200 group-hover/item:text-primary transition-colors" />
+                        </div>
+                        <div className="p-5 flex items-center justify-center border border-dashed border-slate-200 rounded-2xl text-slate-300 text-[10px] font-black uppercase tracking-widest">
+                            No other active employers
+                        </div>
+                    </div>
+                </div>
+
+                {/* Tests Taken Widget */}
+                <div className="bg-white border-2 border-slate-100 rounded-[40px] p-8 shadow-sm hover:shadow-xl hover:shadow-slate-200/20 transition-all group md:col-span-2">
+                    <div className="flex justify-between items-center mb-10 pb-6 border-b border-slate-50">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-rose-50 rounded-2xl text-rose-500 group-hover:scale-110 transition-transform">
+                                <ShieldCheck size={22} />
+                            </div>
+                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.3em]">Assessment Results</h3>
+                        </div>
+                        <Link to="/seeker/profile/edit" className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline decoration-transparent">Update Scores</Link>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                        {/* IQ Section */}
+                        <div className="p-8 rounded-3xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-center text-center group/iq">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">IQ Assessment</p>
+                            <div className="text-5xl font-black text-slate-900 tracking-tighter group-hover/iq:scale-110 transition-transform">{useUser().testScores.iq}</div>
+                            <div className="mt-4 px-4 py-1.5 bg-primary/10 text-primary rounded-full text-[9px] font-black uppercase tracking-widest">Exceptional</div>
+                        </div>
+
+                        {/* DISC Section */}
+                        <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">DISC Personality Profile</p>
+                            <div className="space-y-4">
+                                {[
+                                    { label: 'Dominance', value: useUser().testScores.disc.dominance, color: 'bg-rose-500' },
+                                    { label: 'Influence', value: useUser().testScores.disc.influence, color: 'bg-amber-500' },
+                                    { label: 'Steadiness', value: useUser().testScores.disc.steadiness, color: 'bg-emerald-500' },
+                                    { label: 'Compliance', value: useUser().testScores.disc.compliance, color: 'bg-blue-500' }
+                                ].map((item) => (
+                                    <div key={item.label} className="space-y-1.5">
+                                        <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
+                                            <span className="text-slate-500">{item.label}</span>
+                                            <span className="text-slate-900">{item.value}%</span>
+                                        </div>
+                                        <div className="h-1.5 w-full bg-white rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full ${item.color} rounded-full`}
+                                                style={{ width: `${item.value}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* English Section */}
+                        <div className="p-8 rounded-3xl bg-slate-900 text-white flex flex-col items-center justify-center text-center relative overflow-hidden group/en">
+                            <div className="absolute inset-0 bg-primary/10 opacity-50" />
+                            <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-4 relative z-10">English Proficiency</p>
+                            <div className="text-4xl font-black text-primary tracking-tighter relative z-10 group-hover/en:scale-110 transition-transform">{useUser().testScores.english.split('(')[0]}</div>
+                            <div className="text-[10px] font-bold text-white/60 relative z-10 mt-1">{useUser().testScores.english.split('(')[1].replace(')', '')}</div>
+                            <Globe size={48} className="absolute -bottom-4 -right-4 text-white/5 rotate-12 group-hover:rotate-0 transition-transform duration-700" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Premium Educational Section */}
+            <div className="bg-slate-900 rounded-[48px] p-12 md:p-16 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-12 opacity-10 group-hover:rotate-12 transition-transform duration-[2s]">
+                    <BookOpen size={200} />
+                </div>
+                <div className="relative z-10 flex flex-col md:flex-row gap-12 items-center">
+                    <div className="flex-grow space-y-6 text-center md:text-left">
+                        <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-primary/10 border border-primary/20 rounded-full">
+                            <span className="text-[10px] font-black text-primary uppercase tracking-widest">Premium Education</span>
+                        </div>
+                        <h2 className="text-4xl font-black text-white tracking-tighter leading-tight max-w-xl">
+                            Master the Art of <br /><span className="text-gradient italic">Remote Professionalism</span>
+                        </h2>
+                        <p className="text-blue-100/40 font-medium text-lg leading-relaxed max-w-xl">
+                            Unlock exclusive guides on how to work for foreign clients, secure better rates, and scale your career as a Filipino pro.
+                        </p>
+                        <button className="px-10 py-4 bg-primary text-white rounded-[24px] font-black text-[11px] uppercase tracking-widest shadow-2xl shadow-primary/40 hover:scale-105 active:scale-95 transition-all">
+                            Access Library
+                        </button>
+                    </div>
+                    <div className="shrink-0">
+                        <div className="w-56 h-72 rounded-[40px] bg-white/5 border border-white/10 p-2 transform -rotate-3 hover:rotate-0 transition-transform duration-700">
+                            <div className="w-full h-full rounded-[34px] bg-slate-800 overflow-hidden relative group">
+                                <img
+                                    src="https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&auto=format&fit=crop&q=60"
+                                    alt="Remote course"
+                                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
+                                />
+                                <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-slate-950 to-transparent">
+                                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Featured Guide</p>
+                                    <p className="text-white font-bold text-sm leading-tight mt-1">10 Things You Need To Know</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Bottom Global Footer CTA */}
+            <div className="pt-20 text-center">
+                <h3 className="text-5xl font-black text-slate-900 tracking-tighter mb-8 leading-tight">
+                    Looking for a <span className="text-primary italic">new challenge?</span>
+                </h3>
+                <p className="text-slate-400 font-medium text-xl mb-12 max-w-2xl mx-auto">
+                    Thousands of high-paying premium employers are looking to hire Filipino talent right now.
+                </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+                    <button className="px-12 py-5 bg-primary text-white rounded-[24px] font-black text-sm uppercase tracking-widest shadow-2xl shadow-primary/40 hover:-translate-y-1 transition-all">
+                        Browse Premium Jobs
+                    </button>
+                    <button className="px-12 py-5 bg-white border-2 border-slate-100 text-slate-900 rounded-[24px] font-black text-sm uppercase tracking-widest hover:border-primary transition-all">
+                        Update Resume
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+import SeekerProfile from './SeekerProfile';
+import SeekerEditProfile from './SeekerEditProfile';
+import SeekerFindJobs from './SeekerFindJobs';
+import JobDetails from './JobDetails';
+
+const SeekerDashboard = () => {
+    return (
+        <DashboardLayout role="seeker">
+            <Routes>
+                <Route path="/" element={<SeekerOverview />} />
+                <Route path="/jobs" element={<SeekerFindJobs />} />
+                <Route path="/jobs/:id" element={<JobDetails />} />
+                <Route path="/profile" element={<SeekerProfile />} />
+                <Route path="/profile/edit" element={<SeekerEditProfile />} />
+                <Route path="/calendar" element={
+                    <CalendarView
+                        interviews={[
+                            { id: '1', title: 'Design Sync', time: '2:00 PM', date: new Date(), location: 'Zoom', type: 'video' },
+                            { id: '2', title: 'Initial Screening', time: '10:00 AM', date: new Date(Date.now() + 86400000), location: 'Google Meet', type: 'video' }
+                        ]}
+                    />
+                } />
+                <Route path="/messages" element={<SeekerMessages />} />
+                <Route path="/company/:id" element={<CompanyProfile />} />
+            </Routes>
+        </DashboardLayout>
+    );
+};
+
+export default SeekerDashboard;
