@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Filter, ChevronRight, X, Clock, Building2, ShieldCheck, Globe, Sparkles, Check } from 'lucide-react';
+import { Search, Filter, ChevronRight, X, Clock, Building2, ShieldCheck, Globe, Sparkles, Check, Loader2 } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../services/supabase';
+import { useEffect } from 'react';
 
 interface Job {
     id: string;
@@ -17,52 +19,7 @@ interface Job {
     logo?: string;
 }
 
-const mockJobs: Job[] = [
-    {
-        id: '1',
-        title: 'YouTube Video Editor (Long-form)',
-        company: 'Woken Jobs',
-        postedDate: 'Feb 05, 2026',
-        salary: '$1300 / project',
-        type: 'Gig',
-        location: 'Remote',
-        description: 'Creating high-energy long-form content for top-tier creators. Expert knowledge of After Effects motion graphics is required. Join a team that values creativity and speed.',
-        skills: ['Video Content Creation', 'Animation', 'Adobe Premiere Pro', 'After Effects'],
-    },
-    {
-        id: '2',
-        title: 'Patient Access Representative',
-        company: 'Healthcare Plus',
-        postedDate: 'Feb 05, 2026',
-        salary: '$800 - $1200 / mo',
-        type: 'Full-Time',
-        location: 'Remote',
-        description: 'First point of contact for patient care. Manage scheduling, insurance verification, and high-volume patient communication. Requires empathetic and organized professionals.',
-        skills: ['Medical Services', 'Medical Insurance', 'Onboarding', 'Customer Service'],
-    },
-    {
-        id: '3',
-        title: 'Social Media Manager',
-        company: 'Bright Horizon Marketing',
-        postedDate: 'Feb 04, 2026',
-        salary: '$1200 - $1800 / mo',
-        type: 'Full-Time',
-        location: 'Remote',
-        description: 'Full-service social media management for brand growth. From content planning to community engagement. Must have experience with Meta Ads and short-form video.',
-        skills: ['Social Media Strategy', 'Canva', 'Analytics', 'Content Planning'],
-    },
-    {
-        id: '4',
-        title: 'Virtual Administrative Assistant',
-        company: 'Stellar Outsourcing',
-        postedDate: 'Feb 04, 2026',
-        salary: '$700 - $1100 / mo',
-        type: 'Part-Time',
-        location: 'Remote',
-        description: 'Direct support for global executive teams. Manage complex calendars, travel arrangements, and strategic email communication. Native-level English required.',
-        skills: ['Administrative Support', 'Email Management', 'Google Workspace'],
-    }
-];
+// Mock data removed in favor of Supabase
 
 const FindJobs = () => {
     const navigate = useNavigate();
@@ -70,8 +27,38 @@ const FindJobs = () => {
     const [selectedSkills] = useState<string[]>([]);
     const [employmentTypes, setEmploymentTypes] = useState<string[]>(['Full-Time', 'Part-Time', 'Gig']);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [jobs, setJobs] = useState<Job[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const filteredJobs = mockJobs.filter(job => {
+    useEffect(() => {
+        const fetchJobs = async () => {
+            const { data, error } = await supabase
+                .from('job_posts')
+                .select('*')
+                .eq('status', 'active')
+                .order('created_at', { ascending: false });
+
+            if (!error && data) {
+                const mappedJobs: Job[] = data.map(job => ({
+                    id: job.id,
+                    title: job.title,
+                    company: job.company_name,
+                    postedDate: new Date(job.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+                    salary: `${job.salary} / ${job.period === 'Per Month' ? 'mo' : job.period === 'Per Week' ? 'wk' : 'hr'}`,
+                    type: (job.engagement?.includes('Full-Time') ? 'Full-Time' : job.engagement?.includes('Part-Time') ? 'Part-Time' : 'Gig') as any,
+                    location: job.location,
+                    description: job.preview,
+                    skills: job.skills || [],
+                }));
+                setJobs(mappedJobs);
+            }
+            setLoading(false);
+        };
+
+        fetchJobs();
+    }, []);
+
+    const filteredJobs = jobs.filter(job => {
         const query = searchQuery.toLowerCase();
         const matchesSearch = job.title.toLowerCase().includes(query) ||
             job.company.toLowerCase().includes(query) ||
@@ -88,6 +75,11 @@ const FindJobs = () => {
 
     return (
         <div className="min-h-screen bg-bg-main font-inter selection:bg-primary/20">
+            {loading && (
+                <div className="fixed inset-0 bg-white z-[100] flex items-center justify-center">
+                    <Loader2 className="animate-spin text-primary" size={48} />
+                </div>
+            )}
             <Navbar />
 
             {/* Premium Header - Realigned with Landing Page Style */}
