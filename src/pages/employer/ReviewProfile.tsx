@@ -46,6 +46,7 @@ const mockApplicantsData: Record<string, any> = {
             { title: 'Project: Mastering AI (1M+ Views)', link: '#' },
             { title: 'Commercial: CyberSable 2024', link: '#' }
         ],
+        resume_url: "#",
         application: {
             subject: "Application for YouTube Video Editor",
             message: "Hello! I saw your post for the YouTube Video Editor role and immediately felt my style matches your brand. I've been following your channel for 2 years and understand the pacing you're looking for. Attached is my latest showreel. I'm ready to bring my expertise to your team!"
@@ -277,6 +278,30 @@ const ReviewProfile = () => {
                             </div>
                         </div>
                     </div>
+
+                    {/* Resume / CV Section */}
+                    {applicant.resume_url && (
+                        <div className="bg-slate-900 border-2 border-slate-800 p-12 rounded-[56px] shadow-2xl relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-12 opacity-[0.05] grayscale -translate-y-1/2 translate-x-1/4 pointer-events-none text-white">
+                                <FileText size={300} />
+                            </div>
+                            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                                <div className="space-y-4 text-center md:text-left">
+                                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-400">Verified Document</h4>
+                                    <h3 className="text-3xl font-black text-white tracking-tighter">Candidate Resume / CV</h3>
+                                    <p className="text-slate-400 font-medium max-w-md">Review the candidate's full professional history, certifications, and academic background in detail.</p>
+                                </div>
+                                <a
+                                    href={applicant.resume_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="px-12 py-5 bg-white text-slate-900 rounded-[28px] text-[11px] font-black uppercase tracking-widest shadow-2xl hover:bg-blue-500 hover:text-white transition-all flex items-center gap-3 active:scale-95 group-hover:scale-105"
+                                >
+                                    <Download size={20} /> Download Resume
+                                </a>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

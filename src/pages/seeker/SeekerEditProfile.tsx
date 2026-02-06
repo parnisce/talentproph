@@ -16,19 +16,22 @@ import {
     Linkedin,
     Twitter,
     Facebook,
-    Instagram
+    Instagram,
+    FileText,
+    Eye
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
 
 const SeekerEditProfile = () => {
     const navigate = useNavigate();
-    const { userPhoto, userName, title, website, location, bio, salary, education, experience, skills, linkedin, twitter, facebook, instagram, availability, banner_photo, updateUserProfile, testScores, updateTestScores } = useUser();
+    const { userPhoto, userName, title, website, location, bio, salary, education, experience, skills, linkedin, twitter, facebook, instagram, availability, banner_photo, resume_url, updateUserProfile, testScores, updateTestScores } = useUser();
     const [activeSection, setActiveSection] = useState('general');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const proofInputRef = useRef<HTMLInputElement>(null);
     const [proofImage, setProofImage] = useState<string | null>(null);
     const bannerInputRef = useRef<HTMLInputElement>(null);
+    const resumeInputRef = useRef<HTMLInputElement>(null);
 
     // Local state for all form fields to ensure snappy typing without cursor jumps
     const [localProfile, setLocalProfile] = useState({
@@ -45,7 +48,8 @@ const SeekerEditProfile = () => {
         instagram: instagram || "",
         availability: availability || "Full-Time",
         education: education || "",
-        banner_photo: banner_photo || ""
+        banner_photo: banner_photo || "",
+        resume_url: resume_url || ""
     });
 
     // Handle local change and sync to context/database
@@ -109,12 +113,15 @@ const SeekerEditProfile = () => {
         if (banner_photo && localProfile.banner_photo === "") {
             setLocalProfile(prev => ({ ...prev, banner_photo: banner_photo }));
         }
+        if (resume_url && localProfile.resume_url === "") {
+            setLocalProfile(prev => ({ ...prev, resume_url: resume_url }));
+        }
 
         // Sync test scores if they are currently 0/default
         if (testScores.iq !== 0 && localTestScores.iq === 0) {
             setLocalTestScores(testScores);
         }
-    }, [userName, title, bio, linkedin, twitter, facebook, instagram, location, website, salary, experience, testScores, education, availability, banner_photo]);
+    }, [userName, title, bio, linkedin, twitter, facebook, instagram, location, website, salary, experience, testScores, education, availability, banner_photo, resume_url]);
 
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -146,6 +153,26 @@ const SeekerEditProfile = () => {
                     } catch (err) {
                         console.error("Failed to update banner:", err);
                         alert("Failed to save banner. Please ensure you have added the 'banner_url' column to your Supabase 'profiles' table.");
+                    }
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleResumeChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                if (event.target?.result) {
+                    try {
+                        const resumeData = event.target.result as string;
+                        setLocalProfile(prev => ({ ...prev, resume_url: resumeData }));
+                        await updateUserProfile({ resume_url: resumeData });
+                    } catch (err) {
+                        console.error("Failed to update resume:", err);
+                        alert("Failed to save resume. Please ensure you have added the 'resume_url' column to your Supabase 'profiles' table.");
                     }
                 }
             };
@@ -554,6 +581,44 @@ const SeekerEditProfile = () => {
                                             placeholder="e.g. 5"
                                             autoComplete="off"
                                         />
+                                    </div>
+                                </div>
+
+                                <div className="md:col-span-2 space-y-4 pt-6 border-t border-slate-50 mt-4">
+                                    <h3 className="text-xl font-black text-slate-900 tracking-tight">Professional Resume</h3>
+                                    <div className="flex flex-col md:flex-row items-center gap-8 p-10 bg-slate-50/50 border-2 border-dashed border-slate-200 rounded-[32px] hover:border-primary transition-all group">
+                                        <div className="w-20 h-20 bg-white rounded-3xl shadow-sm flex items-center justify-center text-slate-300 group-hover:text-primary transition-colors">
+                                            <FileText size={32} />
+                                        </div>
+                                        <div className="flex-grow space-y-2 text-center md:text-left">
+                                            <h4 className="font-black text-slate-900 uppercase text-[11px] tracking-widest">Upload your latest Resume</h4>
+                                            <p className="text-xs font-bold text-slate-400 leading-relaxed">PDF, DOCX are supported. Max size 10MB. This will be visible to potential employers.</p>
+                                        </div>
+                                        <div className="shrink-0 flex gap-3">
+                                            {localProfile.resume_url && (
+                                                <a
+                                                    href={localProfile.resume_url}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="px-6 py-3 bg-white border border-slate-100 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2"
+                                                >
+                                                    <Eye size={14} /> View Current
+                                                </a>
+                                            )}
+                                            <button
+                                                onClick={() => resumeInputRef.current?.click()}
+                                                className="px-8 py-3 bg-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                                            >
+                                                <Upload size={14} /> {localProfile.resume_url ? 'Replace' : 'Upload Resume'}
+                                            </button>
+                                            <input
+                                                type="file"
+                                                ref={resumeInputRef}
+                                                onChange={handleResumeChange}
+                                                className="hidden"
+                                                accept=".pdf,.doc,.docx"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>

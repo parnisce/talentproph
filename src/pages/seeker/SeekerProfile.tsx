@@ -41,6 +41,7 @@ const SeekerProfile = () => {
         testScores,
         availability,
         banner_photo,
+        resume_url,
         education,
         created_at
     } = useUser();
@@ -129,7 +130,7 @@ const SeekerProfile = () => {
                     </div>
 
                     {/* Quick Stats Grid */}
-                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-8 mt-8 pt-6 border-t border-slate-50">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 mt-8 pt-6 border-t border-slate-50">
                         <div className="space-y-1">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Expected Salary</p>
                             <p className="text-xl font-black text-slate-900">{salary ? `$${salary}` : 'TBD'} <span className="text-xs text-slate-400 font-bold">/ mo</span></p>
@@ -158,6 +159,22 @@ const SeekerProfile = () => {
                             <div className="text-xl font-black text-green-500 flex items-center gap-2 text-sm">
                                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> Verified Pro
                             </div>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Resume / CV</p>
+                            {resume_url ? (
+                                <a
+                                    href={resume_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors"
+                                >
+                                    <FileText size={16} />
+                                    <span className="text-sm font-black uppercase tracking-widest">View CV</span>
+                                </a>
+                            ) : (
+                                <p className="text-sm font-bold text-slate-300 italic">Not Uploaded</p>
+                            )}
                         </div>
                     </div>
                 </div>

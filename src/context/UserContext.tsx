@@ -32,6 +32,7 @@ export interface UserProfile {
     instagram: string;
     availability: string;
     banner_photo: string;
+    resume_url: string;
     created_at: string;
 }
 
@@ -90,6 +91,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             instagram: "",
             availability: "Full-Time",
             banner_photo: "",
+            resume_url: "",
             created_at: ""
         };
     });
@@ -131,6 +133,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     instagram: data.instagram_url || "",
                     availability: data.availability || "Full-Time",
                     banner_photo: data.banner_url || data.banner_photo || "",
+                    resume_url: data.resume_url || "",
                     created_at: data.created_at || ""
                 });
             }
@@ -181,6 +184,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     instagram: "",
                     availability: "Full-Time",
                     banner_photo: "",
+                    resume_url: "",
                     created_at: ""
                 });
                 setLoading(false);
@@ -221,6 +225,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 // Some older schemas might use banner_photo directly
                 dbData.banner_photo = data.banner_photo;
             }
+            if (data.resume_url !== undefined) dbData.resume_url = data.resume_url;
 
             // Update local state immediately for snappy UI responsiveness
             setUserProfile(prev => ({ ...prev, ...data }));
