@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../services/supabase';
+import { useUser } from '../../context/UserContext';
 import {
     ChevronLeft,
     DollarSign,
@@ -18,8 +20,20 @@ import { motion } from 'framer-motion';
 
 const CreateJobPost = () => {
     const navigate = useNavigate();
+    const { id, company, company_logo, location, name } = useUser();
     const [skills, setSkills] = useState<string[]>([]);
     const [currentSkill, setCurrentSkill] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const [formData, setFormData] = useState({
+        title: '',
+        category: 'Creative & Design',
+        engagement: 'Full-Time (40h/week)',
+        preview: '',
+        description: '',
+        salary: '',
+        period: 'Per Month'
+    });
 
     const handleAddSkill = () => {
         if (currentSkill && !skills.includes(currentSkill)) {
@@ -30,6 +44,46 @@ const CreateJobPost = () => {
 
     const removeSkill = (skillToRemove: string) => {
         setSkills(skills.filter(s => s !== skillToRemove));
+    };
+
+    const handleLaunch = async () => {
+        if (!formData.title || !formData.description || !formData.salary) {
+            alert('Please fill in all required fields');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const { error } = await supabase
+                .from('job_posts')
+                .insert([
+                    {
+                        employer_id: id,
+                        title: formData.title,
+                        category: formData.category,
+                        engagement: formData.engagement,
+                        preview: formData.preview,
+                        description: formData.description,
+                        salary: formData.salary,
+                        period: formData.period,
+                        skills: skills,
+                        company_name: company || name,
+                        company_logo: company_logo,
+                        location: location || 'Remote',
+                        status: 'active'
+                    }
+                ]);
+
+            if (error) throw error;
+
+            alert('Job post launched successfully!');
+            navigate('/employer/posts');
+        } catch (error: any) {
+            console.error('Error launching job:', error);
+            alert('Failed to launch job: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -53,8 +107,12 @@ const CreateJobPost = () => {
                     >
                         Discard
                     </button>
-                    <button className="px-10 py-3.5 bg-primary text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3">
-                        <Zap size={18} /> Launch Post
+                    <button
+                        onClick={handleLaunch}
+                        disabled={loading}
+                        className="px-10 py-3.5 bg-primary text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50"
+                    >
+                        <Zap size={18} /> {loading ? 'Launching...' : 'Launch Post'}
                     </button>
                 </div>
             </div>
@@ -80,13 +138,19 @@ const CreateJobPost = () => {
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Job Title*</label>
                                 <input
                                     type="text"
+                                    value={formData.title}
+                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                     placeholder="e.g. Senior YouTube Video Editor"
                                     className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all"
                                 />
                             </div>
                             <div className="space-y-3">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Category*</label>
-                                <select className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all appearance-none cursor-pointer">
+                                <select
+                                    value={formData.category}
+                                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                    className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all appearance-none cursor-pointer"
+                                >
                                     <option>Creative & Design</option>
                                     <option>Development</option>
                                     <option>Marketing & Sales</option>
@@ -96,7 +160,11 @@ const CreateJobPost = () => {
                             </div>
                             <div className="space-y-3">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Engagement Type</label>
-                                <select className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all appearance-none cursor-pointer">
+                                <select
+                                    value={formData.engagement}
+                                    onChange={(e) => setFormData({ ...formData, engagement: e.target.value })}
+                                    className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all appearance-none cursor-pointer"
+                                >
                                     <option>Full-Time (40h/week)</option>
                                     <option>Part-Time (20h/week)</option>
                                     <option>Gig / Project Based</option>
@@ -135,6 +203,8 @@ const CreateJobPost = () => {
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Short Preview*</label>
                             <input
                                 type="text"
+                                value={formData.preview}
+                                onChange={(e) => setFormData({ ...formData, preview: e.target.value })}
                                 placeholder="A 1-sentence hook to grab attention..."
                                 className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all"
                             />
@@ -144,6 +214,8 @@ const CreateJobPost = () => {
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Detailed Requirements & Responsibilities*</label>
                             <textarea
                                 rows={8}
+                                value={formData.description}
+                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                 placeholder="List responsibilities, expectations, and why someone should join your team..."
                                 className="w-full px-8 py-6 bg-slate-50 border border-slate-100 rounded-[32px] text-sm font-medium leading-relaxed focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all resize-none"
                             />
@@ -203,6 +275,8 @@ const CreateJobPost = () => {
                                         <DollarSign size={18} className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" />
                                         <input
                                             type="text"
+                                            value={formData.salary}
+                                            onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
                                             placeholder="e.g. $800 - $1,200"
                                             className="w-full pl-14 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all"
                                         />
@@ -210,7 +284,11 @@ const CreateJobPost = () => {
                                 </div>
                                 <div className="space-y-3">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Period</label>
-                                    <select className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all appearance-none cursor-pointer">
+                                    <select
+                                        value={formData.period}
+                                        onChange={(e) => setFormData({ ...formData, period: e.target.value })}
+                                        className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all appearance-none cursor-pointer"
+                                    >
                                         <option>Per Month</option>
                                         <option>Per Week</option>
                                         <option>Per Hour</option>

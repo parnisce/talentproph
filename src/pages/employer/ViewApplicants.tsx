@@ -17,60 +17,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Mock data for applicants
-const mockApplicants: Record<string, any[]> = {
-    '1': [
-        {
-            id: 'a1',
-            name: 'Cyryl Bitangcol',
-            role: 'Senior Video Editor',
-            score: 98,
-            status: 'Shortlisted',
-            appliedDate: '2 hours ago',
-            photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=b6e3f4",
-            email: 'cyryl@example.com',
-            experience: '5 years',
-            topSkills: ['Adobe Premiere', 'After Effects', 'Storytelling']
-        },
-        {
-            id: 'a2',
-            name: 'Sarah Connor',
-            role: 'Motion Graphics Artist',
-            score: 94,
-            status: 'New',
-            appliedDate: '5 hours ago',
-            photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah&backgroundColor=ffdfbf",
-            email: 'sarah@example.com',
-            experience: '3 years',
-            topSkills: ['C4D', 'After Effects', 'Illustration']
-        },
-        {
-            id: 'a3',
-            name: 'John Smith',
-            role: 'Video Editor',
-            score: 82,
-            status: 'Reviewed',
-            appliedDate: 'Yesterday',
-            photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=John&backgroundColor=d1d4f9",
-            email: 'john@example.com',
-            experience: '2 years',
-            topSkills: ['Premiere', 'CapCut', 'Subtitling']
-        },
-    ],
-    '2': [
-        {
-            id: 'a4',
-            name: 'Jane Doe',
-            role: 'Social Media Manager',
-            score: 96,
-            status: 'New',
-            appliedDate: '1 day ago',
-            photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jane&backgroundColor=ffdfbf",
-            email: 'jane@example.com',
-            experience: '4 years',
-            topSkills: ['Meta Ads', 'Copywriting', 'Content Strategy']
-        }
-    ]
-};
+const mockApplicants: Record<string, any[]> = {};
 
 const ViewApplicants = () => {
     const { id } = useParams();

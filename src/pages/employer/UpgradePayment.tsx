@@ -36,29 +36,38 @@ const UpgradePayment = () => {
         name: ''
     });
 
-    const handlePayment = (e: React.FormEvent) => {
+    const handlePayment = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsProcessing(true);
 
-        // Simulate payment processing
-        setTimeout(() => {
+        try {
+            // Update the plan in user profile
+            await userContext.updateUserProfile({
+                subscription_plan: plan
+            });
+
             if (selectedCardId === 'new' && saveCard) {
                 // Save the new card
-                userContext.addPaymentMethod({
-                    id: `card_${Date.now()}`, // Generate a unique ID
+                await userContext.addPaymentMethod({
                     brand: 'visa', // Mock brand detection
                     last4: newCard.number.slice(-4),
                     expiry: newCard.expiry,
                     name: newCard.name,
-                    isDefault: false
+                    isDefault: userContext.paymentMethods.length === 0
                 });
             }
 
-            setIsProcessing(false);
-            // Navigate to success or back to dashboard
+            // Simulate small delay for UX
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
             alert(`Successfully upgraded to ${plan} ${cycle} plan!`);
             navigate('/employer');
-        }, 2000);
+        } catch (error: any) {
+            console.error("Payment failed:", error);
+            alert("Payment failed: " + error.message);
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     const total = parseFloat(price);
@@ -113,8 +122,8 @@ const UpgradePayment = () => {
                                         <label
                                             key={method.id}
                                             className={`flex items-center gap-4 p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedCardId === method.id
-                                                    ? 'border-primary bg-primary/5'
-                                                    : 'border-slate-100 hover:border-slate-200'
+                                                ? 'border-primary bg-primary/5'
+                                                : 'border-slate-100 hover:border-slate-200'
                                                 }`}
                                         >
                                             <input
@@ -140,8 +149,8 @@ const UpgradePayment = () => {
                                     {/* Add New Card Option */}
                                     <label
                                         className={`flex items-center gap-4 p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedCardId === 'new'
-                                                ? 'border-primary bg-primary/5'
-                                                : 'border-slate-100 hover:border-slate-200'
+                                            ? 'border-primary bg-primary/5'
+                                            : 'border-slate-100 hover:border-slate-200'
                                             }`}
                                     >
                                         <input

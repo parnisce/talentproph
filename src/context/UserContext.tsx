@@ -33,6 +33,14 @@ export interface UserProfile {
     availability: string;
     banner_photo: string;
     resume_url: string;
+    // Employer specific
+    company_logo: string;
+    industry: string;
+    company_size: string;
+    founded_year: number;
+    about_company: string;
+    perks: string[];
+    subscription_plan: string;
     created_at: string;
 }
 
@@ -92,6 +100,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             availability: "Full-Time",
             banner_photo: "",
             resume_url: "",
+            company_logo: "",
+            industry: "",
+            company_size: "",
+            founded_year: new Date().getFullYear(),
+            about_company: "",
+            perks: [],
+            subscription_plan: "Free",
             created_at: ""
         };
     });
@@ -109,6 +124,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             if (data) {
                 setUserProfile({
+                    ...data, // Map all database fields
+                    subscription_plan: data.subscription_plan || "Free",
                     id: data.id,
                     name: data.full_name || "",
                     photo: data.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.full_name || data.id}`,
@@ -134,6 +151,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     availability: data.availability || "Full-Time",
                     banner_photo: data.banner_url || data.banner_photo || "",
                     resume_url: data.resume_url || "",
+                    company_logo: data.company_logo || "",
+                    industry: data.industry || "",
+                    company_size: data.company_size || "",
+                    founded_year: data.founded_year || new Date().getFullYear(),
+                    about_company: data.about_company || "",
+                    perks: data.perks || [],
                     created_at: data.created_at || ""
                 });
             }
@@ -185,6 +208,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     availability: "Full-Time",
                     banner_photo: "",
                     resume_url: "",
+                    company_logo: "",
+                    industry: "",
+                    company_size: "",
+                    founded_year: new Date().getFullYear(),
+                    about_company: "",
+                    perks: [],
+                    subscription_plan: "Free",
                     created_at: ""
                 });
                 setLoading(false);
@@ -226,6 +256,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 dbData.banner_photo = data.banner_photo;
             }
             if (data.resume_url !== undefined) dbData.resume_url = data.resume_url;
+            if (data.company_logo !== undefined) dbData.company_logo = data.company_logo;
+            if (data.industry !== undefined) dbData.industry = data.industry;
+            if (data.company_size !== undefined) dbData.company_size = data.company_size;
+            if (data.founded_year !== undefined) dbData.founded_year = data.founded_year;
+            if (data.about_company !== undefined) dbData.about_company = data.about_company;
+            if (data.perks !== undefined) dbData.perks = data.perks;
+            if (data.subscription_plan !== undefined) dbData.subscription_plan = data.subscription_plan;
 
             // Update local state immediately for snappy UI responsiveness
             setUserProfile(prev => ({ ...prev, ...data }));
@@ -252,8 +289,29 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
     };
 
-    const addPaymentMethod = (method: any) => {
-        setPaymentMethods(prev => [...prev, { ...method, id: Date.now().toString() }]);
+    const addPaymentMethod = async (method: any) => {
+        try {
+            const { data, error } = await supabase
+                .from('payment_methods')
+                .insert([{
+                    user_id: userProfile.id,
+                    brand: method.brand,
+                    last4: method.last4,
+                    expiry: method.expiry,
+                    name: method.name,
+                    is_default: method.isDefault
+                }])
+                .select();
+
+            if (error) throw error;
+            if (data) {
+                setPaymentMethods(prev => [...prev, data[0]]);
+            }
+        } catch (error) {
+            console.error("Error adding payment method:", error);
+            // Fallback to local if table doesn't work well
+            setPaymentMethods(prev => [...prev, { ...method, id: Date.now().toString() }]);
+        }
     };
 
     const removePaymentMethod = (id: string) => {

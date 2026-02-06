@@ -35,41 +35,7 @@ const EmployerOverview = () => {
         { label: 'Interviewed', value: '12', secondary: 'Candidates', icon: TrendingUp, color: 'text-violet-600 bg-violet-50', trend: 'Next: Today 2PM' },
     ];
 
-    const recentApplicants = [
-        {
-            id: 'a1',
-            name: 'Cyryl Bitangcol',
-            role: 'Senior Video Editor',
-            rate: '$15/hr',
-            score: 98,
-            status: 'Shortlisted',
-            tags: ['Expert AE', 'Motion Graphics'],
-            time: '2 hours ago',
-            photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=b6e3f4"
-        },
-        {
-            id: 'a4',
-            name: 'Jane Smith',
-            role: 'Social Media Manager',
-            rate: '$8/hr',
-            score: 92,
-            status: 'New',
-            tags: ['Meta Ads', 'Copywriting'],
-            time: '5 hours ago',
-            photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jane&backgroundColor=ffdfbf"
-        },
-        {
-            id: 'a3',
-            name: 'Mike Johnson',
-            role: 'Virtual Assistant',
-            rate: '$6/hr',
-            score: 85,
-            status: 'Reviewed',
-            tags: ['Data Entry', 'Scheduling'],
-            time: 'Yesterday',
-            photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mike&backgroundColor=d1d4f9"
-        },
-    ];
+    const recentApplicants: any[] = [];
 
     return (
         <div className="space-y-10 pb-20">
@@ -314,38 +280,7 @@ const EmployerOverview = () => {
 
 const EmployerJobPosts = () => {
     const navigate = useNavigate();
-    const jobs = [
-        {
-            id: '1',
-            title: 'YouTube Video Editor (Long-form)',
-            status: 'Live',
-            applicants: 24,
-            newApplicants: 7,
-            views: '1.2k',
-            postedDate: 'Feb 05, 2026',
-            category: 'Content Creation'
-        },
-        {
-            id: '2',
-            title: 'Social Media Manager',
-            status: 'Under Review',
-            applicants: 42,
-            newApplicants: 12,
-            views: '2.4k',
-            postedDate: 'Feb 04, 2026',
-            category: 'Marketing'
-        },
-        {
-            id: '3',
-            title: 'Virtual Administrative Assistant',
-            status: 'Paused',
-            applicants: 15,
-            newApplicants: 0,
-            views: '800',
-            postedDate: 'Jan 28, 2026',
-            category: 'Admin'
-        }
-    ];
+    const jobs: any[] = [];
 
     return (
         <div className="space-y-10">

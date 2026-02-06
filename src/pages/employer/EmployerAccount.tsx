@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../services/supabase';
 import {
     Camera,
     Save,
@@ -24,7 +25,6 @@ const EmployerAccount = () => {
     const userContext = useUser();
     const [activeTab, setActiveTab] = useState('profile');
 
-    // Initialize state from context
     const [profile, setProfile] = useState({
         name: userContext.name || '',
         title: userContext.title || '',
@@ -34,7 +34,18 @@ const EmployerAccount = () => {
         location: userContext.location || '',
         website: userContext.website || '',
         bio: userContext.bio || '',
-        avatar: userContext.photo || ''
+        avatar: userContext.photo || '',
+        // Company Profile Fields
+        company_logo: userContext.company_logo || '',
+        banner_photo: userContext.banner_photo || '',
+        industry: userContext.industry || 'Software & Technology',
+        company_size: userContext.company_size || '1-10 Employees',
+        founded_year: userContext.founded_year || new Date().getFullYear(),
+        about_company: userContext.about_company || '',
+        perks: userContext.perks || [],
+        linkedin: userContext.linkedin || '',
+        twitter: userContext.twitter || '',
+        facebook: userContext.facebook || ''
     });
 
     const handleSave = async () => {
@@ -49,9 +60,55 @@ const EmployerAccount = () => {
                 bio: profile.bio,
                 photo: profile.avatar
             });
-            alert("Profile saved successfully!");
+            alert("Personal information saved successfully!");
         } catch (error) {
             alert("Failed to save profile. Please try again.");
+        }
+    };
+
+    const handleSaveCompany = async () => {
+        try {
+            await userContext.updateUserProfile({
+                company: profile.company,
+                company_logo: profile.company_logo,
+                banner_photo: profile.banner_photo,
+                industry: profile.industry,
+                company_size: profile.company_size,
+                founded_year: profile.founded_year,
+                about_company: profile.about_company,
+                perks: profile.perks,
+                website: profile.website,
+                linkedin: profile.linkedin,
+                twitter: profile.twitter,
+                facebook: profile.facebook
+            });
+            alert("Company profile saved successfully!");
+        } catch (error) {
+            alert("Failed to save company profile.");
+        }
+    };
+
+    const [passwords, setPasswords] = useState({
+        current: '',
+        new: '',
+        confirm: ''
+    });
+
+    const handleSecuritySave = async () => {
+        if (!passwords.new || passwords.new !== passwords.confirm) {
+            alert("Passwords do not match or are empty.");
+            return;
+        }
+
+        const { error } = await supabase.auth.updateUser({
+            password: passwords.new
+        });
+
+        if (error) {
+            alert("Security update failed: " + error.message);
+        } else {
+            alert("Password updated successfully!");
+            setPasswords({ current: '', new: '', confirm: '' });
         }
     };
 
@@ -81,16 +138,22 @@ const EmployerAccount = () => {
         setShowAddCard(false);
     };
 
-    const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'logo' | 'banner' = 'avatar') => {
         const file = e.target.files?.[0];
         if (file) {
             const reader = new FileReader();
             reader.onloadend = () => {
                 const result = reader.result as string;
-                // Update local state for preview
-                setProfile(prev => ({ ...prev, avatar: result }));
-                // Automatically save and update global state
-                userContext.updateUserProfile({ photo: result });
+                if (type === 'avatar') {
+                    setProfile(prev => ({ ...prev, avatar: result }));
+                    userContext.updateUserProfile({ photo: result });
+                } else if (type === 'logo') {
+                    setProfile(prev => ({ ...prev, company_logo: result }));
+                    userContext.updateUserProfile({ company_logo: result });
+                } else if (type === 'banner') {
+                    setProfile(prev => ({ ...prev, banner_photo: result }));
+                    userContext.updateUserProfile({ banner_photo: result });
+                }
             };
             reader.readAsDataURL(file);
         }
@@ -277,24 +340,44 @@ const EmployerAccount = () => {
                                                 <div className="space-y-2">
                                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Company Logo</label>
                                                     <div className="relative group">
-                                                        <div className="w-32 h-32 rounded-2xl bg-slate-100 border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden hover:border-primary transition-colors">
-                                                            <label className="cursor-pointer flex flex-col items-center gap-2 text-slate-400 hover:text-primary transition-colors">
-                                                                <Building2 size={32} />
-                                                                <span className="text-[10px] font-black uppercase tracking-widest">Upload Logo</span>
-                                                                <input type="file" accept="image/*" className="hidden" />
-                                                            </label>
+                                                        <div className="w-32 h-32 rounded-2xl bg-slate-100 border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden hover:border-primary transition-colors relative">
+                                                            {profile.company_logo ? (
+                                                                <img src={profile.company_logo} className="w-full h-full object-contain" alt="Logo" />
+                                                            ) : (
+                                                                <label className="cursor-pointer flex flex-col items-center gap-2 text-slate-400 hover:text-primary transition-colors w-full h-full justify-center">
+                                                                    <Building2 size={32} />
+                                                                    <span className="text-[10px] font-black uppercase tracking-widest">Upload Logo</span>
+                                                                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handlePhotoUpload(e, 'logo')} />
+                                                                </label>
+                                                            )}
+                                                            {profile.company_logo && (
+                                                                <label className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                                                                    <Camera className="text-white" size={24} />
+                                                                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handlePhotoUpload(e, 'logo')} />
+                                                                </label>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div className="space-y-2">
                                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Cover Banner (1200x400)</label>
                                                     <div className="relative group">
-                                                        <div className="w-full h-32 rounded-2xl bg-slate-100 border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden hover:border-primary transition-colors">
-                                                            <label className="cursor-pointer flex flex-col items-center gap-2 text-slate-400 hover:text-primary transition-colors">
-                                                                <Camera size={32} />
-                                                                <span className="text-[10px] font-black uppercase tracking-widest">Upload Banner</span>
-                                                                <input type="file" accept="image/*" className="hidden" />
-                                                            </label>
+                                                        <div className="w-full h-32 rounded-2xl bg-slate-100 border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden hover:border-primary transition-colors relative">
+                                                            {profile.banner_photo ? (
+                                                                <img src={profile.banner_photo} className="w-full h-full object-cover" alt="Banner" />
+                                                            ) : (
+                                                                <label className="cursor-pointer flex flex-col items-center gap-2 text-slate-400 hover:text-primary transition-colors w-full h-full justify-center">
+                                                                    <Camera size={32} />
+                                                                    <span className="text-[10px] font-black uppercase tracking-widest">Upload Banner</span>
+                                                                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handlePhotoUpload(e, 'banner')} />
+                                                                </label>
+                                                            )}
+                                                            {profile.banner_photo && (
+                                                                <label className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                                                                    <Camera className="text-white" size={24} />
+                                                                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handlePhotoUpload(e, 'banner')} />
+                                                                </label>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -309,14 +392,19 @@ const EmployerAccount = () => {
                                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Company Name</label>
                                                     <input
                                                         type="text"
-                                                        defaultValue={profile.company}
+                                                        value={profile.company}
+                                                        onChange={(e) => setProfile({ ...profile, company: e.target.value })}
                                                         placeholder="TechFlow Solutions"
                                                         className="w-full px-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-900 font-bold focus:outline-none focus:border-primary/20 focus:bg-primary/5 transition-all"
                                                     />
                                                 </div>
                                                 <div className="space-y-2">
                                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Industry</label>
-                                                    <select className="w-full px-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-900 font-bold focus:outline-none focus:border-primary/20 focus:bg-primary/5 transition-all">
+                                                    <select
+                                                        value={profile.industry}
+                                                        onChange={(e) => setProfile({ ...profile, industry: e.target.value })}
+                                                        className="w-full px-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-900 font-bold focus:outline-none focus:border-primary/20 focus:bg-primary/5 transition-all"
+                                                    >
                                                         <option>Software & Technology</option>
                                                         <option>Finance & Banking</option>
                                                         <option>E-Commerce</option>
@@ -328,7 +416,11 @@ const EmployerAccount = () => {
                                                 </div>
                                                 <div className="space-y-2">
                                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Company Size</label>
-                                                    <select className="w-full px-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-900 font-bold focus:outline-none focus:border-primary/20 focus:bg-primary/5 transition-all">
+                                                    <select
+                                                        value={profile.company_size}
+                                                        onChange={(e) => setProfile({ ...profile, company_size: e.target.value })}
+                                                        className="w-full px-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-900 font-bold focus:outline-none focus:border-primary/20 focus:bg-primary/5 transition-all"
+                                                    >
                                                         <option>1-10 Employees</option>
                                                         <option>11-50 Employees</option>
                                                         <option>51-200 Employees</option>
@@ -340,6 +432,8 @@ const EmployerAccount = () => {
                                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Founded Year</label>
                                                     <input
                                                         type="number"
+                                                        value={profile.founded_year}
+                                                        onChange={(e) => setProfile({ ...profile, founded_year: parseInt(e.target.value) })}
                                                         placeholder="2018"
                                                         className="w-full px-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-900 font-bold focus:outline-none focus:border-primary/20 focus:bg-primary/5 transition-all"
                                                     />
@@ -350,7 +444,8 @@ const EmployerAccount = () => {
                                                         <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={18} />
                                                         <input
                                                             type="text"
-                                                            defaultValue={profile.location}
+                                                            value={profile.location}
+                                                            onChange={(e) => setProfile({ ...profile, location: e.target.value })}
                                                             placeholder="New York, USA"
                                                             className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-900 font-bold focus:outline-none focus:border-primary/20 focus:bg-primary/5 transition-all"
                                                         />
@@ -360,6 +455,8 @@ const EmployerAccount = () => {
                                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">About Company</label>
                                                     <textarea
                                                         rows={5}
+                                                        value={profile.about_company}
+                                                        onChange={(e) => setProfile({ ...profile, about_company: e.target.value })}
                                                         placeholder="Tell candidates about your company, mission, culture, and what makes you unique..."
                                                         className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-900 font-bold focus:outline-none focus:border-primary/20 focus:bg-primary/5 transition-all resize-none leading-relaxed"
                                                     />
@@ -373,12 +470,18 @@ const EmployerAccount = () => {
                                             <div className="space-y-3">
                                                 <p className="text-xs text-slate-500 font-medium">Add benefits that make your company attractive to candidates</p>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {['Remote Work', 'Health Insurance', 'Flexible Hours', 'Paid Time Off', 'Learning Budget'].map((perk, i) => (
+                                                    {profile.perks.map((perk, i) => (
                                                         <span key={i} className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-full text-xs font-bold text-slate-600 hover:bg-primary/5 hover:border-primary/20 transition-all cursor-pointer">
-                                                            {perk} <span className="ml-2 text-slate-300">×</span>
+                                                            {perk} <button onClick={() => setProfile(prev => ({ ...prev, perks: prev.perks.filter((_, idx) => idx !== i) }))} className="ml-2 text-slate-300 hover:text-rose-500">×</button>
                                                         </span>
                                                     ))}
-                                                    <button className="px-4 py-2 border-2 border-dashed border-slate-200 rounded-full text-xs font-black text-primary uppercase tracking-widest hover:bg-primary/5 hover:border-primary transition-all">
+                                                    <button
+                                                        onClick={() => {
+                                                            const p = prompt("Enter a perk:");
+                                                            if (p) setProfile(prev => ({ ...prev, perks: [...prev.perks, p] }));
+                                                        }}
+                                                        className="px-4 py-2 border-2 border-dashed border-slate-200 rounded-full text-xs font-black text-primary uppercase tracking-widest hover:bg-primary/5 hover:border-primary transition-all"
+                                                    >
                                                         + Add Perk
                                                     </button>
                                                 </div>
@@ -393,7 +496,8 @@ const EmployerAccount = () => {
                                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Website</label>
                                                     <input
                                                         type="url"
-                                                        defaultValue={profile.website}
+                                                        value={profile.website}
+                                                        onChange={(e) => setProfile({ ...profile, website: e.target.value })}
                                                         placeholder="https://company.com"
                                                         className="w-full px-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-900 font-bold focus:outline-none focus:border-primary/20 focus:bg-primary/5 transition-all"
                                                     />
@@ -402,6 +506,8 @@ const EmployerAccount = () => {
                                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">LinkedIn</label>
                                                     <input
                                                         type="url"
+                                                        value={profile.linkedin}
+                                                        onChange={(e) => setProfile({ ...profile, linkedin: e.target.value })}
                                                         placeholder="https://linkedin.com/company/..."
                                                         className="w-full px-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-900 font-bold focus:outline-none focus:border-primary/20 focus:bg-primary/5 transition-all"
                                                     />
@@ -410,6 +516,8 @@ const EmployerAccount = () => {
                                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Twitter</label>
                                                     <input
                                                         type="text"
+                                                        value={profile.twitter}
+                                                        onChange={(e) => setProfile({ ...profile, twitter: e.target.value })}
                                                         placeholder="@company"
                                                         className="w-full px-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-900 font-bold focus:outline-none focus:border-primary/20 focus:bg-primary/5 transition-all"
                                                     />
@@ -418,6 +526,8 @@ const EmployerAccount = () => {
                                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Facebook</label>
                                                     <input
                                                         type="url"
+                                                        value={profile.facebook}
+                                                        onChange={(e) => setProfile({ ...profile, facebook: e.target.value })}
                                                         placeholder="https://facebook.com/..."
                                                         className="w-full px-4 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-900 font-bold focus:outline-none focus:border-primary/20 focus:bg-primary/5 transition-all"
                                                     />
@@ -430,7 +540,10 @@ const EmployerAccount = () => {
                                         <button className="px-8 py-3.5 bg-slate-100 text-slate-500 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all">
                                             Cancel
                                         </button>
-                                        <button className="px-10 py-3.5 bg-primary text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3">
+                                        <button
+                                            onClick={handleSaveCompany}
+                                            className="px-10 py-3.5 bg-primary text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3"
+                                        >
                                             <Save size={18} /> Save Company Profile
                                         </button>
                                     </div>
@@ -455,7 +568,13 @@ const EmployerAccount = () => {
                                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Current Password</label>
                                                     <div className="relative">
                                                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                                                        <input type="password" placeholder="••••••••" className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-900 font-bold focus:outline-none focus:border-primary/20" />
+                                                        <input
+                                                            type="password"
+                                                            value={passwords.current}
+                                                            onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
+                                                            placeholder="••••••••"
+                                                            className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-900 font-bold focus:outline-none focus:border-primary/20"
+                                                        />
                                                     </div>
                                                 </div>
                                             </div>
@@ -464,18 +583,33 @@ const EmployerAccount = () => {
                                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">New Password</label>
                                                     <div className="relative">
                                                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                                                        <input type="password" placeholder="••••••••" className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-900 font-bold focus:outline-none focus:border-primary/20" />
+                                                        <input
+                                                            type="password"
+                                                            value={passwords.new}
+                                                            onChange={(e) => setPasswords({ ...passwords, new: e.target.value })}
+                                                            placeholder="••••••••"
+                                                            className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-900 font-bold focus:outline-none focus:border-primary/20"
+                                                        />
                                                     </div>
                                                 </div>
                                                 <div className="space-y-2">
                                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Confirm Password</label>
                                                     <div className="relative">
                                                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                                                        <input type="password" placeholder="••••••••" className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-900 font-bold focus:outline-none focus:border-primary/20" />
+                                                        <input
+                                                            type="password"
+                                                            value={passwords.confirm}
+                                                            onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
+                                                            placeholder="••••••••"
+                                                            className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-900 font-bold focus:outline-none focus:border-primary/20"
+                                                        />
                                                     </div>
                                                 </div>
                                             </div>
-                                            <button className="px-6 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all">
+                                            <button
+                                                onClick={handleSecuritySave}
+                                                className="px-6 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all font-bold"
+                                            >
                                                 Update Password
                                             </button>
                                         </div>
