@@ -392,7 +392,12 @@ const EmployerJobPosts = () => {
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-3 mb-1">
-                                        <h3 className="text-xl font-black text-slate-900 tracking-tighter">{job.title}</h3>
+                                        <h3
+                                            onClick={() => navigate(`/seeker/jobs/${job.id}`)}
+                                            className="text-xl font-black text-slate-900 tracking-tighter hover:text-primary cursor-pointer transition-colors"
+                                        >
+                                            {job.title}
+                                        </h3>
                                         <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${job.status === 'Live' ? 'bg-emerald-100 text-emerald-600' :
                                             job.status === 'Under Review' ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-500'
                                             }`}>

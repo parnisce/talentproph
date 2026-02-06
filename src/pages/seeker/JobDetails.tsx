@@ -12,70 +12,12 @@ import {
     Briefcase,
     Calendar,
     MapPin,
-    Mail
+    Mail,
+    Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-// Mock data shared across components or retrieved by ID
-// ... rest of mockJobs
-const mockJobs = [
-    {
-        id: '1',
-        title: 'YouTube Video Editor (Long-form)',
-        company: 'Woken Jobs',
-        postedDate: 'Feb 05, 2026',
-        salary: '$1300 / project',
-        type: 'Gig',
-        location: 'Remote',
-        description: 'Creating high-energy long-form content for top-tier creators. Expert knowledge of After Effects motion graphics is required. Join a team that values creativity and speed.',
-        fullDescription: 'We are looking for a highly creative and technically proficient Video Editor to join our content factory. You will be responsible for editing high-energy, long-form YouTube content that keeps viewers engaged from start to finish. \n\nKey Responsibilities:\n- Process raw footage into polished, high-production value videos.\n- Implement advanced motion graphics using Adobe After Effects.\n- Collaborate with content strategists to refine storytelling beats.\n- Ensure all content adheres to brand voice and quality standards.\n\nRequirements:\n- 3+ years of professional video editing experience.\n- Mastery of Adobe Premiere Pro and After Effects.\n- Strong understanding of YouTube pacing and retention mechanics.\n- Portfolio demonstrating long-form storytelling expertise.',
-        skills: ['Video Content Creation', 'Animation', 'Adobe Premiere Pro', 'After Effects'],
-        verified: true,
-        companyInfo: "Woken Jobs is a premier digital content agency specializing in high-impact video production for global creators."
-    },
-    {
-        id: '2',
-        title: 'Patient Access Representative',
-        company: 'Healthcare Plus',
-        postedDate: 'Feb 05, 2026',
-        salary: '$800 - $1200 / mo',
-        type: 'Full-Time',
-        location: 'Remote',
-        description: 'First point of contact for patient care. Manage scheduling, insurance verification, and high-volume patient communication. Requires empathetic and organized professionals.',
-        fullDescription: 'As a Patient Access Representative, you will be the critical link between patients and their healthcare providers. This role requires exceptional communication skills and a meticulous attention to detail.\n\nKey Responsibilities:\n- Manage patient registration and appointment scheduling.\n- Perform insurance verification and authorization checks.\n- Facilitate communication between patients, physicians, and billing departments.\n- Maintain accurate electronic health records (EHR).\n\nRequirements:\n- Experience in healthcare administration or customer service.\n- Proficiency with medical billing software and EHR systems.\n- High degree of empathy and professional ethics.\n- Ability to handle high-volume call environments.',
-        skills: ['Medical Services', 'Medical Insurance', 'Onboarding', 'Customer Service'],
-        verified: true,
-        companyInfo: "Healthcare Plus provides comprehensive medical support services to clinics and hospitals across North America."
-    },
-    {
-        id: '3',
-        title: 'Social Media Manager',
-        company: 'Bright Horizon Marketing',
-        postedDate: 'Feb 04, 2026',
-        salary: '$1200 - $1800 / mo',
-        type: 'Full-Time',
-        location: 'Remote',
-        description: 'Full-service social media management for brand growth. From content planning to community engagement. Must have experience with Meta Ads and short-form video.',
-        fullDescription: 'We are seeking a strategic Social Media Manager to drive organic and paid growth for our diverse client portfolio. You should be a master of trends and a data-driven content creator.\n\nKey Responsibilities:\n- Develop and execute cross-platform social media strategies.\n- Create engaging short-form video content (Reels, TikToks).\n- Manage Meta Ad campaigns and optimize for conversion.\n- Monitor community engagement and provide monthly performance reports.\n\nRequirements:\n- Proven track record of growing social media accounts.\n- Expertise in Meta Business Suite and Ads Manager.\n- Creative copywriting and visual design skills (Canva/Figma).\n- Knowledge of the latest social media algorithms.',
-        skills: ['Social Media Strategy', 'Canva', 'Analytics', 'Content Planning'],
-        verified: true,
-        companyInfo: "Bright Horizon is a boutique marketing firm focused on scaling D2C brands via social-first strategies."
-    },
-    {
-        id: '4',
-        title: 'Virtual Administrative Assistant',
-        company: 'Stellar Outsourcing',
-        postedDate: 'Feb 04, 2026',
-        salary: '$700 - $1100 / mo',
-        type: 'Part-Time',
-        location: 'Remote',
-        description: 'Direct support for global executive teams. Manage complex calendars, travel arrangements, and strategic email communication. Native-level English required.',
-        fullDescription: 'Direct support for global executive teams. Manage complex calendars, travel arrangements, and strategic email communication. Native-level English required. \n\nKey Responsibilities:\n- Calendar management and appointment scheduling across multiple time zones.\n- Travel coordination and itinerary planning.\n- Executive email management and correspondence.\n- Preparation of reports and presentation materials.\n\nRequirements:\n- Native-level English proficiency (written and verbal).\n- 2+ years of experience in administrative or executive support.\n- Proficiency in Google Workspace and Slack.\n- Exceptional organizational and time-management skills.',
-        skills: ['Administrative Support', 'Email Management', 'Google Workspace'],
-        verified: true,
-        companyInfo: "Stellar Outsourcing connects top-tier Filipino talent with US and UK-based startups and executives."
-    }
-];
+import { supabase } from '../../services/supabase';
+// Mock data removed in favor of Supabase
 
 const JobApplicationModal = ({ isOpen, onClose, jobTitle, onApply }: { isOpen: boolean; onClose: () => void; jobTitle: string; onApply: () => void }) => {
     const [subject, setSubject] = useState('');
@@ -207,18 +149,64 @@ const JobDetails = () => {
     const [job, setJob] = useState<any>(null);
     const [isApplied, setIsApplied] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [loading, setLoading] = useState(true); // Add loading state
 
     useEffect(() => {
-        const foundJob = mockJobs.find(j => j.id === id);
-        if (foundJob) {
-            setJob(foundJob);
-        } else {
-            // Handle job not found
-            navigate('/seeker/jobs');
-        }
+        const fetchJob = async () => {
+            if (!id) {
+                setLoading(false); // No ID, stop loading
+                navigate('/seeker/jobs');
+                return;
+            }
+
+            setLoading(true); // Start loading
+
+            const { data, error } = await supabase
+                .from('job_posts')
+                .select('*')
+                .eq('id', id)
+                .single();
+
+            if (error || !data) {
+                console.error("Error fetching job:", error);
+                navigate('/seeker/jobs');
+                setLoading(false); // Stop loading on error
+                return;
+            }
+
+            setJob({
+                id: data.id,
+                title: data.title,
+                company: data.company_name,
+                postedDate: new Date(data.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+                salary: `${data.salary} / ${data.period === 'Per Month' ? 'mo' : data.period === 'Per Week' ? 'wk' : 'hr'}`,
+                type: data.engagement?.split(' ')[0] || 'Remote',
+                location: data.location || 'Remote',
+                description: data.preview,
+                fullDescription: data.description,
+                skills: data.skills || [],
+                verified: true,
+                companyInfo: "Verified premium employer on TalentPro PH."
+            });
+            setLoading(false); // Stop loading after successful fetch
+        };
+
+        fetchJob();
     }, [id, navigate]);
 
-    if (!job) return null;
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-20 min-h-[60vh]">
+                <Loader2 className="animate-spin text-primary" size={48} />
+            </div>
+        );
+    }
+
+    if (!job) {
+        // This case should ideally be handled by the loading state and navigation,
+        // but as a fallback, if job is null after loading, we can return null or a message.
+        return null;
+    }
 
     return (
         <div className="space-y-10 pb-32">

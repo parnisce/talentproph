@@ -10,53 +10,60 @@ import {
     X,
     Zap,
     MapPin,
-    Save
+    Save,
+    Loader2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { supabase } from '../../services/supabase';
 
-// Mock data for pre-filling
-const mockJobs = [
-    {
-        id: '1',
-        title: 'YouTube Video Editor (Long-form)',
-        category: 'Creative & Design',
-        engagement: 'Full-Time (40h/week)',
-        preview: 'Looking for a master storyteller to edit 2 long-form videos per week.',
-        description: 'We are a fast-growing tech channel looking for a Senior Video Editor who understands retention, pacing, and visual storytelling.\n\nResponsibilities:\n- Edit 15-20 minute long-form videos\n- Create engaging motion graphics\n- Collaborative script-to-screen process\n\nRequirements:\n- 3+ years experience with Premiere & After Effects\n- Portfolio of successful YT content',
-        skills: ['Adobe Premiere Pro', 'After Effects', 'Color Grading', 'Sound Design'],
-        salary: '$1,200 - $1,800',
-        period: 'Per Month'
-    },
-    {
-        id: '2',
-        title: 'Social Media Manager',
-        category: 'Marketing & Sales',
-        engagement: 'Part-Time (20h/week)',
-        preview: 'Manage and grow our community across Meta and TikTok.',
-        description: 'Seeking a creative mind to handle our social presence.\n\nTasks:\n- Content scheduling\n- Community engagement\n- Ad campaign management',
-        skills: ['Meta Ads', 'Copywriting', 'Canva', 'Analytics'],
-        salary: '$600 - $900',
-        period: 'Per Month'
-    }
-];
 
 const EditJobPost = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [jobData, setJobData] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const [updating, setUpdating] = useState(false);
+    const [formData, setFormData] = useState({
+        title: '',
+        category: '',
+        engagement: '',
+        preview: '',
+        description: '',
+        salary: '',
+        period: ''
+    });
     const [skills, setSkills] = useState<string[]>([]);
     const [currentSkill, setCurrentSkill] = useState('');
 
     useEffect(() => {
-        // Simulate fetching job data
-        const job = mockJobs.find(j => j.id === id);
-        if (job) {
-            setJobData(job);
-            setSkills(job.skills);
-        } else {
-            // Handle not found
-            navigate('/employer/posts');
-        }
+        const fetchJob = async () => {
+            if (!id) return;
+
+            const { data, error } = await supabase
+                .from('job_posts')
+                .select('*')
+                .eq('id', id)
+                .single();
+
+            if (error || !data) {
+                console.error("Error fetching job:", error);
+                navigate('/employer/posts');
+                return;
+            }
+
+            setFormData({
+                title: data.title || '',
+                category: data.category || 'Creative & Design',
+                engagement: data.engagement || 'Full-Time (40h/week)',
+                preview: data.preview || '',
+                description: data.description || '',
+                salary: data.salary || '',
+                period: data.period || 'Per Month'
+            });
+            setSkills(data.skills || []);
+            setLoading(false);
+        };
+
+        fetchJob();
     }, [id, navigate]);
 
     const handleAddSkill = () => {
@@ -70,7 +77,48 @@ const EditJobPost = () => {
         setSkills(skills.filter(s => s !== skillToRemove));
     };
 
-    if (!jobData) return null;
+    const handleUpdate = async () => {
+        if (!formData.title || !formData.description || !formData.salary) {
+            alert('Please fill in all required fields');
+            return;
+        }
+
+        setUpdating(true);
+        try {
+            const { error } = await supabase
+                .from('job_posts')
+                .update({
+                    title: formData.title,
+                    category: formData.category,
+                    engagement: formData.engagement,
+                    preview: formData.preview,
+                    description: formData.description,
+                    salary: formData.salary,
+                    period: formData.period,
+                    skills: skills
+                })
+                .eq('id', id);
+
+            if (error) throw error;
+
+            alert('Job post updated successfully!');
+            navigate('/employer/posts');
+        } catch (err: any) {
+            console.error("Update failed:", err);
+            alert("Failed to update: " + err.message);
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <Loader2 className="animate-spin text-primary" size={48} />
+                <p className="ml-4 text-lg font-medium text-slate-600">Loading job details...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-10 pb-32">
@@ -87,7 +135,7 @@ const EditJobPost = () => {
                         <h1 className="text-4xl font-black text-slate-900 tracking-tighter font-outfit">Edit Position</h1>
                         <span className="px-3 py-1 bg-slate-100 text-slate-500 rounded-lg text-[10px] font-black uppercase tracking-widest mt-1">ID: #{id}</span>
                     </div>
-                    <p className="text-slate-500 font-medium mt-1">Update the details for "{jobData.title}".</p>
+                    <p className="text-slate-500 font-medium mt-1">Update the details for "{formData.title}".</p>
                 </div>
                 <div className="flex items-center gap-4">
                     <button
@@ -96,8 +144,13 @@ const EditJobPost = () => {
                     >
                         Cancel Changes
                     </button>
-                    <button className="px-10 py-3.5 bg-primary text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3">
-                        <Save size={18} /> Update Posting
+                    <button
+                        onClick={handleUpdate}
+                        disabled={updating}
+                        className="px-10 py-3.5 bg-primary text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {updating ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                        {updating ? 'Updating...' : 'Update Posting'}
                     </button>
                 </div>
             </div>
@@ -123,7 +176,8 @@ const EditJobPost = () => {
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Job Title*</label>
                                 <input
                                     type="text"
-                                    defaultValue={jobData.title}
+                                    value={formData.title}
+                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                     placeholder="e.g. Senior YouTube Video Editor"
                                     className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all"
                                 />
@@ -131,7 +185,8 @@ const EditJobPost = () => {
                             <div className="space-y-3">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Category*</label>
                                 <select
-                                    defaultValue={jobData.category}
+                                    value={formData.category}
+                                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                                     className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all appearance-none cursor-pointer"
                                 >
                                     <option>Creative & Design</option>
@@ -144,7 +199,8 @@ const EditJobPost = () => {
                             <div className="space-y-3">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Engagement Type</label>
                                 <select
-                                    defaultValue={jobData.engagement}
+                                    value={formData.engagement}
+                                    onChange={(e) => setFormData({ ...formData, engagement: e.target.value })}
                                     className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all appearance-none cursor-pointer"
                                 >
                                     <option>Full-Time (40h/week)</option>
@@ -185,7 +241,8 @@ const EditJobPost = () => {
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Short Preview*</label>
                             <input
                                 type="text"
-                                defaultValue={jobData.preview}
+                                value={formData.preview}
+                                onChange={(e) => setFormData({ ...formData, preview: e.target.value })}
                                 placeholder="A 1-sentence hook to grab attention..."
                                 className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all"
                             />
@@ -195,7 +252,8 @@ const EditJobPost = () => {
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Detailed Requirements & Responsibilities*</label>
                             <textarea
                                 rows={8}
-                                defaultValue={jobData.description}
+                                value={formData.description}
+                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                 placeholder="List responsibilities, expectations, and why someone should join your team..."
                                 className="w-full px-8 py-6 bg-slate-50 border border-slate-100 rounded-[32px] text-sm font-medium leading-relaxed focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all resize-none"
                             />
@@ -255,7 +313,8 @@ const EditJobPost = () => {
                                         <DollarSign size={18} className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" />
                                         <input
                                             type="text"
-                                            defaultValue={jobData.salary}
+                                            value={formData.salary}
+                                            onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
                                             placeholder="e.g. $800 - $1,200"
                                             className="w-full pl-14 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all"
                                         />
@@ -264,7 +323,8 @@ const EditJobPost = () => {
                                 <div className="space-y-3">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Period</label>
                                     <select
-                                        defaultValue={jobData.period}
+                                        value={formData.period}
+                                        onChange={(e) => setFormData({ ...formData, period: e.target.value })}
                                         className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all appearance-none cursor-pointer"
                                     >
                                         <option>Per Month</option>
