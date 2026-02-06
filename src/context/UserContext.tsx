@@ -204,16 +204,19 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (data.facebook !== undefined) dbData.facebook_url = data.facebook;
             if (data.instagram !== undefined) dbData.instagram_url = data.instagram;
 
+            // Update local state immediately for snappy UI responsiveness
+            setUserProfile(prev => ({ ...prev, ...data }));
+
             const { error } = await supabase
                 .from('profiles')
                 .update(dbData)
                 .eq('id', userProfile.id);
 
             if (error) throw error;
-
-            setUserProfile(prev => ({ ...prev, ...data }));
         } catch (error) {
             console.error("Error updating profile:", error);
+            // Optionally: roll back local state on error? 
+            // For now, logging is enough as the user might try again.
             throw error;
         }
     };

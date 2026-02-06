@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
     Save,
     ArrowLeft,
@@ -28,6 +28,56 @@ const SeekerEditProfile = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const proofInputRef = useRef<HTMLInputElement>(null);
     const [proofImage, setProofImage] = useState<string | null>(null);
+
+    // Local state for all form fields to ensure snappy typing without cursor jumps
+    const [localProfile, setLocalProfile] = useState({
+        name: userName || "",
+        title: title || "",
+        website: website || "",
+        location: location || "",
+        bio: bio || "",
+        salary: salary || "",
+        experience: experience || "",
+        linkedin: linkedin || "",
+        twitter: twitter || "",
+        facebook: facebook || "",
+        instagram: instagram || ""
+    });
+
+    // Handle local change and sync to context/database
+    const handleLocalChange = (field: string, value: string) => {
+        setLocalProfile(prev => ({ ...prev, [field]: value }));
+        updateUserProfile({ [field]: value });
+    };
+
+    // Assessment local state for stability
+    const [localTestScores, setLocalTestScores] = useState(testScores);
+
+    const handleAssessmentChange = (updates: any) => {
+        const newScores = { ...localTestScores, ...updates };
+        setLocalTestScores(newScores);
+        updateTestScores(newScores);
+    };
+
+    // Update local state when context data arrives (mount or external update)
+    useEffect(() => {
+        if (userName || title || bio) { // Check for some data to avoid resetting on empty initial state
+            setLocalProfile({
+                name: userName || "",
+                title: title || "",
+                website: website || "",
+                location: location || "",
+                bio: bio || "",
+                salary: salary || "",
+                experience: experience || "",
+                linkedin: linkedin || "",
+                twitter: twitter || "",
+                facebook: facebook || "",
+                instagram: instagram || ""
+            });
+            setLocalTestScores(testScores);
+        }
+    }, [userName, title, website, location, bio, salary, experience, linkedin, twitter, facebook, instagram, testScores.iq]);
 
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -177,17 +227,19 @@ const SeekerEditProfile = () => {
                                     <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] ml-1">Legal Full Name</label>
                                     <input
                                         className="w-full px-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all"
-                                        value={userName}
-                                        onChange={(e) => updateUserProfile({ name: e.target.value })}
+                                        value={localProfile.name}
+                                        onChange={(e) => handleLocalChange('name', e.target.value)}
+                                        autoComplete="off"
                                     />
                                 </div>
                                 <div className="space-y-2.5">
                                     <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] ml-1">Professional Headline</label>
                                     <input
                                         className="w-full px-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all"
-                                        value={title}
-                                        onChange={(e) => updateUserProfile({ title: e.target.value })}
+                                        value={localProfile.title}
+                                        onChange={(e) => handleLocalChange('title', e.target.value)}
                                         placeholder="e.g. Website Developer"
+                                        autoComplete="off"
                                     />
                                 </div>
                                 <div className="space-y-2.5">
@@ -196,9 +248,10 @@ const SeekerEditProfile = () => {
                                         <Globe className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={18} />
                                         <input
                                             className="w-full pl-14 pr-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all"
-                                            value={website}
-                                            onChange={(e) => updateUserProfile({ website: e.target.value })}
+                                            value={localProfile.website}
+                                            onChange={(e) => handleLocalChange('website', e.target.value)}
                                             placeholder="https://yourportfolio.com"
+                                            autoComplete="off"
                                         />
                                     </div>
                                 </div>
@@ -208,9 +261,10 @@ const SeekerEditProfile = () => {
                                         <MapPin className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={18} />
                                         <input
                                             className="w-full pl-14 pr-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all"
-                                            value={location}
-                                            onChange={(e) => updateUserProfile({ location: e.target.value })}
+                                            value={localProfile.location}
+                                            onChange={(e) => handleLocalChange('location', e.target.value)}
                                             placeholder="e.g. Manila, Philippines"
+                                            autoComplete="off"
                                         />
                                     </div>
                                 </div>
@@ -219,9 +273,10 @@ const SeekerEditProfile = () => {
                                     <textarea
                                         rows={6}
                                         className="w-full px-7 py-6 rounded-[32px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-medium text-sm leading-relaxed transition-all resize-none"
-                                        value={bio}
-                                        onChange={(e) => updateUserProfile({ bio: e.target.value })}
+                                        value={localProfile.bio}
+                                        onChange={(e) => handleLocalChange('bio', e.target.value)}
                                         placeholder="Tell employers about your professional journey..."
+                                        autoComplete="off"
                                     />
                                     <p className="text-[10px] text-slate-300 font-bold text-right mr-4 italic">Character Count: {bio?.length || 0} / 2000</p>
                                 </div>
@@ -242,8 +297,9 @@ const SeekerEditProfile = () => {
                                             <input
                                                 type="number"
                                                 className="w-full px-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all"
-                                                value={testScores.iq}
-                                                onChange={(e) => updateTestScores({ ...testScores, iq: parseInt(e.target.value) || 0 })}
+                                                value={localTestScores.iq}
+                                                onChange={(e) => handleAssessmentChange({ iq: parseInt(e.target.value) || 0 })}
+                                                autoComplete="off"
                                             />
                                         </div>
 
@@ -262,11 +318,11 @@ const SeekerEditProfile = () => {
                                                             type="number"
                                                             className="w-full pl-12 pr-6 py-4 rounded-[18px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all"
                                                             placeholder={disc.label}
-                                                            value={testScores.disc[disc.id as keyof typeof testScores.disc]}
-                                                            onChange={(e) => updateTestScores({
-                                                                ...testScores,
-                                                                disc: { ...testScores.disc, [disc.id]: parseInt(e.target.value) || 0 }
+                                                            value={localTestScores.disc[disc.id as keyof typeof localTestScores.disc]}
+                                                            onChange={(e) => handleAssessmentChange({
+                                                                disc: { ...localTestScores.disc, [disc.id]: parseInt(e.target.value) || 0 }
                                                             })}
+                                                            autoComplete="off"
                                                         />
                                                     </div>
                                                 ))}
@@ -277,8 +333,8 @@ const SeekerEditProfile = () => {
                                             <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] ml-1">English Proficiency Level</label>
                                             <select
                                                 className="w-full px-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-black text-[13px] uppercase tracking-widest transition-all appearance-none"
-                                                value={testScores.english}
-                                                onChange={(e) => updateTestScores({ ...testScores, english: e.target.value })}
+                                                value={localTestScores.english}
+                                                onChange={(e) => handleAssessmentChange({ english: e.target.value })}
                                             >
                                                 <option>A1 (Beginner)</option>
                                                 <option>A2 (Elementary)</option>
@@ -382,9 +438,10 @@ const SeekerEditProfile = () => {
                                         <input
                                             type="text"
                                             className="w-full pl-14 pr-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all"
-                                            value={salary}
-                                            onChange={(e) => updateUserProfile({ salary: e.target.value })}
+                                            value={localProfile.salary}
+                                            onChange={(e) => handleLocalChange('salary', e.target.value)}
                                             placeholder="e.g. 50,000"
+                                            autoComplete="off"
                                         />
                                     </div>
                                 </div>
@@ -395,9 +452,10 @@ const SeekerEditProfile = () => {
                                         <input
                                             type="number"
                                             className="w-full pl-14 pr-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all"
-                                            value={experience}
-                                            onChange={(e) => updateUserProfile({ experience: e.target.value })}
+                                            value={localProfile.experience}
+                                            onChange={(e) => handleLocalChange('experience', e.target.value)}
                                             placeholder="e.g. 5"
+                                            autoComplete="off"
                                         />
                                     </div>
                                 </div>
@@ -411,10 +469,10 @@ const SeekerEditProfile = () => {
                             <h3 className="text-xl font-black text-slate-900 tracking-tight">Social Presence</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 {[
-                                    { id: 'linkedin', label: 'LinkedIn URL', icon: Linkedin, value: linkedin },
-                                    { id: 'twitter', label: 'Twitter / X URL', icon: Twitter, value: twitter },
-                                    { id: 'facebook', label: 'Facebook URL', icon: Facebook, value: facebook },
-                                    { id: 'instagram', label: 'Instagram URL', icon: Instagram, value: instagram }
+                                    { id: 'linkedin', label: 'LinkedIn URL', icon: Linkedin, value: localProfile.linkedin },
+                                    { id: 'twitter', label: 'Twitter / X URL', icon: Twitter, value: localProfile.twitter },
+                                    { id: 'facebook', label: 'Facebook URL', icon: Facebook, value: localProfile.facebook },
+                                    { id: 'instagram', label: 'Instagram URL', icon: Instagram, value: localProfile.instagram }
                                 ].map((social) => (
                                     <div key={social.id} className="space-y-2.5">
                                         <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] ml-1">{social.label}</label>
@@ -424,8 +482,9 @@ const SeekerEditProfile = () => {
                                                 type="text"
                                                 className="w-full pl-14 pr-7 py-4.5 rounded-[22px] border border-slate-100 bg-slate-50/5 focus:bg-white focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none font-bold text-sm transition-all"
                                                 value={social.value}
-                                                onChange={(e) => updateUserProfile({ [social.id]: e.target.value })}
+                                                onChange={(e) => handleLocalChange(social.id, e.target.value)}
                                                 placeholder={`https://${social.id}.com/your-profile`}
+                                                autoComplete="off"
                                             />
                                         </div>
                                     </div>
