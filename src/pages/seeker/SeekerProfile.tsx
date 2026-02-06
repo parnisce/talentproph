@@ -103,15 +103,15 @@ const SeekerProfile = () => {
                         <div className="pb-4 flex-grow">
                             <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
                                 <div className="flex flex-wrap items-center gap-4">
-                                    <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter drop-shadow-md">{userName}</h1>
-                                    <span className="text-[11px] font-black text-white uppercase tracking-[0.2em] px-4 py-1.5 bg-black/20 backdrop-blur-md rounded-full border border-white/20">{experience ? `${experience} Years` : 'Associate'}</span>
+                                    <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">{userName}</h1>
+                                    <span className="text-[11px] font-black text-primary uppercase tracking-[0.2em] px-4 py-1.5 bg-primary/5 rounded-full border border-primary/10">{experience ? `${experience} Years` : 'Associate'}</span>
                                 </div>
-                                <div className="flex items-center gap-2 px-6 py-2 bg-black/20 backdrop-blur-md border border-white/10 rounded-2xl">
-                                    <Calendar size={14} className="text-white/40" />
-                                    <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">Member Since {memberSince}</span>
+                                <div className="flex items-center gap-2 px-6 py-2 bg-slate-50 border border-slate-100 rounded-2xl">
+                                    <Calendar size={14} className="text-slate-300" />
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Member Since {memberSince}</span>
                                 </div>
                             </div>
-                            <p className="text-lg font-bold text-white/80 drop-shadow-sm">{title || 'Professional Headline Not Set'}</p>
+                            <p className="text-lg font-bold text-slate-500">{title || 'Professional Headline Not Set'}</p>
                         </div>
                     </div>
 
@@ -130,7 +130,7 @@ const SeekerProfile = () => {
                     </div>
 
                     {/* Quick Stats Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 mt-8 pt-6 border-t border-slate-50">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 mt-8 pt-6 border-t border-slate-50">
                         <div className="space-y-1">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Expected Salary</p>
                             <p className="text-xl font-black text-slate-900">{salary ? `$${salary}` : 'TBD'} <span className="text-xs text-slate-400 font-bold">/ mo</span></p>
@@ -152,12 +152,6 @@ const SeekerProfile = () => {
                                 <p className="text-[13px] font-black text-slate-900 uppercase">
                                     {education || 'Incomplete'}
                                 </p>
-                            </div>
-                        </div>
-                        <div className="space-y-1">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Verification Status</p>
-                            <div className="text-xl font-black text-green-500 flex items-center gap-2 text-sm">
-                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> Verified Pro
                             </div>
                         </div>
                         <div className="space-y-1">
