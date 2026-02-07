@@ -317,7 +317,48 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const logout = async () => {
-        await supabase.auth.signOut();
+        try {
+            await supabase.auth.signOut();
+            // Reset user profile to default state
+            setUserProfile({
+                id: "",
+                name: "",
+                photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Guest",
+                role: "seeker",
+                title: "",
+                company: "",
+                email: "",
+                phone: "",
+                location: "",
+                website: "",
+                bio: "",
+                iq: 0,
+                disc: { dominance: 0, influence: 0, steadiness: 0, compliance: 0 },
+                english: "N/A",
+                salary: "",
+                education: "",
+                experience: "",
+                skills: [],
+                linkedin: "",
+                twitter: "",
+                facebook: "",
+                instagram: "",
+                availability: "Full-Time",
+                banner_photo: "",
+                resume_url: "",
+                company_logo: "",
+                industry: "",
+                company_size: "",
+                founded_year: new Date().getFullYear(),
+                about_company: "",
+                perks: [],
+                subscription_plan: "Free",
+                created_at: ""
+            });
+            setPaymentMethods([]);
+        } catch (error) {
+            console.error('Error logging out:', error);
+        }
     };
 
     return (

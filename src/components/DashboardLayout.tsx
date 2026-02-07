@@ -41,12 +41,17 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout = ({ children, role, userName: propUserName, userPhoto: propUserPhoto }: DashboardLayoutProps) => {
-    const { userName: contextUserName, userPhoto: contextUserPhoto } = useUser();
+    const { userName: contextUserName, userPhoto: contextUserPhoto, logout } = useUser();
     const location = useLocation();
     const navigate = useNavigate();
 
     const userName = propUserName || contextUserName;
     const userPhoto = propUserPhoto || contextUserPhoto;
+
+    const handleLogout = async () => {
+        await logout();
+        navigate('/login');
+    };
 
     const menuItems = {
         seeker: [
@@ -99,9 +104,12 @@ const DashboardLayout = ({ children, role, userName: propUserName, userPhoto: pr
                     <Link to="/help" className="flex items-center gap-3 px-5 py-3 rounded-2xl text-slate-500 hover:bg-primary/5 hover:text-primary transition-all text-[13px] font-bold tracking-tight">
                         <HelpCircle size={18} /> Help Center
                     </Link>
-                    <Link to="/login" className="flex items-center gap-3 px-5 py-3 rounded-2xl text-rose-500 hover:bg-rose-50 transition-all text-[13px] font-bold tracking-tight">
+                    <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-3 px-5 py-3 rounded-2xl text-rose-500 hover:bg-rose-50 transition-all text-[13px] font-bold tracking-tight"
+                    >
                         <LogOut size={18} /> Logout
-                    </Link>
+                    </button>
                 </div>
             </aside>
 

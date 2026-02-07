@@ -11,6 +11,7 @@ import LearnToOutsource from './pages/how/LearnToOutsource';
 import PricingPage from './pages/PricingPage';
 import FindJobs from './pages/seeker/FindJobs';
 import { UserProvider } from './context/UserContext';
+import ProtectedRoute from './components/ProtectedRoute';
 import './index.css';
 
 function App() {
@@ -26,9 +27,30 @@ function App() {
           <Route path="/jobs" element={<FindJobs />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/seeker/*" element={<SeekerDashboard />} />
-          <Route path="/employer/*" element={<EmployerDashboard />} />
-          <Route path="/admin/*" element={<AdminDashboard />} />
+          <Route
+            path="/seeker/*"
+            element={
+              <ProtectedRoute allowedRole="seeker">
+                <SeekerDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/employer/*"
+            element={
+              <ProtectedRoute allowedRole="employer">
+                <EmployerDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/*"
+            element={
+              <ProtectedRoute allowedRole="admin">
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </Router>
     </UserProvider>
