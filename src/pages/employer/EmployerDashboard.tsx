@@ -29,6 +29,7 @@ import EditJobPost from './EditJobPost';
 import ViewApplicants from './ViewApplicants';
 import ReviewProfile from './ReviewProfile';
 import EmployerAccount from './EmployerAccount';
+import JobDetails from '../seeker/JobDetails';
 
 const EmployerOverview = () => {
     const navigate = useNavigate();
@@ -394,7 +395,7 @@ const EmployerJobPosts = () => {
                                 <div>
                                     <div className="flex items-center gap-3 mb-1">
                                         <h3
-                                            onClick={() => navigate(`/seeker/jobs/${job.id}`)}
+                                            onClick={() => navigate(`/employer/jobs/${job.id}`)}
                                             className="text-xl font-black text-slate-900 tracking-tighter hover:text-primary cursor-pointer transition-colors"
                                         >
                                             {job.title}
@@ -504,6 +505,7 @@ const EmployerDashboard = () => {
                 } />
                 <Route path="/messages" element={<EmployerMessages />} />
                 <Route path="/posts" element={<EmployerJobPosts />} />
+                <Route path="/jobs/:id" element={<JobDetails />} />
                 <Route path="/new-post" element={<CreateJobPost />} />
                 <Route path="/edit-post/:id" element={<EditJobPost />} />
                 <Route path="/applicants/:id" element={<ViewApplicants />} />

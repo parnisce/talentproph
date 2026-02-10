@@ -231,7 +231,15 @@ const JobDetails = () => {
                 {/* Navigation Header */}
                 <div className="flex items-center justify-between px-4">
                     <button
-                        onClick={() => navigate('/jobs')}
+                        onClick={() => {
+                            if (location.pathname.startsWith('/employer')) {
+                                navigate('/employer/posts');
+                            } else if (location.pathname.startsWith('/seeker')) {
+                                navigate('/seeker/jobs');
+                            } else {
+                                navigate('/jobs');
+                            }
+                        }}
                         className="flex items-center gap-2 p-3 bg-white border border-slate-100 rounded-2xl text-slate-400 hover:text-primary hover:border-primary transition-all shadow-sm group"
                     >
                         <ChevronLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
