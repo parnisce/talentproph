@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Link, Routes, Route } from 'react-router-dom';
 import DashboardLayout from '../../components/DashboardLayout';
 import {
@@ -21,8 +21,13 @@ import {
 } from 'lucide-react';
 import CalendarView from '../../components/CalendarView';
 import { useUser } from '../../context/UserContext';
+import { supabase } from '../../services/supabase';
 import SeekerMessages from './SeekerMessages';
 import CompanyProfile from './CompanyProfile';
+import SeekerProfile from './SeekerProfile';
+import SeekerEditProfile from './SeekerEditProfile';
+import SeekerFindJobs from './SeekerFindJobs';
+import JobDetails from './JobDetails';
 
 const SeekerOverview = () => {
     const { userPhoto, updateUserProfile, userName, title, website, salary, education, skills, resume_url } = useUser();
@@ -420,12 +425,50 @@ const SeekerOverview = () => {
     );
 };
 
-import SeekerProfile from './SeekerProfile';
-import SeekerEditProfile from './SeekerEditProfile';
-import SeekerFindJobs from './SeekerFindJobs';
-import JobDetails from './JobDetails';
-
 const SeekerDashboard = () => {
+    const { id: seekerId } = useUser();
+    const [interviews, setInterviews] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchInterviews = async () => {
+            if (!seekerId) return;
+            try {
+                const { data, error } = await supabase
+                    .from('interviews')
+                    .select(`
+                        id,
+                        scheduled_at,
+                        location_type,
+                        location_details,
+                        job_posts (
+                            title,
+                            company_name
+                        )
+                    `)
+                    .eq('seeker_id', seekerId);
+
+                if (error) throw error;
+
+                if (data) {
+                    const formatted = data.map((i: any) => ({
+                        id: i.id,
+                        title: `${i.job_posts?.title} Interview`,
+                        time: new Date(i.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        date: new Date(i.scheduled_at),
+                        location: i.location_details || i.location_type,
+                        type: i.location_type.toLowerCase() === 'virtual' ? 'video' :
+                            i.location_type.toLowerCase() === 'phone' ? 'phone' : 'onsite'
+                    }));
+                    setInterviews(formatted);
+                }
+            } catch (err) {
+                console.error("Error fetching interviews:", err);
+            }
+        };
+
+        fetchInterviews();
+    }, [seekerId]);
+
     return (
         <DashboardLayout role="seeker">
             <Routes>
@@ -435,12 +478,7 @@ const SeekerDashboard = () => {
                 <Route path="/profile" element={<SeekerProfile />} />
                 <Route path="/profile/edit" element={<SeekerEditProfile />} />
                 <Route path="/calendar" element={
-                    <CalendarView
-                        interviews={[
-                            { id: '1', title: 'Design Sync', time: '2:00 PM', date: new Date(), location: 'Zoom', type: 'video' },
-                            { id: '2', title: 'Initial Screening', time: '10:00 AM', date: new Date(Date.now() + 86400000), location: 'Google Meet', type: 'video' }
-                        ]}
-                    />
+                    <CalendarView interviews={interviews} />
                 } />
                 <Route path="/messages" element={<SeekerMessages />} />
                 <Route path="/company/:id" element={<CompanyProfile />} />
