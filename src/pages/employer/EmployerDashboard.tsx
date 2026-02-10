@@ -256,7 +256,7 @@ const EmployerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
                                                 <MapPin size={14} className="text-primary" /> {interview.location}
                                             </div>
                                             <button
-                                                onClick={() => navigate(`/employer/applicants/review/${interview.id.split('-')[0]}`)}
+                                                onClick={() => navigate(`/employer/applicants/review/${interview.application_id}`)}
                                                 className="px-4 py-2 bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-400 rounded-xl hover:bg-slate-900 hover:text-white transition-all whitespace-nowrap"
                                             >
                                                 Details
@@ -664,6 +664,7 @@ const EmployerDashboard = () => {
                     .from('interviews')
                     .select(`
                         id,
+                        application_id,
                         scheduled_at,
                         location_type,
                         location_details,
@@ -681,6 +682,7 @@ const EmployerDashboard = () => {
                 if (data) {
                     const formatted = data.map((i: any) => ({
                         id: i.id,
+                        application_id: i.application_id,
                         title: `${i.profiles?.full_name} - ${i.job_posts?.title}`,
                         time: new Date(i.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                         date: new Date(i.scheduled_at),
