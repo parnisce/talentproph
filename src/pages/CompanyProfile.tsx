@@ -16,7 +16,6 @@ import {
     Loader2,
     ExternalLink
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 const CompanyProfile = () => {
     const { id } = useParams();
@@ -82,14 +81,14 @@ const CompanyProfile = () => {
     return (
         <div className="w-full max-w-[1400px] mx-auto pb-32">
             {/* Banner Section */}
-            <div className="relative h-[300 md:h-[450px] rounded-[64px] overflow-hidden shadow-2xl group">
-                <img 
-                    src={company.banner_url || "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80"} 
-                    alt="Banner" 
+            <div className="relative h-[300px] md:h-[450px] rounded-[64px] overflow-hidden shadow-2xl group">
+                <img
+                    src={company.banner_url || "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80"}
+                    alt="Banner"
                     className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent" />
-                
+
                 {/* Company Logo Overlap */}
                 <div className="absolute -bottom-1 left-12 md:left-20 translate-y-1/2">
                     <div className="w-32 h-32 md:w-44 md:h-44 bg-white rounded-[40px] p-4 shadow-2xl border-[8px] border-white overflow-hidden flex items-center justify-center">
@@ -152,8 +151,8 @@ const CompanyProfile = () => {
                         <div className="space-y-4">
                             {jobs.length > 0 ? (
                                 jobs.map(job => (
-                                    <Link 
-                                        to={`/jobs/${job.id}`} 
+                                    <Link
+                                        to={`/jobs/${job.id}`}
                                         key={job.id}
                                         className="block bg-white border-2 border-slate-50 p-8 rounded-[32px] hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5 transition-all group"
                                     >
@@ -190,7 +189,7 @@ const CompanyProfile = () => {
                     <div className="sticky top-32 space-y-8">
                         <div className="bg-white border-2 border-slate-50 p-10 rounded-[48px] shadow-sm space-y-8">
                             <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Key Information</h4>
-                            
+
                             <div className="space-y-6">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400">
@@ -255,7 +254,7 @@ const CompanyProfile = () => {
                         <div className="bg-slate-900 p-8 rounded-[40px] text-white">
                             <h4 className="text-[10px] font-black uppercase tracking-widest text-primary mb-4">Share This Company</h4>
                             <p className="text-xs text-white/50 font-medium leading-relaxed mb-6">Know someone who would be a great fit for this team? Share this profile with them.</p>
-                            <button 
+                            <button
                                 onClick={() => {
                                     navigator.clipboard.writeText(window.location.href);
                                     alert('Link copied to clipboard!');
