@@ -159,7 +159,7 @@ const JobDetails = () => {
         const fetchJob = async () => {
             if (!id) {
                 setLoading(false); // No ID, stop loading
-                navigate('/seeker/jobs');
+                navigate('/jobs');
                 return;
             }
 
@@ -173,7 +173,7 @@ const JobDetails = () => {
 
             if (error || !data) {
                 console.error("Error fetching job:", error);
-                navigate('/seeker/jobs');
+                navigate('/jobs');
                 setLoading(false); // Stop loading on error
                 return;
             }
@@ -228,7 +228,7 @@ const JobDetails = () => {
                 {/* Navigation Header */}
                 <div className="flex items-center justify-between px-4">
                     <button
-                        onClick={() => navigate('/seeker/jobs')}
+                        onClick={() => navigate('/jobs')}
                         className="flex items-center gap-2 p-3 bg-white border border-slate-100 rounded-2xl text-slate-400 hover:text-primary hover:border-primary transition-all shadow-sm group"
                     >
                         <ChevronLeft size={20} className="group-hover:-translate-x-1 transition-transform" />

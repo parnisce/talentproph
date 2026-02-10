@@ -10,6 +10,7 @@ import JobSeekerFAQ from './pages/how/JobSeekerFAQ';
 import LearnToOutsource from './pages/how/LearnToOutsource';
 import PricingPage from './pages/PricingPage';
 import FindJobs from './pages/seeker/FindJobs';
+import JobDetails from './pages/seeker/JobDetails';
 import CompanyProfile from './pages/CompanyProfile';
 import { UserProvider } from './context/UserContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -26,6 +27,7 @@ function App() {
           <Route path="/learn" element={<LearnToOutsource />} />
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/jobs" element={<FindJobs />} />
+          <Route path="/jobs/:id" element={<JobDetails />} />
           <Route path="/company/:id" element={<CompanyProfile />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
