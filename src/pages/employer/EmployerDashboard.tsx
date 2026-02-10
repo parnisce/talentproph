@@ -30,6 +30,7 @@ import EditJobPost from './EditJobPost';
 import ViewApplicants from './ViewApplicants';
 import ReviewProfile from './ReviewProfile';
 import EmployerAccount from './EmployerAccount';
+import HiredCandidates from './HiredCandidates';
 import JobDetails from '../seeker/JobDetails';
 
 const EmployerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
@@ -714,6 +715,7 @@ const EmployerDashboard = () => {
                 <Route path="/edit-post/:id" element={<EditJobPost />} />
                 <Route path="/applicants/:id" element={<ViewApplicants />} />
                 <Route path="/applicants/review/:applicantId" element={<ReviewProfile />} />
+                <Route path="/hired" element={<HiredCandidates />} />
                 <Route path="/account" element={<EmployerAccount />} />
                 <Route path="/upgrade" element={<UpgradePlan />} />
                 <Route path="/upgrade/payment" element={<UpgradePayment />} />

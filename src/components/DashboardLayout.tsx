@@ -10,7 +10,8 @@ import {
     Bell,
     Search,
     User,
-    HelpCircle
+    HelpCircle,
+    UserCheck
 } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 
@@ -66,6 +67,7 @@ const DashboardLayout = ({ children, role, userName: propUserName, userPhoto: pr
             { icon: Briefcase, label: 'My Job Posts', href: '/employer/posts' },
             { icon: MessageSquare, label: 'Messages', href: '/employer/messages' },
             { icon: Calendar, label: 'Schedule', href: '/employer/calendar' },
+            { icon: UserCheck, label: 'Hired Team', href: '/employer/hired' },
             { icon: Settings, label: 'Settings', href: '/employer/settings' },
         ],
         admin: [
