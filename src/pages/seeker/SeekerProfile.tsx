@@ -43,7 +43,8 @@ const SeekerProfile = () => {
         banner_photo,
         resume_url,
         education,
-        created_at
+        created_at,
+        id
     } = useUser();
 
     // Format member since date
@@ -62,7 +63,7 @@ const SeekerProfile = () => {
                 </div>
                 <div className="flex items-center gap-3">
                     <button
-                        onClick={() => window.open(`/profile/${useUser().id}`, '_blank')}
+                        onClick={() => window.open(`/profile/${id}`, '_blank')}
                         className="px-6 py-2.5 bg-white border-2 border-slate-100 rounded-xl font-black text-[11px] uppercase tracking-widest text-slate-500 hover:border-primary hover:text-primary transition-all flex items-center gap-2"
                     >
                         <Eye size={14} /> Preview as Employer
