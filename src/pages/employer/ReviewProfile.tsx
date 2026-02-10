@@ -15,7 +15,8 @@ import {
     ExternalLink,
     ShieldCheck,
     FileText,
-    User
+    User,
+    Calendar
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -55,11 +56,130 @@ const mockApplicantsData: Record<string, any> = {
     }
 };
 
+const ScheduleInterviewModal = ({ isOpen, onClose, applicant, onSchedule }: { isOpen: boolean; onClose: () => void; applicant: any; onSchedule: (details: any) => void }) => {
+    const [date, setDate] = useState('');
+    const [time, setTime] = useState('');
+    const [location, setLocation] = useState('Virtual');
+    const [details, setDetails] = useState('');
+    const [notes, setNotes] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    if (!isOpen) return null;
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        try {
+            const scheduledAt = new Date(`${date}T${time}`).toISOString();
+            onSchedule({ date, time, location, details, notes, scheduledAt });
+        } catch (err) {
+            console.error("Error formatting date:", err);
+            alert("Please provide a valid date and time.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
+            <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                className="bg-white w-full max-w-xl rounded-[48px] shadow-2xl overflow-hidden"
+            >
+                <div className="p-10 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                    <div>
+                        <h2 className="text-2xl font-black text-slate-900 tracking-tighter">Schedule Interview</h2>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">For {applicant?.name}</p>
+                    </div>
+                </div>
+
+                <form onSubmit={handleSubmit} className="p-10 space-y-6">
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Date</label>
+                            <input
+                                type="date"
+                                required
+                                value={date}
+                                onChange={(e) => setDate(e.target.value)}
+                                className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:outline-none focus:border-primary transition-all"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Time</label>
+                            <input
+                                type="time"
+                                required
+                                value={time}
+                                onChange={(e) => setTime(e.target.value)}
+                                className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:outline-none focus:border-primary transition-all"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Meeting Method</label>
+                        <select
+                            value={location}
+                            onChange={(e) => setLocation(e.target.value)}
+                            className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:outline-none focus:border-primary transition-all"
+                        >
+                            <option value="Virtual">Virtual (Zoom/Google Meet)</option>
+                            <option value="In-Person">In-Person Office</option>
+                            <option value="Phone">Phone Call</option>
+                        </select>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Meeting Details (Link/Address)</label>
+                        <input
+                            type="text"
+                            placeholder="e.g. meet.google.com/xyz or Office address"
+                            value={details}
+                            onChange={(e) => setDetails(e.target.value)}
+                            className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:outline-none focus:border-primary transition-all"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Additional Notes</label>
+                        <textarea
+                            rows={3}
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            className="w-full px-6 py-6 bg-slate-50 border border-slate-100 rounded-3xl text-sm font-medium focus:outline-none focus:border-primary transition-all resize-none"
+                        />
+                    </div>
+
+                    <div className="flex gap-4 pt-4">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="flex-2 px-10 py-5 bg-primary text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+                        >
+                            {isSubmitting ? 'Scheduling...' : 'Confirm Schedule'}
+                        </button>
+                    </div>
+                </form>
+            </motion.div>
+        </div>
+    );
+};
+
 const ReviewProfile = () => {
     const { applicantId } = useParams();
     const navigate = useNavigate();
     const [applicant, setApplicant] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchApplicantData = async () => {
@@ -88,7 +208,9 @@ const ReviewProfile = () => {
                             expected_salary
                         ),
                         job_posts!inner (
-                            title
+                            id,
+                            title,
+                            employer_id
                         )
                     `)
                     .eq('id', applicantId)
@@ -99,6 +221,9 @@ const ReviewProfile = () => {
                 if (data) {
                     const mapped = {
                         id: data.id,
+                        job_id: data.job_id,
+                        seeker_id: data.seeker_id,
+                        employer_id: data.job_posts?.employer_id,
                         name: data.profiles?.full_name || 'Anonymous',
                         photo: data.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.seeker_id}`,
                         role: data.profiles?.title || 'Job Seeker',
@@ -107,6 +232,7 @@ const ReviewProfile = () => {
                         phone: data.profiles?.phone || 'N/A',
                         experience: data.profiles?.experience_years || 'N/A',
                         status: data.status || 'New',
+                        appliedPoints: data.points_used || 0,
                         bio: data.profiles?.bio || data.message || "No bio provided.",
                         testScores: {
                             iq: data.profiles?.iq || 0,
@@ -115,6 +241,8 @@ const ReviewProfile = () => {
                         },
                         skills: data.profiles?.skills_list || [],
                         resume_url: data.profiles?.resume_url || "#",
+                        history: [], // Placeholder for real history if table exists
+                        portfolio: [], // Placeholder
                         application: {
                             subject: data.subject || `Application for ${data.job_posts?.title}`,
                             message: data.message || "No message provided."
@@ -122,14 +250,12 @@ const ReviewProfile = () => {
                     };
                     setApplicant(mapped);
                 } else {
-                    // Fallback to first mock if ID not found for demo
-                    const mockData = mockApplicantsData[applicantId || ''] || mockApplicantsData['a1'];
+                    const mockData = mockApplicantsData['a1'];
                     setApplicant(mockData);
                 }
             } catch (err) {
                 console.error("Error fetching applicant:", err);
-                const mockData = mockApplicantsData[applicantId || ''] || mockApplicantsData['a1'];
-                setApplicant(mockData);
+                setApplicant(mockApplicantsData['a1']);
             } finally {
                 setLoading(false);
             }
@@ -137,6 +263,42 @@ const ReviewProfile = () => {
 
         fetchApplicantData();
     }, [applicantId]);
+
+    const handleScheduleInterview = async (details: any) => {
+        try {
+            // 1. Create Interview Record
+            const { error: interviewError } = await supabase
+                .from('interviews')
+                .insert([{
+                    application_id: applicant.id,
+                    employer_id: applicant.employer_id,
+                    seeker_id: applicant.seeker_id,
+                    job_id: applicant.job_id,
+                    scheduled_at: details.scheduledAt,
+                    location_type: details.location,
+                    location_details: details.details,
+                    notes: details.notes
+                }]);
+
+            if (interviewError) throw interviewError;
+
+            // 2. Update Application Status
+            const { error: appError } = await supabase
+                .from('job_applications')
+                .update({ status: 'Interviewed' })
+                .eq('id', applicant.id);
+
+            if (appError) throw appError;
+
+            // 3. Update Local State
+            setApplicant((prev: any) => ({ ...prev, status: 'Interviewed' }));
+            setIsScheduleModalOpen(false);
+            alert("Interview successfully scheduled!");
+        } catch (err: any) {
+            console.error("Error scheduling interview:", err);
+            alert("Failed to schedule interview: " + (err.message || "Please ensure the 'interviews' table exists in your database."));
+        }
+    };
 
     if (loading) {
         return (
@@ -155,6 +317,13 @@ const ReviewProfile = () => {
 
     return (
         <div className="space-y-10 pb-32">
+            <ScheduleInterviewModal
+                isOpen={isScheduleModalOpen}
+                onClose={() => setIsScheduleModalOpen(false)}
+                applicant={applicant}
+                onSchedule={handleScheduleInterview}
+            />
+
             {/* Header / Action Bar */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
@@ -167,8 +336,9 @@ const ReviewProfile = () => {
                     <div className="flex items-center gap-4">
                         <h1 className="text-4xl font-black text-slate-900 tracking-tighter font-outfit">Review Profile</h1>
                         <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${applicant.status === 'Shortlisted' ? 'bg-amber-100 text-amber-600' :
-                            applicant.status === 'New' ? 'bg-primary/10 text-primary' :
-                                'bg-slate-100 text-slate-500'
+                            applicant.status === 'New' || applicant.status === 'Interviewed' ? 'bg-blue-100 text-blue-600' :
+                                applicant.status === 'Hired' ? 'bg-emerald-100 text-emerald-600' :
+                                    'bg-slate-100 text-slate-500'
                             }`}>
                             {applicant.status}
                         </span>
@@ -177,6 +347,12 @@ const ReviewProfile = () => {
                 <div className="flex items-center gap-3">
                     <button className="p-4 bg-white border-2 border-slate-100 text-rose-500 rounded-2xl hover:bg-rose-50 transition-all shadow-sm">
                         <XCircle size={22} />
+                    </button>
+                    <button
+                        onClick={() => setIsScheduleModalOpen(true)}
+                        className="px-8 py-4 bg-slate-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-slate-900/10 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3"
+                    >
+                        <Calendar size={18} /> Schedule Interview
                     </button>
                     <button className="px-8 py-4 bg-primary text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3">
                         <CheckCircle2 size={18} /> Shortlist Candidate
