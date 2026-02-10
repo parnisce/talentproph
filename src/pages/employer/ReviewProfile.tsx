@@ -16,7 +16,9 @@ import {
     ShieldCheck,
     FileText,
     User,
-    Calendar
+    Calendar,
+    Trash2,
+    UserCheck
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -324,6 +326,58 @@ const ReviewProfile = () => {
         }
     };
 
+    const handleCancelInterview = async () => {
+        if (!activeInterview?.id) return;
+        if (!confirm("Are you sure you want to cancel this interview? This will remove it from the schedule.")) return;
+
+        try {
+            // 1. Delete Interview
+            const { error: deleteError } = await supabase
+                .from('interviews')
+                .delete()
+                .eq('id', activeInterview.id);
+
+            if (deleteError) throw deleteError;
+
+            // 2. Optional: Restore status to 'Shortlisted' if it was 'Interviewed'
+            if (applicant.status === 'Interviewed') {
+                const { error: appError } = await supabase
+                    .from('job_applications')
+                    .update({ status: 'Shortlisted' })
+                    .eq('id', applicant.id);
+                if (appError) throw appError;
+                setApplicant((prev: any) => ({ ...prev, status: 'Shortlisted' }));
+            }
+
+            // 3. Reset local state
+            setIsAlreadyScheduled(false);
+            setActiveInterview(null);
+            alert("Interview cancelled successfully.");
+        } catch (err: any) {
+            console.error("Error cancelling interview:", err);
+            alert("Failed to cancel: " + err.message);
+        }
+    };
+
+    const handleHireApplicant = async () => {
+        if (!confirm(`Are you sure you want to HIRE ${applicant.name}? This will update their application status.`)) return;
+
+        try {
+            const { error } = await supabase
+                .from('job_applications')
+                .update({ status: 'Hired' })
+                .eq('id', applicant.id);
+
+            if (error) throw error;
+
+            setApplicant((prev: any) => ({ ...prev, status: 'Hired' }));
+            alert("Congratulations! Candidate has been marked as HIRED.");
+        } catch (err: any) {
+            console.error("Error hiring applicant:", err);
+            alert("Failed to hire: " + err.message);
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center py-20 min-h-[40vh]">
@@ -368,27 +422,58 @@ const ReviewProfile = () => {
                         </span>
                     </div>
                 </div>
-                <div className="flex items-center gap-3">
-                    <button className="p-4 bg-white border-2 border-slate-100 text-rose-500 rounded-2xl hover:bg-rose-50 transition-all shadow-sm">
-                        <XCircle size={22} />
-                    </button>
-                    <button
-                        onClick={() => !isAlreadyScheduled && setIsScheduleModalOpen(true)}
-                        title={isAlreadyScheduled && activeInterview ? `Next interview: ${new Date(activeInterview.scheduled_at).toLocaleString()}` : ''}
-                        className={`px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl transition-all flex items-center gap-3 ${isAlreadyScheduled
-                            ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
-                            : 'bg-slate-900 text-white shadow-slate-900/10 hover:scale-[1.02] active:scale-95'
-                            }`}
-                    >
-                        {isAlreadyScheduled ? (
-                            <><CheckCircle2 size={18} className="text-emerald-500" /> Already Scheduled</>
-                        ) : (
-                            <><Calendar size={18} /> Schedule Interview</>
+                <div className="flex flex-wrap items-center justify-end gap-3 max-w-full">
+                    {/* Rejected Button */}
+                    {applicant.status !== 'Hired' && (
+                        <button
+                            className="p-4 bg-white border-2 border-slate-100 text-rose-500 rounded-2xl hover:bg-rose-50 transition-all shadow-sm"
+                            title="Reject Candidate"
+                        >
+                            <XCircle size={22} />
+                        </button>
+                    )}
+
+                    {/* Schedule / Cancel Button */}
+                    <div className="relative group/cancel flex items-center gap-2">
+                        <button
+                            onClick={() => !isAlreadyScheduled && setIsScheduleModalOpen(true)}
+                            title={isAlreadyScheduled && activeInterview ? `Next interview: ${new Date(activeInterview.scheduled_at).toLocaleString()}` : ''}
+                            className={`px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl transition-all flex items-center gap-3 ${isAlreadyScheduled
+                                ? 'bg-emerald-50 text-emerald-600 border-2 border-emerald-100 shadow-none'
+                                : 'bg-slate-900 text-white shadow-slate-900/10 hover:scale-[1.02] active:scale-95'
+                                }`}
+                        >
+                            {isAlreadyScheduled ? (
+                                <><CheckCircle2 size={18} /> Already Scheduled</>
+                            ) : (
+                                <><Calendar size={18} /> Schedule Interview</>
+                            )}
+                        </button>
+
+                        {isAlreadyScheduled && (
+                            <button
+                                onClick={handleCancelInterview}
+                                className="p-4 bg-white border-2 border-rose-100 text-rose-500 rounded-2xl hover:bg-rose-50 transition-all shadow-sm"
+                                title="Cancel Scheduled Interview"
+                            >
+                                <Trash2 size={20} />
+                            </button>
                         )}
-                    </button>
-                    <button className="px-8 py-4 bg-primary text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3">
-                        <CheckCircle2 size={18} /> Shortlist Candidate
-                    </button>
+                    </div>
+
+                    {/* Hire Button */}
+                    {applicant.status !== 'Hired' ? (
+                        <button
+                            onClick={handleHireApplicant}
+                            className="px-8 py-4 bg-primary text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3"
+                        >
+                            <UserCheck size={18} /> Hire Candidate
+                        </button>
+                    ) : (
+                        <div className="px-8 py-4 bg-emerald-500 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20 flex items-center gap-3">
+                            <ShieldCheck size={18} /> Officially Hired
+                        </div>
+                    )}
                 </div>
             </div>
 
