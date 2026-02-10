@@ -61,7 +61,10 @@ const SeekerProfile = () => {
                     <span className="px-3 py-1 bg-green-500/10 text-green-500 text-[10px] font-black rounded-full uppercase tracking-widest border border-green-500/20">Active Profile</span>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button className="px-6 py-2.5 bg-white border-2 border-slate-100 rounded-xl font-black text-[11px] uppercase tracking-widest text-slate-500 hover:border-primary hover:text-primary transition-all flex items-center gap-2">
+                    <button
+                        onClick={() => window.open(`/profile/${useUser().id}`, '_blank')}
+                        className="px-6 py-2.5 bg-white border-2 border-slate-100 rounded-xl font-black text-[11px] uppercase tracking-widest text-slate-500 hover:border-primary hover:text-primary transition-all flex items-center gap-2"
+                    >
                         <Eye size={14} /> Preview as Employer
                     </button>
                     <Link to="/seeker/profile/edit" className="px-8 py-3 bg-primary text-white rounded-xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 text-center decoration-transparent">

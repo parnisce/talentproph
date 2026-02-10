@@ -12,6 +12,7 @@ import PricingPage from './pages/PricingPage';
 import FindJobs from './pages/seeker/FindJobs';
 import JobDetails from './pages/seeker/JobDetails';
 import CompanyProfile from './pages/CompanyProfile';
+import PublicSeekerProfile from './pages/PublicSeekerProfile';
 import { UserProvider } from './context/UserContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import './index.css';
@@ -29,6 +30,7 @@ function App() {
           <Route path="/jobs" element={<FindJobs />} />
           <Route path="/jobs/:id" element={<JobDetails />} />
           <Route path="/company/:id" element={<CompanyProfile />} />
+          <Route path="/profile/:id" element={<PublicSeekerProfile />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route
