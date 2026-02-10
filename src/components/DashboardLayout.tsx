@@ -153,7 +153,7 @@ const DashboardLayout = ({ children, role, userName: propUserName, userPhoto: pr
                             </button>
 
                             <div
-                                onClick={() => navigate(`/${role}/account`)}
+                                onClick={() => navigate(role === 'seeker' ? '/seeker/profile' : `/${role}/account`)}
                                 className="flex items-center gap-3 pl-4 border-l border-slate-100 cursor-pointer group"
                             >
                                 <div className="text-right hidden md:block">
