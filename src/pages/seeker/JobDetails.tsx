@@ -190,68 +190,90 @@ const JobDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
+    const { id: seekerId } = useUser();
     const [job, setJob] = useState<any>(null);
     const [isApplied, setIsApplied] = useState(false);
+    const [appliedDate, setAppliedDate] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [loading, setLoading] = useState(true); // Add loading state
+    const [loading, setLoading] = useState(true);
 
     const isDashboard = location.pathname.startsWith('/seeker') || location.pathname.startsWith('/employer');
 
     useEffect(() => {
         const fetchJob = async () => {
             if (!id) {
-                setLoading(false); // No ID, stop loading
+                setLoading(false);
                 navigate('/jobs');
                 return;
             }
 
-            setLoading(true); // Start loading
-
-            const { data, error } = await supabase
-                .from('job_posts')
-                .select('*')
-                .eq('id', id)
-                .single();
-
-            if (error || !data) {
-                console.error("Error fetching job:", error);
-                navigate('/jobs');
-                setLoading(false); // Stop loading on error
-                return;
-            }
-
-            setJob({
-                id: data.id,
-                title: data.title,
-                company: data.company_name,
-                postedDate: new Date(data.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-                salary: `${data.salary} / ${data.period === 'Per Month' ? 'mo' : data.period === 'Per Week' ? 'wk' : 'hr'}`,
-                type: data.engagement?.split(' ')[0] || 'Remote',
-                location: data.location || 'Remote',
-                description: data.preview,
-                fullDescription: data.description,
-                skills: data.skills || [],
-                verified: true,
-                companyInfo: "Verified premium employer on TalentPro PH.",
-                employerId: data.employer_id,
-                companyLogo: data.company_logo
-            });
-            setLoading(false); // Stop loading after successful fetch
-
-            // Increment views
+            setLoading(true);
             try {
+                // Fetch job details
+                const { data, error } = await supabase
+                    .from('job_posts')
+                    .select('*')
+                    .eq('id', id)
+                    .single();
+
+                if (error || !data) {
+                    console.error("Error fetching job:", error);
+                    navigate('/jobs');
+                    return;
+                }
+
+                setJob({
+                    id: data.id,
+                    title: data.title,
+                    company: data.company_name,
+                    postedDate: new Date(data.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+                    salary: `${data.salary} / ${data.period === 'Per Month' ? 'mo' : data.period === 'Per Week' ? 'wk' : 'hr'}`,
+                    type: data.engagement?.split(' ')[0] || 'Remote',
+                    location: data.location || 'Remote',
+                    description: data.preview,
+                    fullDescription: data.description,
+                    skills: data.skills || [],
+                    verified: true,
+                    companyInfo: "Verified premium employer on TalentPro PH.",
+                    employerId: data.employer_id,
+                    companyLogo: data.company_logo
+                });
+
+                // Check if user has already applied
+                if (seekerId) {
+                    const { data: appData } = await supabase
+                        .from('job_applications')
+                        .select('created_at')
+                        .eq('job_id', id)
+                        .eq('seeker_id', seekerId)
+                        .maybeSingle();
+
+                    if (appData) {
+                        setIsApplied(true);
+                        setAppliedDate(new Date(appData.created_at).toLocaleDateString('en-US', {
+                            month: 'long',
+                            day: 'numeric',
+                            year: 'numeric'
+                        }));
+                    }
+                }
+
+                // Increment views
                 const currentViews = data.views || 0;
                 await supabase
                     .from('job_posts')
                     .update({ views: currentViews + 1 })
                     .eq('id', id);
-            } catch (vErr) {
-                console.error("Error updating views:", vErr);
+
+            } catch (err) {
+                console.error("General error in JobDetails:", err);
+            } finally {
+                setLoading(false);
             }
         };
 
         fetchJob();
-    }, [id, navigate]);
+    }, [id, navigate, seekerId]);
 
     if (loading) {
         return (
@@ -277,7 +299,14 @@ const JobDetails = () => {
                     onClose={() => setIsModalOpen(false)}
                     jobTitle={job.title}
                     jobId={id || ''}
-                    onApply={() => setIsApplied(true)}
+                    onApply={() => {
+                        setIsApplied(true);
+                        setAppliedDate(new Date().toLocaleDateString('en-US', {
+                            month: 'long',
+                            day: 'numeric',
+                            year: 'numeric'
+                        }));
+                    }}
                 />
                 {/* Navigation Header */}
                 <div className="flex items-center justify-between px-4">
@@ -435,11 +464,12 @@ const JobDetails = () => {
                                 <div className="mt-10 space-y-4">
                                     <button
                                         onClick={() => !isApplied && setIsModalOpen(true)}
-                                        className={`w-full py-6 rounded-3xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-3 group relative overflow-hidden ${isApplied ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-primary text-white shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95'}`}
+                                        disabled={isApplied}
+                                        className={`w-full py-6 rounded-3xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-3 group relative overflow-hidden ${isApplied ? 'bg-emerald-500/10 text-emerald-600 border-2 border-emerald-500/20 cursor-default' : 'bg-primary text-white shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95'}`}
                                     >
                                         {isApplied ? (
                                             <>
-                                                <CheckCircle2 size={20} /> Application Sent
+                                                <CheckCircle2 size={20} /> Already Applied
                                             </>
                                         ) : (
                                             <>
@@ -447,9 +477,22 @@ const JobDetails = () => {
                                             </>
                                         )}
                                     </button>
-                                    <button className="w-full py-5 border-2 border-slate-100 rounded-3xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:text-rose-500 hover:border-rose-100 transition-all flex items-center justify-center gap-2">
-                                        <Bookmark size={16} /> Save for Later
-                                    </button>
+
+                                    {isApplied && appliedDate && (
+                                        <div className="flex items-center justify-center gap-2 group">
+                                            <div className="h-[2px] w-4 bg-slate-100 group-hover:w-6 transition-all" />
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                                Submitted on {appliedDate}
+                                            </p>
+                                            <div className="h-[2px] w-4 bg-slate-100 group-hover:w-6 transition-all" />
+                                        </div>
+                                    )}
+
+                                    {!isApplied && (
+                                        <button className="w-full py-5 border-2 border-slate-100 rounded-3xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:text-rose-500 hover:border-rose-100 transition-all flex items-center justify-center gap-2">
+                                            <Bookmark size={16} /> Save for Later
+                                        </button>
+                                    )}
                                 </div>
 
                                 <p className="mt-8 text-[10px] font-bold text-slate-300 italic leading-relaxed">
