@@ -17,7 +17,8 @@ import {
     CheckCircle2,
     Clock,
     DollarSign,
-    Target
+    Target,
+    MapPin
 } from 'lucide-react';
 import CalendarView from '../../components/CalendarView';
 import { useUser } from '../../context/UserContext';
@@ -31,11 +32,12 @@ import ReviewProfile from './ReviewProfile';
 import EmployerAccount from './EmployerAccount';
 import JobDetails from '../seeker/JobDetails';
 
-const EmployerOverview = () => {
+const EmployerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
     const navigate = useNavigate();
     const { id, subscription_plan } = useUser();
     const [jobCount, setJobCount] = useState(0);
     const [applicantCount, setApplicantCount] = useState(0);
+    const [interviewCount, setInterviewCount] = useState(0);
     const [recentApplicants, setRecentApplicants] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -110,6 +112,10 @@ const EmployerOverview = () => {
                                 score: app.profiles?.iq ? Math.min(Math.round((app.profiles.iq / 160) * 100), 100) : 85,
                             }));
                             setRecentApplicants(mappedApps);
+
+                            // Set total interviewed count
+                            const interviewedTotal = apps.filter(a => a.status === 'Interviewed').length;
+                            setInterviewCount(interviewedTotal);
                         }
                     } catch (appErr) {
                         console.error("Applications table error in overview:", appErr);
@@ -128,7 +134,7 @@ const EmployerOverview = () => {
     const stats = [
         { label: 'Active Jobs', value: jobCount.toString(), secondary: `/ ${maxSlots} slots`, icon: Briefcase, color: 'text-blue-600 bg-blue-50', trend: `${jobCount} live now` },
         { label: 'Total Applicants', value: applicantCount.toString(), secondary: 'Across all posts', icon: Users, color: 'text-emerald-600 bg-emerald-50', trend: 'Updating...' },
-        { label: 'Interviewed', value: '0', secondary: 'Candidates', icon: TrendingUp, color: 'text-violet-600 bg-violet-50', trend: 'Check messages' },
+        { label: 'Interviewed', value: (interviews.length || interviewCount).toString(), secondary: 'Candidates', icon: TrendingUp, color: 'text-violet-600 bg-violet-50', trend: 'Check schedule' },
     ];
 
     if (loading) {
@@ -211,6 +217,56 @@ const EmployerOverview = () => {
                             </button>
                         </div>
                     </div>
+
+                    {/* Upcoming Interviews Section */}
+                    {interviews.length > 0 && (
+                        <div className="space-y-8">
+                            <div className="flex items-center justify-between px-4">
+                                <div className="flex items-center gap-4">
+                                    <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Upcoming Interviews</h3>
+                                    <div className="bg-violet-500/10 text-violet-600 px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase">
+                                        {interviews.length} Scheduled
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => navigate('/employer/calendar')}
+                                    className="flex items-center gap-2 text-primary font-black text-[11px] uppercase tracking-widest hover:translate-x-1 transition-transform">
+                                    Full Calendar <ChevronRight size={16} />
+                                </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {interviews.slice(0, 4).map((interview) => (
+                                    <motion.div
+                                        key={interview.id}
+                                        whileHover={{ y: -4 }}
+                                        className="bg-white border-2 border-slate-50 p-6 rounded-[32px] shadow-sm hover:shadow-xl hover:shadow-slate-200/30 transition-all group"
+                                    >
+                                        <div className="flex items-center gap-4 mb-4">
+                                            <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white shrink-0">
+                                                <Clock size={20} />
+                                            </div>
+                                            <div className="overflow-hidden">
+                                                <h4 className="font-black text-slate-900 tracking-tight truncate">{interview.title}</h4>
+                                                <p className="text-[10px] font-black text-primary uppercase tracking-widest">{interview.time}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-between pt-4 border-t border-slate-50 gap-4">
+                                            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 truncate">
+                                                <MapPin size={14} className="text-primary" /> {interview.location}
+                                            </div>
+                                            <button
+                                                onClick={() => navigate(`/employer/applicants/review/${interview.id.split('-')[0]}`)}
+                                                className="px-4 py-2 bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-400 rounded-xl hover:bg-slate-900 hover:text-white transition-all whitespace-nowrap"
+                                            >
+                                                Details
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -597,17 +653,57 @@ const EmployerJobPosts = () => {
 };
 
 const EmployerDashboard = () => {
+    const { id: employerId } = useUser();
+    const [interviews, setInterviews] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchInterviews = async () => {
+            if (!employerId) return;
+            try {
+                const { data, error } = await supabase
+                    .from('interviews')
+                    .select(`
+                        id,
+                        scheduled_at,
+                        location_type,
+                        location_details,
+                        profiles!seeker_id (
+                            full_name
+                        ),
+                        job_posts (
+                            title
+                        )
+                    `)
+                    .eq('employer_id', employerId);
+
+                if (error) throw error;
+
+                if (data) {
+                    const formatted = data.map((i: any) => ({
+                        id: i.id,
+                        title: `${i.profiles?.full_name} - ${i.job_posts?.title}`,
+                        time: new Date(i.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        date: new Date(i.scheduled_at),
+                        location: i.location_details || i.location_type,
+                        type: i.location_type.toLowerCase() === 'virtual' ? 'video' :
+                            i.location_type.toLowerCase() === 'phone' ? 'phone' : 'onsite'
+                    }));
+                    setInterviews(formatted);
+                }
+            } catch (err) {
+                console.error("Error fetching interviews:", err);
+            }
+        };
+
+        fetchInterviews();
+    }, [employerId]);
+
     return (
         <DashboardLayout role="employer">
             <Routes>
-                <Route path="/" element={<EmployerOverview />} />
+                <Route path="/" element={<EmployerOverview interviews={interviews} />} />
                 <Route path="/calendar" element={
-                    <CalendarView
-                        interviews={[
-                            { id: '1', title: 'John Doe - 1st Interview', time: '11:00 AM', date: new Date(), location: 'Zoom', type: 'video' },
-                            { id: '2', title: 'Jane Smith - Screening', time: '4:00 PM', date: new Date(), location: 'Direct Call', type: 'phone' }
-                        ]}
-                    />
+                    <CalendarView interviews={interviews} />
                 } />
                 <Route path="/messages" element={<EmployerMessages />} />
                 <Route path="/posts" element={<EmployerJobPosts />} />
