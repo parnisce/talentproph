@@ -72,46 +72,47 @@ const EmployerOverview = () => {
                 if (jCount !== null) setJobCount(jCount);
 
                 if (jobIds.length > 0) {
-                    // Fetch total Applicants count
-                    const { count: aCount } = await supabase
-                        .from('job_applications')
-                        .select('*', { count: 'exact', head: true })
-                        .in('job_id', jobIds);
+                    // Fetch total Applicants count - resiliently
+                    try {
+                        const { count: aCount } = await supabase
+                            .from('job_applications')
+                            .select('*', { count: 'exact', head: true })
+                            .in('job_id', jobIds);
 
-                    if (aCount !== null) setApplicantCount(aCount);
+                        if (aCount !== null) setApplicantCount(aCount);
 
-                    // Fetch Recent Applicants (last 5)
-                    const { data: apps } = await supabase
-                        .from('job_applications')
-                        .select(`
-                            *,
-                            profiles:seeker_id (
-                                full_name,
-                                avatar_url,
-                                title,
-                                expected_salary,
-                                iq
-                            ),
-                            job_posts!inner (
-                                title
-                            )
-                        `)
-                        .in('job_id', jobIds)
-                        .order('created_at', { ascending: false })
-                        .limit(5);
+                        // Fetch Recent Applicants (last 5)
+                        const { data: apps } = await supabase
+                            .from('job_applications')
+                            .select(`
+                                *,
+                                profiles:seeker_id (
+                                    full_name,
+                                    avatar_url,
+                                    title,
+                                    expected_salary,
+                                    iq
+                                )
+                            `)
+                            .in('job_id', jobIds)
+                            .order('created_at', { ascending: false })
+                            .limit(5);
 
-                    if (apps) {
-                        const mappedApps = apps.map(app => ({
-                            id: app.id,
-                            name: app.profiles?.full_name || 'Anonymous',
-                            photo: app.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${app.seeker_id}`,
-                            role: app.profiles?.title || 'Job Seeker',
-                            status: app.status || 'New',
-                            rate: app.profiles?.expected_salary || 'TBD',
-                            time: new Date(app.created_at).toLocaleDateString(),
-                            score: app.profiles?.iq ? Math.min(Math.round((app.profiles.iq / 160) * 100), 100) : 85,
-                        }));
-                        setRecentApplicants(mappedApps);
+                        if (apps) {
+                            const mappedApps = apps.map(app => ({
+                                id: app.id,
+                                name: app.profiles?.full_name || 'Anonymous',
+                                photo: app.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${app.seeker_id}`,
+                                role: app.profiles?.title || 'Job Seeker',
+                                status: app.status || 'New',
+                                rate: app.profiles?.expected_salary || 'TBD',
+                                time: new Date(app.created_at).toLocaleDateString(),
+                                score: app.profiles?.iq ? Math.min(Math.round((app.profiles.iq / 160) * 100), 100) : 85,
+                            }));
+                            setRecentApplicants(mappedApps);
+                        }
+                    } catch (appErr) {
+                        console.error("Applications table error in overview:", appErr);
                     }
                 }
             } catch (err) {
@@ -396,10 +397,10 @@ const EmployerJobPosts = () => {
     useEffect(() => {
         if (!id) return;
 
-        const fetchJobs = async () => {
+        const fetchJobsAndApps = async () => {
             setLoading(true);
             try {
-                // Fetch job posts
+                // 1. Fetch job posts for this employer
                 const { data: jobsData, error: jobsError } = await supabase
                     .from('job_posts')
                     .select('*')
@@ -408,39 +409,56 @@ const EmployerJobPosts = () => {
 
                 if (jobsError) throw jobsError;
 
-                // Fetch applicant counts
-                const { data: appsData, error: appsError } = await supabase
-                    .from('job_applications')
-                    .select('job_id, status');
-
-                if (appsError) throw appsError;
-
-                if (jobsData) {
-                    const mappedJobs = jobsData.map(job => {
-                        const jobApps = appsData?.filter(app => app.job_id === job.id) || [];
-                        const newApps = jobApps.filter(app => app.status === 'New').length;
-
-                        return {
-                            id: job.id,
-                            title: job.title,
-                            status: job.status === 'active' ? 'Live' : 'Paused',
-                            applicants: jobApps.length,
-                            newApplicants: newApps,
-                            views: (job.views || 0).toString(),
-                            postedDate: new Date(job.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-                            category: job.category
-                        };
-                    });
-                    setJobs(mappedJobs);
+                if (!jobsData || jobsData.length === 0) {
+                    setJobs([]);
+                    setLoading(false);
+                    return;
                 }
+
+                // 2. Fetch applications ONLY for these specific jobs
+                const jobIds = jobsData.map(j => j.id);
+                let appsData: any[] = [];
+
+                try {
+                    const { data: aData, error: appsError } = await supabase
+                        .from('job_applications')
+                        .select('job_id, status')
+                        .in('job_id', jobIds);
+
+                    if (!appsError && aData) {
+                        appsData = aData;
+                    }
+                } catch (appErr) {
+                    console.error("Error fetching applications (may not exist yet):", appErr);
+                    // Continue anyway, just show 0 applicants
+                }
+
+                // 3. Map and unify data
+                const mappedJobs = jobsData.map(job => {
+                    const jobApps = appsData.filter(app => app.job_id === job.id);
+                    const newApps = jobApps.filter(app => app.status === 'New').length;
+
+                    return {
+                        id: job.id,
+                        title: job.title,
+                        status: job.status === 'active' ? 'Live' : 'Paused',
+                        applicants: jobApps.length,
+                        newApplicants: newApps,
+                        views: (job.views || 0).toString(),
+                        postedDate: new Date(job.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+                        category: job.category
+                    };
+                });
+
+                setJobs(mappedJobs);
             } catch (err) {
-                console.error("Error fetching jobs and applicants:", err);
+                console.error("Error in EmployerJobPosts:", err);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchJobs();
+        fetchJobsAndApps();
     }, [id]);
 
     if (loading) {
@@ -596,7 +614,6 @@ const EmployerDashboard = () => {
                 <Route path="/jobs/:id" element={<JobDetails />} />
                 <Route path="/new-post" element={<CreateJobPost />} />
                 <Route path="/edit-post/:id" element={<EditJobPost />} />
-                <Route path="/applicants/:id" element={<ViewApplicants />} />
                 <Route path="/applicants/:id" element={<ViewApplicants />} />
                 <Route path="/applicants/review/:applicantId" element={<ReviewProfile />} />
                 <Route path="/account" element={<EmployerAccount />} />

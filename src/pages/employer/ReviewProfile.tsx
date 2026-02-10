@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { supabase } from '../../services/supabase';
 import {
     ChevronLeft,
     Mail,
@@ -58,14 +59,99 @@ const ReviewProfile = () => {
     const { applicantId } = useParams();
     const navigate = useNavigate();
     const [applicant, setApplicant] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Fallback to first mock if ID not found for demo
-        const data = mockApplicantsData[applicantId || ''] || mockApplicantsData['a1'];
-        setApplicant(data);
+        const fetchApplicantData = async () => {
+            if (!applicantId) return;
+            setLoading(true);
+            try {
+                // Fetch application with seeker profile and job details
+                const { data, error } = await supabase
+                    .from('job_applications')
+                    .select(`
+                        *,
+                        profiles:seeker_id (
+                            full_name,
+                            avatar_url,
+                            title,
+                            location,
+                            email,
+                            phone,
+                            experience_years,
+                            iq,
+                            english_proficiency,
+                            disc_scores,
+                            skills_list,
+                            bio,
+                            resume_url,
+                            expected_salary
+                        ),
+                        job_posts!inner (
+                            title
+                        )
+                    `)
+                    .eq('id', applicantId)
+                    .single();
+
+                if (error) throw error;
+
+                if (data) {
+                    const mapped = {
+                        id: data.id,
+                        name: data.profiles?.full_name || 'Anonymous',
+                        photo: data.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.seeker_id}`,
+                        role: data.profiles?.title || 'Job Seeker',
+                        location: data.profiles?.location || 'Remote',
+                        email: data.profiles?.email || 'N/A',
+                        phone: data.profiles?.phone || 'N/A',
+                        experience: data.profiles?.experience_years || 'N/A',
+                        status: data.status || 'New',
+                        bio: data.profiles?.bio || data.message || "No bio provided.",
+                        testScores: {
+                            iq: data.profiles?.iq || 0,
+                            english: data.profiles?.english_proficiency || 'N/A',
+                            disc: data.profiles?.disc_scores || { D: 0, I: 0, S: 0, C: 0 }
+                        },
+                        skills: data.profiles?.skills_list || [],
+                        resume_url: data.profiles?.resume_url || "#",
+                        application: {
+                            subject: data.subject || `Application for ${data.job_posts?.title}`,
+                            message: data.message || "No message provided."
+                        }
+                    };
+                    setApplicant(mapped);
+                } else {
+                    // Fallback to first mock if ID not found for demo
+                    const mockData = mockApplicantsData[applicantId || ''] || mockApplicantsData['a1'];
+                    setApplicant(mockData);
+                }
+            } catch (err) {
+                console.error("Error fetching applicant:", err);
+                const mockData = mockApplicantsData[applicantId || ''] || mockApplicantsData['a1'];
+                setApplicant(mockData);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchApplicantData();
     }, [applicantId]);
 
-    if (!applicant) return null;
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-20 min-h-[40vh]">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
+
+    if (!applicant) return (
+        <div className="text-center py-20">
+            <p className="text-slate-500 italic">Applicant profile not found.</p>
+            <button onClick={() => navigate(-1)} className="mt-4 text-primary font-bold">Go Back</button>
+        </div>
+    );
 
     return (
         <div className="space-y-10 pb-32">
