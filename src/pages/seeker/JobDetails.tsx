@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import {
     ChevronLeft,
     ChevronRight,
@@ -150,10 +150,13 @@ const JobApplicationModal = ({ isOpen, onClose, jobTitle, onApply }: { isOpen: b
 const JobDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const [job, setJob] = useState<any>(null);
     const [isApplied, setIsApplied] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [loading, setLoading] = useState(true); // Add loading state
+
+    const isDashboard = location.pathname.startsWith('/seeker') || location.pathname.startsWith('/employer');
 
     useEffect(() => {
         const fetchJob = async () => {
@@ -215,10 +218,10 @@ const JobDetails = () => {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50/30">
-            <Navbar forceSolid={true} />
+        <div className={isDashboard ? "" : "min-h-screen bg-slate-50/30"}>
+            {!isDashboard && <Navbar forceSolid={true} />}
 
-            <div className="container mx-auto max-w-[1400px] pt-32 px-6 pb-32 space-y-10">
+            <div className={`container mx-auto max-w-[1400px] px-6 pb-32 space-y-10 ${isDashboard ? "pt-4" : "pt-32"}`}>
                 <JobApplicationModal
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
