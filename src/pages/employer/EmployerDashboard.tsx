@@ -35,7 +35,9 @@ const EmployerOverview = () => {
     const navigate = useNavigate();
     const { id, subscription_plan } = useUser();
     const [jobCount, setJobCount] = useState(0);
-    const [applicantCount] = useState(0);
+    const [applicantCount, setApplicantCount] = useState(0);
+    const [recentApplicants, setRecentApplicants] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
     const planLimits: Record<string, number> = {
         'Free': 1,
@@ -50,17 +52,73 @@ const EmployerOverview = () => {
         if (!id) return;
 
         const fetchData = async () => {
-            // Fetch Job Postings count
-            const { count: jCount, error: jError } = await supabase
-                .from('job_posts')
-                .select('*', { count: 'exact', head: true })
-                .eq('employer_id', id)
-                .eq('status', 'active');
+            setLoading(true);
+            try {
+                // Fetch employer's job IDs
+                const { data: jobs } = await supabase
+                    .from('job_posts')
+                    .select('id')
+                    .eq('employer_id', id);
 
-            if (!jError) setJobCount(jCount || 0);
+                const jobIds = jobs?.map(j => j.id) || [];
 
-            // Fetch Applicants count (mocked for now until applications table ready, or placeholder)
-            // setApplicantCount(0); 
+                // Fetch Job Postings count
+                const { count: jCount } = await supabase
+                    .from('job_posts')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('employer_id', id)
+                    .eq('status', 'active');
+
+                if (jCount !== null) setJobCount(jCount);
+
+                if (jobIds.length > 0) {
+                    // Fetch total Applicants count
+                    const { count: aCount } = await supabase
+                        .from('job_applications')
+                        .select('*', { count: 'exact', head: true })
+                        .in('job_id', jobIds);
+
+                    if (aCount !== null) setApplicantCount(aCount);
+
+                    // Fetch Recent Applicants (last 5)
+                    const { data: apps } = await supabase
+                        .from('job_applications')
+                        .select(`
+                            *,
+                            profiles:seeker_id (
+                                full_name,
+                                avatar_url,
+                                title,
+                                expected_salary,
+                                iq
+                            ),
+                            job_posts!inner (
+                                title
+                            )
+                        `)
+                        .in('job_id', jobIds)
+                        .order('created_at', { ascending: false })
+                        .limit(5);
+
+                    if (apps) {
+                        const mappedApps = apps.map(app => ({
+                            id: app.id,
+                            name: app.profiles?.full_name || 'Anonymous',
+                            photo: app.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${app.seeker_id}`,
+                            role: app.profiles?.title || 'Job Seeker',
+                            status: app.status || 'New',
+                            rate: app.profiles?.expected_salary || 'TBD',
+                            time: new Date(app.created_at).toLocaleDateString(),
+                            score: app.profiles?.iq ? Math.min(Math.round((app.profiles.iq / 160) * 100), 100) : 85,
+                        }));
+                        setRecentApplicants(mappedApps);
+                    }
+                }
+            } catch (err) {
+                console.error("Error fetching overview data:", err);
+            } finally {
+                setLoading(false);
+            }
         };
 
         fetchData();
@@ -72,7 +130,15 @@ const EmployerOverview = () => {
         { label: 'Interviewed', value: '0', secondary: 'Candidates', icon: TrendingUp, color: 'text-violet-600 bg-violet-50', trend: 'Check messages' },
     ];
 
-    const recentApplicants: any[] = [];
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-20 min-h-[40vh]">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
+
+    const newAppsCount = recentApplicants.filter(a => a.status === 'New').length;
 
     return (
         <div className="space-y-10 pb-20">
@@ -183,7 +249,9 @@ const EmployerOverview = () => {
                     <div className="flex items-center justify-between px-4">
                         <div className="flex items-center gap-4">
                             <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Promising Talent</h3>
-                            <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase">7 New</div>
+                            {newAppsCount > 0 && (
+                                <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase">{newAppsCount} New</div>
+                            )}
                         </div>
                         <button
                             onClick={() => navigate('/employer/applicants/all')}
