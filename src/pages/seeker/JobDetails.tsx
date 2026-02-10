@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../services/supabase';
+import Navbar from '../../components/Navbar';
 // Mock data removed in favor of Supabase
 
 const JobApplicationModal = ({ isOpen, onClose, jobTitle, onApply }: { isOpen: boolean; onClose: () => void; jobTitle: string; onApply: () => void }) => {
@@ -144,6 +145,8 @@ const JobApplicationModal = ({ isOpen, onClose, jobTitle, onApply }: { isOpen: b
     );
 };
 
+
+
 const JobDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -212,195 +215,199 @@ const JobDetails = () => {
     }
 
     return (
-        <div className="space-y-10 pb-32">
-            <JobApplicationModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                jobTitle={job.title}
-                onApply={() => setIsApplied(true)}
-            />
-            {/* Navigation Header */}
-            <div className="flex items-center justify-between px-4">
-                <button
-                    onClick={() => navigate('/seeker/jobs')}
-                    className="flex items-center gap-2 p-3 bg-white border border-slate-100 rounded-2xl text-slate-400 hover:text-primary hover:border-primary transition-all shadow-sm group"
-                >
-                    <ChevronLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-                    <span className="text-[10px] font-black uppercase tracking-widest pr-2">Back to Listings</span>
-                </button>
-                <div className="flex gap-3">
-                    <button className="p-3 bg-white border border-slate-100 rounded-2xl text-slate-300 hover:text-primary transition-all shadow-sm">
-                        <Share2 size={20} />
-                    </button>
-                    <button className="p-3 bg-white border border-slate-100 rounded-2xl text-slate-300 hover:text-rose-500 transition-all shadow-sm">
-                        <Bookmark size={20} />
-                    </button>
-                </div>
-            </div>
+        <div className="min-h-screen bg-slate-50/30">
+            <Navbar forceSolid={true} />
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                {/* Main Content */}
-                <div className="lg:col-span-2 space-y-10">
-                    {/* Primary Job Card */}
-                    <div className="bg-white rounded-[56px] border-2 border-slate-100 shadow-xl shadow-slate-200/20 overflow-hidden relative group">
-                        <div className="absolute top-0 right-0 p-12 opacity-[0.03] rotate-12 group-hover:rotate-0 transition-transform duration-1000">
-                            <Briefcase size={200} />
+            <div className="container mx-auto max-w-[1400px] pt-32 px-6 pb-32 space-y-10">
+                <JobApplicationModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    jobTitle={job.title}
+                    onApply={() => setIsApplied(true)}
+                />
+                {/* Navigation Header */}
+                <div className="flex items-center justify-between px-4">
+                    <button
+                        onClick={() => navigate('/seeker/jobs')}
+                        className="flex items-center gap-2 p-3 bg-white border border-slate-100 rounded-2xl text-slate-400 hover:text-primary hover:border-primary transition-all shadow-sm group"
+                    >
+                        <ChevronLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+                        <span className="text-[10px] font-black uppercase tracking-widest pr-2">Back to Listings</span>
+                    </button>
+                    <div className="flex gap-3">
+                        <button className="p-3 bg-white border border-slate-100 rounded-2xl text-slate-300 hover:text-primary transition-all shadow-sm">
+                            <Share2 size={20} />
+                        </button>
+                        <button className="p-3 bg-white border border-slate-100 rounded-2xl text-slate-300 hover:text-rose-500 transition-all shadow-sm">
+                            <Bookmark size={20} />
+                        </button>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                    {/* Main Content */}
+                    <div className="lg:col-span-2 space-y-10">
+                        {/* Primary Job Card */}
+                        <div className="bg-white rounded-[56px] border-2 border-slate-100 shadow-xl shadow-slate-200/20 overflow-hidden relative group">
+                            <div className="absolute top-0 right-0 p-12 opacity-[0.03] rotate-12 group-hover:rotate-0 transition-transform duration-1000">
+                                <Briefcase size={200} />
+                            </div>
+
+                            <div className="p-12 md:p-16 relative z-10">
+                                <div className="flex flex-wrap items-center gap-3 mb-8">
+                                    <span className="px-4 py-1.5 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                                        <ShieldCheck size={14} /> Verified Premium
+                                    </span>
+                                    <span className="px-4 py-1.5 bg-slate-50 border border-slate-100 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                        {job.type}
+                                    </span>
+                                </div>
+
+                                <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter mb-6 leading-tight">
+                                    {job.title}
+                                </h1>
+
+                                <div className="flex flex-wrap items-center gap-x-8 gap-y-4 mb-10 pb-10 border-b border-slate-50">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 bg-slate-50 border-2 border-white rounded-2xl flex items-center justify-center text-primary shadow-sm overflow-hidden">
+                                            {job.companyLogo ? (
+                                                <img src={job.companyLogo} alt={job.company} className="w-full h-full object-contain" />
+                                            ) : (
+                                                <Building2 size={24} />
+                                            )}
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Company</p>
+                                            <p className="text-sm font-black text-slate-900">{job.company}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-primary border border-slate-100">
+                                            <MapPin size={24} />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Location</p>
+                                            <p className="text-sm font-black text-slate-900">{job.location}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-primary border border-slate-100">
+                                            <Calendar size={24} />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Posted</p>
+                                            <p className="text-sm font-black text-slate-900">{job.postedDate}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-12">
+                                    <section>
+                                        <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.3em] mb-6 flex items-center gap-3">
+                                            <Zap size={16} className="text-primary" /> Role Overview
+                                        </h3>
+                                        <p className="text-lg text-slate-600 font-medium leading-relaxed whitespace-pre-line">
+                                            {job.fullDescription}
+                                        </p>
+                                    </section>
+
+                                    <section>
+                                        <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.3em] mb-6">Required Expertise</h3>
+                                        <div className="flex flex-wrap gap-3">
+                                            {job.skills.map((skill: string) => (
+                                                <div key={skill} className="px-6 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-3">
+                                                    <CheckCircle2 size={14} className="text-emerald-500" />
+                                                    {skill}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </section>
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="p-12 md:p-16 relative z-10">
-                            <div className="flex flex-wrap items-center gap-3 mb-8">
-                                <span className="px-4 py-1.5 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
-                                    <ShieldCheck size={14} /> Verified Premium
-                                </span>
-                                <span className="px-4 py-1.5 bg-slate-50 border border-slate-100 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                    {job.type}
-                                </span>
-                            </div>
-
-                            <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter mb-6 leading-tight">
-                                {job.title}
-                            </h1>
-
-                            <div className="flex flex-wrap items-center gap-x-8 gap-y-4 mb-10 pb-10 border-b border-slate-50">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 bg-slate-50 border-2 border-white rounded-2xl flex items-center justify-center text-primary shadow-sm overflow-hidden">
-                                        {job.companyLogo ? (
-                                            <img src={job.companyLogo} alt={job.company} className="w-full h-full object-contain" />
-                                        ) : (
-                                            <Building2 size={24} />
-                                        )}
+                        {/* Company Card */}
+                        <div className="bg-slate-900 p-12 rounded-[56px] text-white shadow-2xl relative overflow-hidden group">
+                            <div className="absolute inset-0 bg-primary/5 opacity-50" />
+                            <div className="relative z-10">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-8">
+                                    <div className="flex items-center gap-6">
+                                        <div className="w-20 h-20 bg-white/5 border border-white/10 rounded-[28px] flex items-center justify-center overflow-hidden">
+                                            {job.companyLogo ? (
+                                                <img src={job.companyLogo} alt={job.company} className="w-full h-full object-contain" />
+                                            ) : (
+                                                <Building2 size={32} className="text-primary" />
+                                            )}
+                                        </div>
+                                        <div>
+                                            <h2 className="text-3xl font-black tracking-tighter mb-1">About {job.company}</h2>
+                                            <p className="text-primary text-[10px] font-black uppercase tracking-widest">Verified Employer Account</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Company</p>
-                                        <p className="text-sm font-black text-slate-900">{job.company}</p>
-                                    </div>
+                                    <Link
+                                        to={`/company/${job.employerId}`}
+                                        className="px-8 py-4 bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center gap-3 shadow-2xl"
+                                    >
+                                        Full Profile <ChevronRight size={14} />
+                                    </Link>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-primary border border-slate-100">
-                                        <MapPin size={24} />
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Location</p>
-                                        <p className="text-sm font-black text-slate-900">{job.location}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-primary border border-slate-100">
-                                        <Calendar size={24} />
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Posted</p>
-                                        <p className="text-sm font-black text-slate-900">{job.postedDate}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-12">
-                                <section>
-                                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.3em] mb-6 flex items-center gap-3">
-                                        <Zap size={16} className="text-primary" /> Role Overview
-                                    </h3>
-                                    <p className="text-lg text-slate-600 font-medium leading-relaxed whitespace-pre-line">
-                                        {job.fullDescription}
-                                    </p>
-                                </section>
-
-                                <section>
-                                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.3em] mb-6">Required Expertise</h3>
-                                    <div className="flex flex-wrap gap-3">
-                                        {job.skills.map((skill: string) => (
-                                            <div key={skill} className="px-6 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-3">
-                                                <CheckCircle2 size={14} className="text-emerald-500" />
-                                                {skill}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </section>
+                                <p className="text-lg text-white/50 font-medium leading-relaxed max-w-2xl">
+                                    {job.companyInfo} Visit the full company profile to learn more about their culture, perks, and open positions.
+                                </p>
                             </div>
                         </div>
                     </div>
 
-                    {/* Company Card */}
-                    <div className="bg-slate-900 p-12 rounded-[56px] text-white shadow-2xl relative overflow-hidden group">
-                        <div className="absolute inset-0 bg-primary/5 opacity-50" />
-                        <div className="relative z-10">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-8">
-                                <div className="flex items-center gap-6">
-                                    <div className="w-20 h-20 bg-white/5 border border-white/10 rounded-[28px] flex items-center justify-center overflow-hidden">
-                                        {job.companyLogo ? (
-                                            <img src={job.companyLogo} alt={job.company} className="w-full h-full object-contain" />
-                                        ) : (
-                                            <Building2 size={32} className="text-primary" />
-                                        )}
-                                    </div>
-                                    <div>
-                                        <h2 className="text-3xl font-black tracking-tighter mb-1">About {job.company}</h2>
-                                        <p className="text-primary text-[10px] font-black uppercase tracking-widest">Verified Employer Account</p>
-                                    </div>
+                    {/* Sidebar Sticky Actions */}
+                    <div className="lg:col-span-1">
+                        <div className="sticky top-32 space-y-8">
+                            {/* Compensation Card */}
+                            <div className="bg-white p-10 rounded-[48px] border-2 border-slate-100 shadow-sm text-center">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Budgeted Compensation</p>
+                                <div className="flex items-center justify-center gap-2 mb-2">
+                                    <DollarSign size={24} className="text-primary" />
+                                    <span className="text-4xl font-black text-slate-900 tracking-tighter">{job.salary?.split(' / ')[0] || 'TBD'}</span>
                                 </div>
-                                <Link
-                                    to={`/company/${job.employerId}`}
-                                    className="px-8 py-4 bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center gap-3 shadow-2xl"
-                                >
-                                    Full Profile <ChevronRight size={14} />
-                                </Link>
-                            </div>
-                            <p className="text-lg text-white/50 font-medium leading-relaxed max-w-2xl">
-                                {job.companyInfo} Visit the full company profile to learn more about their culture, perks, and open positions.
-                            </p>
-                        </div>
-                    </div>
-                </div>
+                                <p className="text-sm font-bold text-slate-400">/{job.salary?.split(' / ')[1] || 'month'}</p>
 
-                {/* Sidebar Sticky Actions */}
-                <div className="lg:col-span-1">
-                    <div className="sticky top-32 space-y-8">
-                        {/* Compensation Card */}
-                        <div className="bg-white p-10 rounded-[48px] border-2 border-slate-100 shadow-sm text-center">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Budgeted Compensation</p>
-                            <div className="flex items-center justify-center gap-2 mb-2">
-                                <DollarSign size={24} className="text-primary" />
-                                <span className="text-4xl font-black text-slate-900 tracking-tighter">{job.salary?.split(' / ')[0] || 'TBD'}</span>
-                            </div>
-                            <p className="text-sm font-bold text-slate-400">/{job.salary?.split(' / ')[1] || 'month'}</p>
+                                <div className="mt-10 space-y-4">
+                                    <button
+                                        onClick={() => !isApplied && setIsModalOpen(true)}
+                                        className={`w-full py-6 rounded-3xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-3 group relative overflow-hidden ${isApplied ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-primary text-white shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95'}`}
+                                    >
+                                        {isApplied ? (
+                                            <>
+                                                <CheckCircle2 size={20} /> Application Sent
+                                            </>
+                                        ) : (
+                                            <>
+                                                Apply To This Post <Zap size={18} className="group-hover:scale-110 transition-transform" />
+                                            </>
+                                        )}
+                                    </button>
+                                    <button className="w-full py-5 border-2 border-slate-100 rounded-3xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:text-rose-500 hover:border-rose-100 transition-all flex items-center justify-center gap-2">
+                                        <Bookmark size={16} /> Save for Later
+                                    </button>
+                                </div>
 
-                            <div className="mt-10 space-y-4">
-                                <button
-                                    onClick={() => !isApplied && setIsModalOpen(true)}
-                                    className={`w-full py-6 rounded-3xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-3 group relative overflow-hidden ${isApplied ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-primary text-white shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95'}`}
-                                >
-                                    {isApplied ? (
-                                        <>
-                                            <CheckCircle2 size={20} /> Application Sent
-                                        </>
-                                    ) : (
-                                        <>
-                                            Apply To This Post <Zap size={18} className="group-hover:scale-110 transition-transform" />
-                                        </>
-                                    )}
-                                </button>
-                                <button className="w-full py-5 border-2 border-slate-100 rounded-3xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:text-rose-500 hover:border-rose-100 transition-all flex items-center justify-center gap-2">
-                                    <Bookmark size={16} /> Save for Later
+                                <p className="mt-8 text-[10px] font-bold text-slate-300 italic leading-relaxed">
+                                    Your full profile and assessment data will be included in the application.
+                                </p>
+                            </div>
+
+                            {/* Direct Support */}
+                            <div className="bg-primary/5 p-8 rounded-[40px] border border-primary/10">
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="p-2.5 bg-primary/10 rounded-xl text-primary font-black">?</div>
+                                    <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Need Assistance?</h4>
+                                </div>
+                                <p className="text-[11px] font-bold text-slate-500 leading-relaxed mb-6">
+                                    Have questions about this specific role? Our talent concierges are available to help.
+                                </p>
+                                <button className="w-full py-3 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase text-primary hover:bg-white/50 transition-all">
+                                    Chat With Support
                                 </button>
                             </div>
-
-                            <p className="mt-8 text-[10px] font-bold text-slate-300 italic leading-relaxed">
-                                Your full profile and assessment data will be included in the application.
-                            </p>
-                        </div>
-
-                        {/* Direct Support */}
-                        <div className="bg-primary/5 p-8 rounded-[40px] border border-primary/10">
-                            <div className="flex items-center gap-4 mb-6">
-                                <div className="p-2.5 bg-primary/10 rounded-xl text-primary font-black">?</div>
-                                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Need Assistance?</h4>
-                            </div>
-                            <p className="text-[11px] font-bold text-slate-500 leading-relaxed mb-6">
-                                Have questions about this specific role? Our talent concierges are available to help.
-                            </p>
-                            <button className="w-full py-3 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase text-primary hover:bg-white/50 transition-all">
-                                Chat With Support
-                            </button>
                         </div>
                     </div>
                 </div>
