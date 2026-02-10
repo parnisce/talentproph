@@ -17,7 +17,8 @@ import {
     Upload,
     GraduationCap,
     ExternalLink,
-    Eye
+    Eye,
+    Calendar
 } from 'lucide-react';
 import CalendarView from '../../components/CalendarView';
 import { useUser } from '../../context/UserContext';
@@ -29,7 +30,7 @@ import SeekerEditProfile from './SeekerEditProfile';
 import SeekerFindJobs from './SeekerFindJobs';
 import JobDetails from './JobDetails';
 
-const SeekerOverview = () => {
+const SeekerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
     const { userPhoto, updateUserProfile, userName, title, website, salary, education, skills, resume_url } = useUser();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -255,22 +256,39 @@ const SeekerOverview = () => {
                     </div>
                 </div>
 
-                {/* Timeproof Widget */}
+                {/* Interviews Widget */}
                 <div className="bg-white border-2 border-slate-100 rounded-[40px] p-8 shadow-sm hover:shadow-xl hover:shadow-slate-200/20 transition-all group">
-                    <div className="flex justify-between items-center mb-10 pb-6 border-b border-slate-50">
+                    <div className="flex justify-between items-center mb-8 pb-6 border-b border-slate-50">
                         <div className="flex items-center gap-4">
                             <div className="p-3 bg-violet-50 rounded-2xl text-violet-500 group-hover:scale-110 transition-transform">
-                                <Clock size={22} />
+                                <Calendar size={22} />
                             </div>
-                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.3em]">Time Tracking Status</h3>
+                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.3em]">Job Interviews</h3>
                         </div>
-                        <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">Open Tracker</button>
+                        <Link to="/seeker/calendar" className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline decoration-transparent">View Calendar</Link>
                     </div>
-                    <div className="py-12 flex flex-col items-center justify-center text-center">
-                        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6 text-slate-200">
-                            <Clock size={32} />
-                        </div>
-                        <p className="text-slate-400 font-bold text-sm tracking-tight">Track your productivity with Timeproof.<br /><span className="text-primary font-black uppercase text-[10px] mt-2 block tracking-widest cursor-pointer hover:underline">What is Timeproof?</span></p>
+                    <div className="space-y-4 max-h-[280px] overflow-y-auto pr-2 custom-scrollbar">
+                        {interviews.length > 0 ? (
+                            interviews.slice(0, 3).map((interview) => (
+                                <div key={interview.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:border-primary/20 transition-all">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <h4 className="text-sm font-black text-slate-900 truncate pr-4">{interview.title}</h4>
+                                        <span className="text-[9px] font-black text-white px-2 py-0.5 bg-primary rounded-full uppercase tracking-tighter shrink-0">{interview.type}</span>
+                                    </div>
+                                    <div className="flex items-center gap-3 text-slate-500 font-bold text-[11px]">
+                                        <span className="flex items-center gap-1"><Clock size={12} /> {interview.time}</span>
+                                        <span className="flex items-center gap-1"><Calendar size={12} /> {new Date(interview.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="py-8 flex flex-col items-center justify-center text-center">
+                                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-200">
+                                    <Calendar size={28} />
+                                </div>
+                                <p className="text-slate-400 font-bold text-sm tracking-tight italic">No interviews scheduled yet.</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -472,7 +490,7 @@ const SeekerDashboard = () => {
     return (
         <DashboardLayout role="seeker">
             <Routes>
-                <Route path="/" element={<SeekerOverview />} />
+                <Route path="/" element={<SeekerOverview interviews={interviews} />} />
                 <Route path="/jobs" element={<SeekerFindJobs />} />
                 <Route path="/jobs/:id" element={<JobDetails />} />
                 <Route path="/profile" element={<SeekerProfile />} />
