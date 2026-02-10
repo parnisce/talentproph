@@ -180,6 +180,8 @@ const ReviewProfile = () => {
     const [applicant, setApplicant] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+    const [isAlreadyScheduled, setIsAlreadyScheduled] = useState(false);
+    const [activeInterview, setActiveInterview] = useState<any>(null);
 
     useEffect(() => {
         const fetchApplicantData = async () => {
@@ -241,14 +243,34 @@ const ReviewProfile = () => {
                         },
                         skills: data.profiles?.skills_list || [],
                         resume_url: data.profiles?.resume_url || "#",
-                        history: [], // Placeholder for real history if table exists
-                        portfolio: [], // Placeholder
+                        history: [],
+                        portfolio: [],
                         application: {
                             subject: data.subject || `Application for ${data.job_posts?.title}`,
                             message: data.message || "No message provided."
                         }
                     };
                     setApplicant(mapped);
+
+                    // 2. Fetch Interview Status
+                    const { data: interviewData } = await supabase
+                        .from('interviews')
+                        .select('*')
+                        .eq('application_id', applicantId)
+                        .order('scheduled_at', { ascending: false })
+                        .limit(1);
+
+                    if (interviewData && interviewData.length > 0) {
+                        const latest = interviewData[0];
+                        const isFuture = new Date(latest.scheduled_at) > new Date();
+                        if (isFuture) {
+                            setIsAlreadyScheduled(true);
+                            setActiveInterview(latest);
+                        } else {
+                            setIsAlreadyScheduled(false);
+                            setActiveInterview(null);
+                        }
+                    }
                 } else {
                     const mockData = mockApplicantsData['a1'];
                     setApplicant(mockData);
@@ -292,6 +314,8 @@ const ReviewProfile = () => {
 
             // 3. Update Local State
             setApplicant((prev: any) => ({ ...prev, status: 'Interviewed' }));
+            setIsAlreadyScheduled(true);
+            setActiveInterview(details);
             setIsScheduleModalOpen(false);
             alert("Interview successfully scheduled!");
         } catch (err: any) {
@@ -349,10 +373,18 @@ const ReviewProfile = () => {
                         <XCircle size={22} />
                     </button>
                     <button
-                        onClick={() => setIsScheduleModalOpen(true)}
-                        className="px-8 py-4 bg-slate-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-slate-900/10 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3"
+                        onClick={() => !isAlreadyScheduled && setIsScheduleModalOpen(true)}
+                        title={isAlreadyScheduled && activeInterview ? `Next interview: ${new Date(activeInterview.scheduled_at).toLocaleString()}` : ''}
+                        className={`px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl transition-all flex items-center gap-3 ${isAlreadyScheduled
+                            ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
+                            : 'bg-slate-900 text-white shadow-slate-900/10 hover:scale-[1.02] active:scale-95'
+                            }`}
                     >
-                        <Calendar size={18} /> Schedule Interview
+                        {isAlreadyScheduled ? (
+                            <><CheckCircle2 size={18} className="text-emerald-500" /> Already Scheduled</>
+                        ) : (
+                            <><Calendar size={18} /> Schedule Interview</>
+                        )}
                     </button>
                     <button className="px-8 py-4 bg-primary text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3">
                         <CheckCircle2 size={18} /> Shortlist Candidate
