@@ -327,7 +327,10 @@ const EmployerAccount = () => {
                                 <>
                                     <div className="flex items-center justify-between">
                                         <h3 className="text-2xl font-black text-slate-900 tracking-tighter">Company Profile</h3>
-                                        <button className="text-slate-400 text-xs font-black uppercase tracking-widest hover:text-primary transition-colors">
+                                        <button
+                                            onClick={() => window.open(`/company/${userContext.id}`, '_blank')}
+                                            className="text-slate-400 text-xs font-black uppercase tracking-widest hover:text-primary transition-colors"
+                                        >
                                             Preview Public Page
                                         </button>
                                     </div>

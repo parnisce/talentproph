@@ -17,6 +17,7 @@ interface Job {
     description: string;
     skills: string[];
     logo?: string;
+    employerId?: string;
 }
 
 // Mock data removed in favor of Supabase
@@ -49,6 +50,8 @@ const FindJobs = () => {
                     location: job.location,
                     description: job.preview,
                     skills: job.skills || [],
+                    employerId: job.employer_id,
+                    logo: job.company_logo
                 }));
                 setJobs(mappedJobs);
             }
@@ -71,6 +74,13 @@ const FindJobs = () => {
 
     const handleJobClick = (jobId: string) => {
         navigate('/login', { state: { redirectTo: `/jobs/${jobId}`, message: 'Please log in to view full job details and apply.' } });
+    };
+
+    const handleCompanyClick = (e: React.MouseEvent, employerId: string) => {
+        e.stopPropagation();
+        if (employerId) {
+            navigate(`/company/${employerId}`);
+        }
     };
 
     return (
@@ -228,8 +238,15 @@ const FindJobs = () => {
                                     className="bg-white p-8 md:p-10 rounded-[40px] border border-slate-100 hover:border-primary hover:bg-slate-50/30 transition-all cursor-pointer group relative overflow-hidden flex flex-col md:flex-row gap-8 items-start shadow-sm hover:shadow-2xl hover:shadow-slate-200/40"
                                 >
                                     {/* Company Identity */}
-                                    <div className="w-20 h-20 bg-slate-50 border border-slate-100 rounded-[28px] shrink-0 flex items-center justify-center p-5 relative group-hover:bg-primary/5 transition-colors duration-500">
-                                        <Building2 className="text-slate-400 group-hover:text-primary transition-colors" size={32} strokeWidth={1.5} />
+                                    <div
+                                        onClick={(e) => handleCompanyClick(e, job.employerId || '')}
+                                        className="w-20 h-20 bg-slate-50 border border-slate-100 rounded-[28px] shrink-0 flex items-center justify-center p-5 relative group-hover:bg-primary/5 transition-colors duration-500 overflow-hidden"
+                                    >
+                                        {job.logo ? (
+                                            <img src={job.logo} alt={job.company} className="w-full h-full object-contain" />
+                                        ) : (
+                                            <Building2 className="text-slate-400 group-hover:text-primary transition-colors" size={32} strokeWidth={1.5} />
+                                        )}
                                     </div>
 
                                     <div className="flex-grow pt-1">
@@ -243,7 +260,10 @@ const FindJobs = () => {
                                                     {job.title}
                                                 </h3>
                                                 <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-                                                    <span className="text-[11px] font-bold text-slate-500 flex items-center gap-2">
+                                                    <span
+                                                        onClick={(e) => handleCompanyClick(e, job.employerId || '')}
+                                                        className="text-[11px] font-bold text-slate-500 flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"
+                                                    >
                                                         <Globe size={14} className="text-primary/60" /> {job.company}
                                                     </span>
                                                     <span className="text-[11px] font-bold text-slate-400 flex items-center gap-2">

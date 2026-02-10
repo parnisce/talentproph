@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
     ChevronLeft,
+    ChevronRight,
     Building2,
     DollarSign,
     ShieldCheck,
@@ -186,7 +187,9 @@ const JobDetails = () => {
                 fullDescription: data.description,
                 skills: data.skills || [],
                 verified: true,
-                companyInfo: "Verified premium employer on TalentPro PH."
+                companyInfo: "Verified premium employer on TalentPro PH.",
+                employerId: data.employer_id,
+                companyLogo: data.company_logo
             });
             setLoading(false); // Stop loading after successful fetch
         };
@@ -260,8 +263,12 @@ const JobDetails = () => {
 
                             <div className="flex flex-wrap items-center gap-x-8 gap-y-4 mb-10 pb-10 border-b border-slate-50">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-primary border border-slate-100">
-                                        <Building2 size={24} />
+                                    <div className="w-12 h-12 bg-slate-50 border-2 border-white rounded-2xl flex items-center justify-center text-primary shadow-sm overflow-hidden">
+                                        {job.companyLogo ? (
+                                            <img src={job.companyLogo} alt={job.company} className="w-full h-full object-contain" />
+                                        ) : (
+                                            <Building2 size={24} />
+                                        )}
                                     </div>
                                     <div>
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Company</p>
@@ -317,17 +324,29 @@ const JobDetails = () => {
                     <div className="bg-slate-900 p-12 rounded-[56px] text-white shadow-2xl relative overflow-hidden group">
                         <div className="absolute inset-0 bg-primary/5 opacity-50" />
                         <div className="relative z-10">
-                            <div className="flex items-center gap-6 mb-8">
-                                <div className="w-20 h-20 bg-white/5 border border-white/10 rounded-[28px] flex items-center justify-center">
-                                    <Building2 size={32} className="text-primary" />
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-8">
+                                <div className="flex items-center gap-6">
+                                    <div className="w-20 h-20 bg-white/5 border border-white/10 rounded-[28px] flex items-center justify-center overflow-hidden">
+                                        {job.companyLogo ? (
+                                            <img src={job.companyLogo} alt={job.company} className="w-full h-full object-contain" />
+                                        ) : (
+                                            <Building2 size={32} className="text-primary" />
+                                        )}
+                                    </div>
+                                    <div>
+                                        <h2 className="text-3xl font-black tracking-tighter mb-1">About {job.company}</h2>
+                                        <p className="text-primary text-[10px] font-black uppercase tracking-widest">Verified Employer Account</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h2 className="text-3xl font-black tracking-tighter mb-1">About {job.company}</h2>
-                                    <p className="text-primary text-[10px] font-black uppercase tracking-widest">Verified Employer Since 2022</p>
-                                </div>
+                                <Link
+                                    to={`/company/${job.employerId}`}
+                                    className="px-8 py-4 bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center gap-3 shadow-2xl"
+                                >
+                                    Full Profile <ChevronRight size={14} />
+                                </Link>
                             </div>
                             <p className="text-lg text-white/50 font-medium leading-relaxed max-w-2xl">
-                                {job.companyInfo}
+                                {job.companyInfo} Visit the full company profile to learn more about their culture, perks, and open positions.
                             </p>
                         </div>
                     </div>
