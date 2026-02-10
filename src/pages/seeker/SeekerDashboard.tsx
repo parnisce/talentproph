@@ -30,7 +30,7 @@ import SeekerEditProfile from './SeekerEditProfile';
 import SeekerFindJobs from './SeekerFindJobs';
 import JobDetails from './JobDetails';
 
-const SeekerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
+const SeekerOverview = ({ interviews = [], employers = [] }: { interviews?: any[], employers?: any[] }) => {
     const { userPhoto, updateUserProfile, userName, title, website, salary, education, skills, resume_url } = useUser();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -303,20 +303,30 @@ const SeekerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
                         </div>
                         <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">View History</button>
                     </div>
-                    <div className="space-y-4">
-                        <div className="p-5 rounded-2xl border border-slate-100 hover:border-primary/20 hover:bg-slate-50/50 transition-all flex items-center justify-between group/item">
-                            <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center font-black text-slate-400">GH</div>
-                                <div>
-                                    <p className="text-sm font-black text-slate-900">Green Horizon Inc.</p>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Active Relationship</p>
+                    <div className="space-y-4 max-h-[280px] overflow-y-auto pr-2 custom-scrollbar">
+                        {employers.length > 0 ? (
+                            employers.map((emp) => (
+                                <div key={emp.id} className="p-5 rounded-2xl border border-slate-100 hover:border-primary/20 hover:bg-slate-50/50 transition-all flex items-center justify-between group/item">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center font-black text-emerald-500">
+                                            {emp.company.substring(0, 2).toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-black text-slate-900">{emp.company}</p>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{emp.role}</p>
+                                        </div>
+                                    </div>
+                                    <ChevronRight size={18} className="text-slate-200 group-hover/item:text-primary transition-colors" />
                                 </div>
+                            ))
+                        ) : (
+                            <div className="py-8 flex flex-col items-center justify-center text-center">
+                                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-200">
+                                    <Users size={28} />
+                                </div>
+                                <p className="text-slate-400 font-bold text-sm tracking-tight italic">No active employers yet.</p>
                             </div>
-                            <ChevronRight size={18} className="text-slate-200 group-hover/item:text-primary transition-colors" />
-                        </div>
-                        <div className="p-5 flex items-center justify-center border border-dashed border-slate-200 rounded-2xl text-slate-300 text-[10px] font-black uppercase tracking-widest">
-                            No other active employers
-                        </div>
+                        )}
                     </div>
                 </div>
 
@@ -446,6 +456,7 @@ const SeekerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
 const SeekerDashboard = () => {
     const { id: seekerId } = useUser();
     const [interviews, setInterviews] = useState<any[]>([]);
+    const [employers, setEmployers] = useState<any[]>([]);
 
     useEffect(() => {
         const fetchInterviews = async () => {
@@ -484,13 +495,44 @@ const SeekerDashboard = () => {
             }
         };
 
+        const fetchEmployers = async () => {
+            if (!seekerId) return;
+            try {
+                const { data, error } = await supabase
+                    .from('job_applications')
+                    .select(`
+                        id,
+                        job_posts (
+                            title,
+                            company_name
+                        )
+                    `)
+                    .eq('seeker_id', seekerId)
+                    .eq('status', 'Hired');
+
+                if (error) throw error;
+
+                if (data) {
+                    const mapped = data.map((app: any) => ({
+                        id: app.id,
+                        company: app.job_posts?.company_name || 'Unknown Company',
+                        role: app.job_posts?.title || 'Team Member'
+                    }));
+                    setEmployers(mapped);
+                }
+            } catch (err) {
+                console.error("Error fetching employers:", err);
+            }
+        };
+
         fetchInterviews();
+        fetchEmployers();
     }, [seekerId]);
 
     return (
         <DashboardLayout role="seeker">
             <Routes>
-                <Route path="/" element={<SeekerOverview interviews={interviews} />} />
+                <Route path="/" element={<SeekerOverview interviews={interviews} employers={employers} />} />
                 <Route path="/jobs" element={<SeekerFindJobs />} />
                 <Route path="/jobs/:id" element={<JobDetails />} />
                 <Route path="/profile" element={<SeekerProfile />} />
