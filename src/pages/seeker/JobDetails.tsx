@@ -19,17 +19,55 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../services/supabase';
 import Navbar from '../../components/Navbar';
+import { useUser } from '../../context/UserContext';
 
-const JobApplicationModal = ({ isOpen, onClose, jobTitle, onApply }: { isOpen: boolean; onClose: () => void; jobTitle: string; onApply: () => void }) => {
+const JobApplicationModal = ({ isOpen, onClose, jobTitle, jobId, onApply }: { isOpen: boolean; onClose: () => void; jobTitle: string; jobId: string; onApply: () => void }) => {
+    const { id: seekerId } = useUser();
     const [subject, setSubject] = useState('');
+    const [message, setMessage] = useState('');
     const [points, setPoints] = useState('3');
     const [contactInfo, setContactInfo] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
             setSubject(`Application for ${jobTitle}`);
         }
     }, [isOpen, jobTitle]);
+
+    const handleApply = async () => {
+        if (!seekerId) {
+            alert("Please login as a job seeker to apply.");
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const { error } = await supabase
+                .from('job_applications')
+                .insert([
+                    {
+                        job_id: jobId,
+                        seeker_id: seekerId,
+                        subject: subject,
+                        message: message,
+                        contact_info: contactInfo,
+                        points_used: parseInt(points) || 0,
+                        status: 'New'
+                    }
+                ]);
+
+            if (error) throw error;
+
+            onApply();
+            onClose();
+        } catch (err: any) {
+            console.error("Error applying for job:", err);
+            alert("Failed to submit application: " + err.message);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     return (
         <AnimatePresence>
@@ -83,6 +121,8 @@ const JobApplicationModal = ({ isOpen, onClose, jobTitle, onApply }: { isOpen: b
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">MESSAGE</label>
                                     <textarea
                                         rows={6}
+                                        value={message}
+                                        onChange={(e) => setMessage(e.target.value)}
                                         placeholder="Write your message here..."
                                         className="w-full px-6 py-6 bg-slate-50 border border-slate-100 rounded-[32px] text-sm font-medium leading-relaxed focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all resize-none"
                                     />
@@ -129,10 +169,11 @@ const JobApplicationModal = ({ isOpen, onClose, jobTitle, onApply }: { isOpen: b
                         {/* Modal Footer */}
                         <div className="p-10 pt-4 bg-white">
                             <button
-                                onClick={() => { onApply(); onClose(); }}
-                                className="px-10 py-5 bg-[#78B943] hover:bg-[#6AA43A] text-white rounded-full font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-500/10 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 group"
+                                onClick={handleApply}
+                                disabled={isSubmitting}
+                                className="px-10 py-5 bg-[#78B943] hover:bg-[#6AA43A] text-white rounded-full font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-500/10 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 group disabled:opacity-50"
                             >
-                                <Mail size={18} /> SEND EMAIL
+                                <Mail size={18} /> {isSubmitting ? 'SENDING...' : 'SEND EMAIL'}
                             </button>
                             <p className="mt-8 text-[11px] text-slate-500 font-medium">
                                 If you want to send a file, <span className="text-primary hover:underline cursor-pointer">learn how here.</span>
@@ -196,6 +237,17 @@ const JobDetails = () => {
                 companyLogo: data.company_logo
             });
             setLoading(false); // Stop loading after successful fetch
+
+            // Increment views
+            try {
+                const currentViews = data.views || 0;
+                await supabase
+                    .from('job_posts')
+                    .update({ views: currentViews + 1 })
+                    .eq('id', id);
+            } catch (vErr) {
+                console.error("Error updating views:", vErr);
+            }
         };
 
         fetchJob();
@@ -224,6 +276,7 @@ const JobDetails = () => {
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
                     jobTitle={job.title}
+                    jobId={id || ''}
                     onApply={() => setIsApplied(true)}
                 />
                 {/* Navigation Header */}

@@ -329,27 +329,47 @@ const EmployerJobPosts = () => {
         if (!id) return;
 
         const fetchJobs = async () => {
-            const { data, error } = await supabase
-                .from('job_posts')
-                .select('*')
-                .eq('employer_id', id)
-                .order('created_at', { ascending: false });
+            setLoading(true);
+            try {
+                // Fetch job posts
+                const { data: jobsData, error: jobsError } = await supabase
+                    .from('job_posts')
+                    .select('*')
+                    .eq('employer_id', id)
+                    .order('created_at', { ascending: false });
 
-            if (!error && data) {
-                // Map DB fields to UI fields if necessary
-                const mappedJobs = data.map(job => ({
-                    id: job.id,
-                    title: job.title,
-                    status: job.status === 'active' ? 'Live' : 'Paused',
-                    applicants: 0, // Placeholder
-                    newApplicants: 0, // Placeholder
-                    views: '0', // Placeholder
-                    postedDate: new Date(job.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-                    category: job.category
-                }));
-                setJobs(mappedJobs);
+                if (jobsError) throw jobsError;
+
+                // Fetch applicant counts
+                const { data: appsData, error: appsError } = await supabase
+                    .from('job_applications')
+                    .select('job_id, status');
+
+                if (appsError) throw appsError;
+
+                if (jobsData) {
+                    const mappedJobs = jobsData.map(job => {
+                        const jobApps = appsData?.filter(app => app.job_id === job.id) || [];
+                        const newApps = jobApps.filter(app => app.status === 'New').length;
+
+                        return {
+                            id: job.id,
+                            title: job.title,
+                            status: job.status === 'active' ? 'Live' : 'Paused',
+                            applicants: jobApps.length,
+                            newApplicants: newApps,
+                            views: (job.views || 0).toString(),
+                            postedDate: new Date(job.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+                            category: job.category
+                        };
+                    });
+                    setJobs(mappedJobs);
+                }
+            } catch (err) {
+                console.error("Error fetching jobs and applicants:", err);
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         };
 
         fetchJobs();

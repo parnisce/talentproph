@@ -16,25 +16,79 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Mock data for applicants
-const mockApplicants: Record<string, any[]> = {};
+import { supabase } from '../../services/supabase';
 
 const ViewApplicants = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [applicants, setApplicants] = useState<any[]>([]);
+    const [jobTitle, setJobTitle] = useState('Position');
     const [filter, setFilter] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Find applicants for the specific job ID or show all
-        if (id === 'all') {
-            const allApps = Object.values(mockApplicants).flat();
-            setApplicants(allApps);
-        } else {
-            const jobApplicants = mockApplicants[id || ''] || [];
-            setApplicants(jobApplicants);
-        }
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                // Fetch Job Title if specific ID
+                if (id && id !== 'all') {
+                    const { data: jobData } = await supabase
+                        .from('job_posts')
+                        .select('title')
+                        .eq('id', id)
+                        .single();
+                    if (jobData) setJobTitle(jobData.title);
+                } else if (id === 'all') {
+                    setJobTitle('All Active Candidates');
+                }
+
+                // Fetch Applicants
+                let query = supabase
+                    .from('job_applications')
+                    .select(`
+                        *,
+                        profiles:seeker_id (
+                            full_name,
+                            avatar_url,
+                            title,
+                            experience_years,
+                            skills_list,
+                            iq,
+                            disc_scores
+                        )
+                    `);
+
+                if (id && id !== 'all') {
+                    query = query.eq('job_id', id);
+                }
+
+                const { data, error } = await query;
+
+                if (error) throw error;
+
+                if (data) {
+                    const mappedApplicants = data.map(app => ({
+                        id: app.id,
+                        name: app.profiles?.full_name || 'Anonymous Seeker',
+                        photo: app.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${app.seeker_id}`,
+                        role: app.profiles?.title || 'Job Seeker',
+                        experience: app.profiles?.experience_years || 'No',
+                        appliedDate: new Date(app.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit' }),
+                        status: app.status || 'New',
+                        topSkills: app.profiles?.skills_list?.slice(0, 3) || [],
+                        score: app.profiles?.iq ? Math.min(Math.round((app.profiles.iq / 160) * 100), 100) : 85, // Mock score logic based on IQ
+                    }));
+                    setApplicants(mappedApplicants);
+                }
+            } catch (err) {
+                console.error("Error fetching applicants:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
     }, [id]);
 
     const filteredApplicants = applicants.filter(app => {
@@ -44,9 +98,13 @@ const ViewApplicants = () => {
         return matchesSearch && matchesFilter;
     });
 
-    const jobTitle = id === 'all' ? 'All Active Candidates' :
-        id === '1' ? 'YouTube Video Editor' :
-            id === '2' ? 'Social Media Manager' : 'Position';
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-20 min-h-[40vh]">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-10 pb-32">
