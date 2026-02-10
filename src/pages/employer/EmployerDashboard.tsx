@@ -126,8 +126,9 @@ const EmployerOverview = () => {
                                 <div className="flex items-center gap-4">
                                     <div className="h-2.5 w-40 bg-slate-100 rounded-full overflow-hidden shadow-inner">
                                         <div
-                                            className="h-full bg-primary rounded-full transition-all duration-1000"
-                                            style={{ width: '0%' }}
+                                            className={`h-full rounded-full transition-all duration-1000 ${(jobCount / maxSlots) >= 1 ? 'bg-gradient-to-r from-violet-500 to-primary' : 'bg-primary'
+                                                }`}
+                                            style={{ width: `${Math.min((jobCount / maxSlots) * 100, 100)}%` }}
                                         />
                                     </div>
                                     <span className="text-sm font-black text-slate-900 tracking-tighter">{jobCount} / {maxSlots}</span>
