@@ -19,11 +19,11 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../services/supabase';
 import Navbar from '../../components/Navbar';
-// Mock data removed in favor of Supabase
 
 const JobApplicationModal = ({ isOpen, onClose, jobTitle, onApply }: { isOpen: boolean; onClose: () => void; jobTitle: string; onApply: () => void }) => {
     const [subject, setSubject] = useState('');
     const [points, setPoints] = useState('3');
+    const [contactInfo, setContactInfo] = useState('');
 
     useEffect(() => {
         if (isOpen) {
@@ -88,19 +88,19 @@ const JobApplicationModal = ({ isOpen, onClose, jobTitle, onApply }: { isOpen: b
                                     />
                                 </div>
 
-                                {/* Contact Info Preview */}
+                                {/* Contact Info Input */}
                                 <div className="space-y-2">
                                     <div className="flex items-center gap-2 ml-1">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">CONTACT INFO</label>
-                                        <div className="w-3 h-3 bg-primary/20 text-primary rounded-full flex items-center justify-center text-[8px] font-black cursor-help">?</div>
+                                        <div className="w-3 h-3 bg-primary/20 text-primary rounded-full flex items-center justify-center text-[8px] font-black cursor-help" title="Enter your contact details (Links, Email, Skype, etc.)">?</div>
                                     </div>
-                                    <div className="w-full p-6 bg-slate-50 border border-slate-100 rounded-[28px] text-[11px] font-bold text-slate-500 space-y-2 overflow-y-auto max-h-32 scrollbar-hide">
-                                        <p>Onlinejobs Link: <span className="text-primary hover:underline cursor-pointer">https://www.onlinejobs.ph/jobseekers/info/365555</span></p>
-                                        <p>Facebook Account: <span className="text-primary hover:underline cursor-pointer">https://www.facebook.com/cyrylbitangcolofficial</span></p>
-                                        <p>Here is my Email Address: <span className="text-primary">cyryl.bitangcol@gmail.com</span></p>
-                                        <p>Here is my Online CV: <span className="text-primary hover:underline cursor-pointer">https://cyrylbitangcolproject.com/</span></p>
-                                        <p>Here is my Skype Name: <span className="text-primary">parnisce</span></p>
-                                    </div>
+                                    <textarea
+                                        rows={4}
+                                        value={contactInfo}
+                                        onChange={(e) => setContactInfo(e.target.value)}
+                                        placeholder="Enter your contact details (Onlinejobs link, Facebook, Email, etc.)"
+                                        className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-[24px] text-sm font-medium leading-relaxed focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all resize-none"
+                                    />
                                 </div>
 
                                 {/* Apply Points */}
@@ -144,8 +144,6 @@ const JobApplicationModal = ({ isOpen, onClose, jobTitle, onApply }: { isOpen: b
         </AnimatePresence>
     );
 };
-
-
 
 const JobDetails = () => {
     const { id } = useParams();
