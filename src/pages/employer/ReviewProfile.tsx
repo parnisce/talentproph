@@ -319,13 +319,15 @@ const ReviewProfile = () => {
 
             // 3. Send Automated Message
             try {
+                const currentEmployerId = employerId || applicant.employer_id;
+
                 // Find or create conversation
                 const { data: existingConv, error: fetchError } = await supabase
                     .from('conversations')
                     .select('id')
                     .eq('job_id', applicant.job_id)
                     .eq('seeker_id', applicant.seeker_id)
-                    .eq('employer_id', applicant.employer_id)
+                    .eq('employer_id', currentEmployerId)
                     .maybeSingle();
 
                 if (fetchError) {
@@ -341,7 +343,7 @@ const ReviewProfile = () => {
                         .insert({
                             job_id: applicant.job_id,
                             seeker_id: applicant.seeker_id,
-                            employer_id: applicant.employer_id,
+                            employer_id: currentEmployerId,
                             last_message: 'Interview Scheduled',
                             last_message_at: new Date().toISOString()
                         })
@@ -357,7 +359,7 @@ const ReviewProfile = () => {
                                 .select('id')
                                 .eq('job_id', applicant.job_id)
                                 .eq('seeker_id', applicant.seeker_id)
-                                .eq('employer_id', applicant.employer_id)
+                                .eq('employer_id', currentEmployerId)
                                 .maybeSingle();
                             conversationId = retryConv?.id;
                         }
@@ -390,7 +392,7 @@ Looking forward to speaking with you!`;
 
                     await supabase.from('messages').insert({
                         conversation_id: conversationId,
-                        sender_id: employerId,
+                        sender_id: currentEmployerId,
                         content: autoMessage,
                         type: 'text'
                     });
@@ -442,22 +444,25 @@ Looking forward to speaking with you!`;
 
             // 3. Send Automated Cancellation Message
             try {
+                const currentEmployerId = employerId || applicant.employer_id;
+
+                // Find conversation
                 const { data: conv } = await supabase
                     .from('conversations')
                     .select('id')
                     .eq('job_id', applicant.job_id)
                     .eq('seeker_id', applicant.seeker_id)
-                    .eq('employer_id', employerId)
+                    .eq('employer_id', currentEmployerId)
                     .maybeSingle();
 
                 if (conv?.id) {
-                    const cancelMessage = `I'm writing to let you know that the scheduled interview has been cancelled.
+                    const cancelMessage = `I'm writing to let you know that the scheduled interview for the position has been cancelled.
                     
 If you have any questions, please feel free to message me here. We will reach out if there are any further updates regarding your application.`;
 
                     await supabase.from('messages').insert({
                         conversation_id: conv.id,
-                        sender_id: employerId,
+                        sender_id: currentEmployerId,
                         content: cancelMessage,
                         type: 'text'
                     });
@@ -511,8 +516,42 @@ If you have any questions, please feel free to message me here. We will reach ou
 
             if (error) throw error;
 
+            // Send Automated Rejection Message
+            try {
+                const currentEmployerId = employerId || applicant.employer_id;
+                const { data: conv } = await supabase
+                    .from('conversations')
+                    .select('id')
+                    .eq('job_id', applicant.job_id)
+                    .eq('seeker_id', applicant.seeker_id)
+                    .eq('employer_id', currentEmployerId)
+                    .maybeSingle();
+
+                if (conv?.id) {
+                    const rejectMessage = `Thank you for your interest in this position and for taking the time to apply. 
+                    
+After careful consideration of your profile and experience, we have decided to move forward with other candidates at this time. 
+
+We truly appreciate your interest in our company and wish you the best of luck with your job search and future professional endeavors.`;
+
+                    await supabase.from('messages').insert({
+                        conversation_id: conv.id,
+                        sender_id: currentEmployerId,
+                        content: rejectMessage,
+                        type: 'text'
+                    });
+
+                    await supabase.from('conversations').update({
+                        last_message: 'Application Status Updated',
+                        last_message_at: new Date().toISOString()
+                    }).eq('id', conv.id);
+                }
+            } catch (msgErr) {
+                console.error("Error sending rejection message:", msgErr);
+            }
+
             setApplicant((prev: any) => ({ ...prev, status: 'Rejected' }));
-            alert("Candidate has been rejected.");
+            alert("Candidate has been rejected and notified with a message.");
         } catch (err: any) {
             console.error("Error rejecting applicant:", err);
             alert("Failed to reject: " + err.message);
