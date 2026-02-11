@@ -3,23 +3,20 @@ import { useSearchParams } from 'react-router-dom';
 import {
     Search,
     Star,
-    Paperclip,
     ChevronDown,
     Mail,
     Inbox,
     Pin,
     Send,
     Archive,
-    Briefcase,
-    Plus,
-    Tag
+    Plus
 } from 'lucide-react';
 import EmployerConversation from './EmployerConversation';
 import { supabase } from '../../services/supabase';
 import { useUser } from '../../context/UserContext';
 
 const EmployerMessages = () => {
-    const { userId } = useUser();
+    const { id: userId } = useUser();
     const [searchParams] = useSearchParams();
     const [selectedTab, setSelectedTab] = useState('inbox');
     const [selectedMessage, setSelectedMessage] = useState<any>(null);
@@ -127,7 +124,7 @@ const EmployerMessages = () => {
                                 <item.icon size={18} className={((selectedTab === 'inbox' && item.id === 'messages') || selectedTab === item.id) ? 'text-primary' : 'text-slate-400'} />
                                 <span>{item.label}</span>
                             </div>
-                            {item.badge > 0 && (
+                            {(item.badge ?? 0) > 0 && (
                                 <span className="text-[10px] font-black bg-rose-500 text-white px-1.5 py-0.5 rounded-md min-w-[20px] text-center">
                                     {item.badge}
                                 </span>
