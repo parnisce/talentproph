@@ -17,11 +17,12 @@ import { supabase } from '../../services/supabase';
 import { useUser } from '../../context/UserContext';
 
 interface ConversationProps {
-    message: any; // The selected conversation object
+    message: any;
     onBack: () => void;
+    onDataUpdate?: () => void;
 }
 
-const SeekerConversation = ({ message, onBack }: ConversationProps) => {
+const SeekerConversation = ({ message, onBack, onDataUpdate }: ConversationProps) => {
     const navigate = useNavigate();
     const { id: seekerId, photo: seekerPhoto, name: seekerName } = useUser();
     const [isPinned, setIsPinned] = useState(message?.pinned || false);
@@ -83,6 +84,7 @@ const SeekerConversation = ({ message, onBack }: ConversationProps) => {
             if (isSelected) await supabase.from('conversation_labels').delete().eq('conversation_id', message.id).eq('label_id', labelId);
             else await supabase.from('conversation_labels').insert({ conversation_id: message.id, label_id: labelId });
             fetchConvLabels();
+            if (onDataUpdate) onDataUpdate();
         } catch (err) { console.error(err); }
     };
 
@@ -117,18 +119,31 @@ const SeekerConversation = ({ message, onBack }: ConversationProps) => {
     const togglePin = async () => {
         const newVal = !isPinned;
         setIsPinned(newVal);
-        try { await supabase.from('conversations').update({ is_pinned_seeker: newVal }).eq('id', message.id); } catch (err) { console.error(err); }
+        try {
+            await supabase.from('conversations').update({ is_pinned_seeker: newVal }).eq('id', message.id);
+            if (onDataUpdate) onDataUpdate();
+        } catch (err) { console.error(err); }
     };
 
     const handleArchive = async () => {
         const newVal = !isArchived;
         setIsArchived(newVal);
-        try { await supabase.from('conversations').update({ is_archived_seeker: newVal }).eq('id', message.id); if (newVal) onBack(); } catch (err) { console.error(err); }
+        try {
+            await supabase.from('conversations').update({ is_archived_seeker: newVal }).eq('id', message.id);
+            if (onDataUpdate) onDataUpdate();
+            if (newVal) onBack();
+        } catch (err) { console.error(err); }
     };
+
+
 
     const handleDelete = async () => {
         if (!confirm("Delete this conversation?")) return;
-        try { await supabase.from('conversations').delete().eq('id', message.id); onBack(); }
+        try {
+            await supabase.from('conversations').delete().eq('id', message.id);
+            if (onDataUpdate) onDataUpdate();
+            onBack();
+        }
         catch (err) { console.error(err); }
     };
 
@@ -199,58 +214,64 @@ const SeekerConversation = ({ message, onBack }: ConversationProps) => {
                 </form>
             </div>
 
-            <div className="w-80 bg-white shrink-0 h-full overflow-y-auto border-l border-slate-100 hidden xl:block">
-                <div className="p-8 text-center border-b border-slate-100">
-                    <div className="w-24 h-24 rounded-full bg-slate-50 mx-auto mb-4 overflow-hidden border-2 border-slate-100 p-4">
-                        <img src={message.avatar} alt={message.sender} className="w-full h-full object-contain" />
-                    </div>
-                    <h3 className="text-lg font-black text-slate-900 tracking-tighter">{message.sender}</h3>
-                    <div className="grid grid-cols-4 gap-2 mt-6">
-                        <button onClick={togglePin} className={`flex flex-col items-center gap-2 p-2 rounded-xl transition-all ${isPinned ? 'text-primary' : 'text-slate-400 hover:text-primary'}`}>
-                            <Pin size={18} className={isPinned ? 'fill-primary' : ''} />
-                            <span className="text-[9px] font-bold">Pin</span>
-                        </button>
-                        <div className="relative">
-                            <button onClick={() => setShowLabelMenu(!showLabelMenu)} className={`flex flex-col items-center gap-2 p-2 rounded-xl transition-all w-full ${showLabelMenu || convLabels.length > 0 ? 'text-secondary font-bold' : 'text-slate-400 hover:text-secondary'}`}>
-                                <Tag size={18} className={convLabels.length > 0 ? 'fill-secondary text-secondary' : ''} />
-                                <span className="text-[9px] font-bold">Label</span>
-                            </button>
-                            {showLabelMenu && (
-                                <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-[60] p-1.5">
-                                    <p className="px-3 py-2 text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-50 mb-1">Select Labels</p>
-                                    {allLabels.length === 0 ? <p className="px-3 py-4 text-xs font-bold text-slate-400 text-center">No labels yet</p> :
-                                        allLabels.map(l => {
-                                            const isSelected = convLabels.some(cl => cl.id === l.id);
-                                            return (
-                                                <button key={l.id} onClick={() => toggleLabel(l.id)} className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${isSelected ? 'bg-slate-50 text-slate-900' : 'text-slate-600 hover:bg-slate-50'}`}>
-                                                    <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: l.color }} />{l.name}</div>
-                                                    {isSelected && <CheckCircle size={14} className="text-secondary" />}
-                                                </button>
-                                            );
-                                        })
-                                    }
-                                </div>
-                            )}
+            {/* Right Sidebar - Company Details */}
+            <div className="w-80 bg-white shrink-0 h-full border-l border-slate-100 hidden xl:flex flex-col relative z-20">
+                <div className="shrink-0">
+                    <div className="p-8 text-center border-b border-slate-100">
+                        <div className="w-24 h-24 rounded-full bg-slate-50 mx-auto mb-4 overflow-hidden border-2 border-slate-100 p-4">
+                            <img src={message.avatar} alt={message.sender} className="w-full h-full object-contain" />
                         </div>
-                        <button onClick={handleArchive} className={`flex flex-col items-center gap-2 p-2 rounded-xl transition-all ${isArchived ? 'text-primary' : 'text-slate-400 hover:text-primary'}`}>
-                            <Archive size={18} className={isArchived ? 'fill-primary' : ''} />
-                            <span className="text-[10px] font-bold">Archive</span>
-                        </button>
-                        <div className="relative">
-                            <button onClick={() => setShowMoreMenu(!showMoreMenu)} className="flex flex-col items-center gap-2 p-2 rounded-xl text-slate-400 hover:text-primary transition-all w-full">
-                                <MoreHorizontal size={18} />
-                                <span className="text-[9px] font-bold">More</span>
+                        <h3 className="text-lg font-black text-slate-900 tracking-tighter">{message.sender}</h3>
+                        <div className="grid grid-cols-4 gap-2 mt-6 relative">
+                            <button onClick={togglePin} className={`flex flex-col items-center gap-2 p-2 rounded-xl transition-all ${isPinned ? 'text-primary' : 'text-slate-400 hover:text-primary'}`}>
+                                <Pin size={18} className={isPinned ? 'fill-primary' : ''} />
+                                <span className="text-[9px] font-bold">Pin</span>
                             </button>
-                            {showMoreMenu && (
-                                <div className="absolute top-full right-0 mt-2 w-40 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-50 p-1">
-                                    <button onClick={handleDelete} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] font-bold text-rose-500 hover:bg-rose-50 transition-colors text-left cursor-pointer"><Trash2 size={12} /> Delete Thread</button>
-                                </div>
-                            )}
+                            <div className="relative">
+                                <button onClick={() => setShowLabelMenu(!showLabelMenu)} className={`flex flex-col items-center gap-2 p-2 rounded-xl transition-all w-full ${showLabelMenu || convLabels.length > 0 ? 'text-secondary font-bold' : 'text-slate-400 hover:text-secondary'}`}>
+                                    <Tag size={18} className={convLabels.length > 0 ? 'fill-secondary text-secondary' : ''} />
+                                    <span className="text-[9px] font-bold">Label</span>
+                                </button>
+                                {showLabelMenu && (
+                                    <div className="absolute top-[calc(100%+8px)] right-[-80px] w-56 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-[100] p-1.5 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                                        <p className="px-3 py-2 text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-50 mb-1">Select Labels</p>
+                                        {allLabels.length === 0 ? <p className="px-3 py-4 text-xs font-bold text-slate-400 text-center">No labels created yet</p> :
+                                            allLabels.map(l => {
+                                                const isSelected = convLabels.some(cl => cl.id === l.id);
+                                                return (
+                                                    <button key={l.id} onClick={() => toggleLabel(l.id)} className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${isSelected ? 'bg-slate-50 text-slate-900' : 'text-slate-600 hover:bg-slate-50'}`}>
+                                                        <div className="flex items-center gap-2 overflow-hidden">
+                                                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: l.color }} />
+                                                            <span className="truncate">{l.name}</span>
+                                                        </div>
+                                                        {isSelected && <CheckCircle size={14} className="text-secondary shrink-0" />}
+                                                    </button>
+                                                );
+                                            })
+                                        }
+                                    </div>
+                                )}
+                            </div>
+                            <button onClick={handleArchive} className={`flex flex-col items-center gap-2 p-2 rounded-xl transition-all ${isArchived ? 'text-primary' : 'text-slate-400 hover:text-primary'}`}>
+                                <Archive size={18} className={isArchived ? 'fill-primary' : ''} />
+                                <span className="text-[10px] font-bold">Archive</span>
+                            </button>
+                            <div className="relative">
+                                <button onClick={() => setShowMoreMenu(!showMoreMenu)} className="flex flex-col items-center gap-2 p-2 rounded-xl text-slate-400 hover:text-primary transition-all w-full">
+                                    <MoreHorizontal size={18} />
+                                    <span className="text-[9px] font-bold">More</span>
+                                </button>
+                                {showMoreMenu && (
+                                    <div className="absolute top-full right-0 mt-2 w-40 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-50 p-1">
+                                        <button onClick={handleDelete} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] font-bold text-rose-500 hover:bg-rose-50 transition-colors text-left cursor-pointer"><Trash2 size={12} /> Delete Thread</button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="p-8 space-y-8">
+                <div className="flex-1 overflow-y-auto p-8 space-y-8">
                     <div className="space-y-4">
                         <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest">About Company</h4>
                         <div className="flex items-center gap-3 text-sm font-medium text-slate-600">

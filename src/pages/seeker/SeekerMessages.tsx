@@ -7,7 +7,8 @@ import {
     Inbox,
     Pin,
     Archive,
-    Tag
+    Tag,
+    Plus
 } from 'lucide-react';
 import SeekerConversation from './SeekerConversation';
 import { supabase } from '../../services/supabase';
@@ -22,83 +23,102 @@ const SeekerMessages = () => {
     const [allLabels, setAllLabels] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [unreadTotal, setUnreadTotal] = useState(0);
+    const [showNewLabelModal, setShowNewLabelModal] = useState(false);
+    const [newLabelName, setNewLabelName] = useState('');
+
+    const fetchData = async () => {
+        if (!userId) return;
+        setLoading(true);
+        try {
+            // 1. Fetch user's custom labels
+            const { data: labelsData } = await supabase.from('labels').select('*').eq('user_id', userId).order('name');
+            if (labelsData) setAllLabels(labelsData);
+
+            // 2. Fetch conversations
+            const { data: convData, error: convError } = await supabase
+                .from('conversations')
+                .select(`
+                    id,
+                    last_message,
+                    last_message_at,
+                    created_at,
+                    employer_id,
+                    job_id,
+                    is_pinned_seeker,
+                    is_archived_seeker,
+                    employer:employer_id (full_name, avatar_url, company_name),
+                    job:job_id (title),
+                    conversation_labels (label:label_id (id, name, color))
+                `)
+                .eq('seeker_id', userId)
+                .order('last_message_at', { ascending: false });
+
+            if (convError) throw convError;
+
+            // 3. Fetch unread counts
+            const { data: unreadData } = await supabase.from('messages').select('conversation_id').eq('is_read', false).neq('sender_id', userId);
+
+            const unreadCounts = (unreadData || []).reduce((acc: any, msg: any) => {
+                acc[msg.conversation_id] = (acc[msg.conversation_id] || 0) + 1;
+                return acc;
+            }, {});
+            setUnreadTotal(Object.keys(unreadCounts).length);
+
+            if (convData) {
+                const mapped = convData.map((conv: any) => ({
+                    id: conv.id,
+                    sender: conv.employer?.company_name || conv.employer?.full_name || 'Unknown Employer',
+                    avatar: conv.employer?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${conv.employer?.company_name || 'Employer'}`,
+                    role: conv.job?.title || 'General Inquiry',
+                    subject: conv.job?.title ? `Regarding: ${conv.job.title}` : 'General Inquiry',
+                    date: new Date(conv.last_message_at).toLocaleDateString(),
+                    timestamp: conv.last_message_at,
+                    preview: conv.last_message,
+                    count: unreadCounts[conv.id] || 0,
+                    pinned: conv.is_pinned_seeker || false,
+                    read: (unreadCounts[conv.id] || 0) === 0,
+                    archived: conv.is_archived_seeker || false,
+                    labels: conv.conversation_labels?.map((cl: any) => cl.label) || [],
+                    employer_id: conv.employer_id,
+                    job_id: conv.job_id
+                }));
+                setMessages(mapped);
+
+                const linkedConvId = searchParams.get('conversationId');
+                if (linkedConvId) {
+                    const target = mapped.find(m => m.id === linkedConvId);
+                    if (target) setSelectedMessage(target);
+                }
+            }
+        } catch (err) { console.error(err); } finally { setLoading(false); }
+    };
 
     // Fetch Conversations and Labels
     useEffect(() => {
-        const fetchData = async () => {
-            if (!userId) return;
-            setLoading(true);
-            try {
-                // 1. Fetch user's custom labels
-                const { data: labelsData } = await supabase.from('labels').select('*').eq('user_id', userId).order('name');
-                if (labelsData) setAllLabels(labelsData);
-
-                // 2. Fetch conversations
-                const { data: convData, error: convError } = await supabase
-                    .from('conversations')
-                    .select(`
-                        id,
-                        last_message,
-                        last_message_at,
-                        created_at,
-                        employer_id,
-                        job_id,
-                        is_pinned_seeker,
-                        is_archived_seeker,
-                        employer:employer_id (full_name, avatar_url, company_name),
-                        job:job_id (title),
-                        conversation_labels (label:label_id (id, name, color))
-                    `)
-                    .eq('seeker_id', userId)
-                    .order('last_message_at', { ascending: false });
-
-                if (convError) throw convError;
-
-                // 3. Fetch unread counts
-                const { data: unreadData } = await supabase.from('messages').select('conversation_id').eq('is_read', false).neq('sender_id', userId);
-
-                const unreadCounts = (unreadData || []).reduce((acc: any, msg: any) => {
-                    acc[msg.conversation_id] = (acc[msg.conversation_id] || 0) + 1;
-                    return acc;
-                }, {});
-                setUnreadTotal(Object.keys(unreadCounts).length);
-
-                if (convData) {
-                    const mapped = convData.map((conv: any) => ({
-                        id: conv.id,
-                        sender: conv.employer?.company_name || conv.employer?.full_name || 'Unknown Employer',
-                        avatar: conv.employer?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${conv.employer?.company_name || 'Employer'}`,
-                        role: conv.job?.title || 'General Inquiry',
-                        subject: conv.job?.title ? `Regarding: ${conv.job.title}` : 'General Inquiry',
-                        date: new Date(conv.last_message_at).toLocaleDateString(),
-                        timestamp: conv.last_message_at,
-                        preview: conv.last_message,
-                        count: unreadCounts[conv.id] || 0,
-                        pinned: conv.is_pinned_seeker || false,
-                        read: (unreadCounts[conv.id] || 0) === 0,
-                        archived: conv.is_archived_seeker || false,
-                        labels: conv.conversation_labels?.map((cl: any) => cl.label) || [],
-                        employer_id: conv.employer_id,
-                        job_id: conv.job_id
-                    }));
-                    setMessages(mapped);
-
-                    const linkedConvId = searchParams.get('conversationId');
-                    if (linkedConvId) {
-                        const target = mapped.find(m => m.id === linkedConvId);
-                        if (target) setSelectedMessage(target);
-                    }
-                }
-            } catch (err) { console.error(err); } finally { setLoading(false); }
-        };
-
         fetchData();
 
         const convSub = supabase.channel('seeker_convs').on('postgres_changes', { event: '*', schema: 'public', table: 'conversations', filter: `seeker_id=eq.${userId}` }, fetchData).subscribe();
         const msgSub = supabase.channel('seeker_msgs').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, fetchData).subscribe();
+        const labelSub = supabase.channel('seeker_labels').on('postgres_changes', { event: '*', schema: 'public', table: 'conversation_labels' }, fetchData).subscribe();
 
-        return () => { supabase.removeChannel(convSub); supabase.removeChannel(msgSub); };
+        return () => { supabase.removeChannel(convSub); supabase.removeChannel(msgSub); supabase.removeChannel(labelSub); };
     }, [userId]);
+
+    const handleCreateLabel = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newLabelName.trim() || !userId) return;
+        try {
+            const { error } = await supabase
+                .from('labels')
+                .insert({ name: newLabelName.trim(), user_id: userId });
+            if (error) throw error;
+            setNewLabelName('');
+            setShowNewLabelModal(false);
+            fetchData();
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
 
     const filteredMessages = messages.filter(msg => {
         if (currentTab === 'inbox') return !msg.archived;
@@ -141,6 +161,7 @@ const SeekerMessages = () => {
                 <div className="space-y-3 px-2">
                     <div className="flex items-center justify-between text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
                         <span>Labels</span>
+                        <button onClick={() => setShowNewLabelModal(true)} className="hover:text-primary"><Plus size={14} /></button>
                     </div>
                     {allLabels.map((l) => (
                         <div
@@ -153,11 +174,44 @@ const SeekerMessages = () => {
                         </div>
                     ))}
                 </div>
+
+                {showNewLabelModal && (
+                    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                        <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in duration-200">
+                            <h3 className="text-lg font-black text-slate-900 mb-4">Create New Label</h3>
+                            <form onSubmit={handleCreateLabel}>
+                                <input
+                                    autoFocus
+                                    type="text"
+                                    placeholder="Label Name"
+                                    value={newLabelName}
+                                    onChange={(e) => setNewLabelName(e.target.value)}
+                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/50 mb-4"
+                                />
+                                <div className="flex gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowNewLabelModal(false)}
+                                        className="flex-1 py-3 text-sm font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="flex-1 py-3 bg-slate-900 text-white text-sm font-black rounded-xl hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10"
+                                    >
+                                        Create
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className="flex-1 bg-white border-2 border-slate-50 rounded-[32px] shadow-sm flex flex-col overflow-hidden">
                 {selectedMessage ? (
-                    <SeekerConversation message={selectedMessage} onBack={() => setSelectedMessage(null)} />
+                    <SeekerConversation message={selectedMessage} onBack={() => setSelectedMessage(null)} onDataUpdate={fetchData} />
                 ) : (
                     <>
                         <div className="px-8 py-5 border-b border-slate-100 flex items-center justify-between bg-white z-10 transition-all">
