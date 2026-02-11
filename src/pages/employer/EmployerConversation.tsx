@@ -152,8 +152,31 @@ const EmployerConversation = ({ message, onBack }: ConversationProps) => {
         }
     };
 
-    const handleViewProfile = () => {
-        navigate(`/employer/applicants/review/${message.seeker_id}`);
+    const handleViewProfile = async () => {
+        if (!message.seeker_id || !message.job_id) {
+            console.error("Missing seeker or job info for profile view");
+            return;
+        }
+
+        try {
+            // Fetch the application ID for this seeker/job combo
+            const { data, error } = await supabase
+                .from('job_applications')
+                .select('id')
+                .eq('seeker_id', message.seeker_id)
+                .eq('job_id', message.job_id)
+                .single();
+
+            if (error || !data) {
+                console.error("No application found for this conversation:", error);
+                alert("Could not find a specific job application to review.");
+                return;
+            }
+
+            navigate(`/employer/applicants/review/${data.id}`);
+        } catch (err) {
+            console.error("Error navigating to review profile:", err);
+        }
     };
 
     const togglePin = () => setIsPinned(!isPinned);
