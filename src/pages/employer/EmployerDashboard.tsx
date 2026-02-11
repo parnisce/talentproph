@@ -551,21 +551,21 @@ const EmployerJobPosts = () => {
                             }`} />
 
                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 relative z-10">
-                            <div className="flex items-center gap-6">
-                                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${job.status === 'Live' ? 'bg-emerald-50 text-emerald-500' :
+                            <div className="flex items-center gap-6 flex-1 min-w-0">
+                                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 ${job.status === 'Live' ? 'bg-emerald-50 text-emerald-500' :
                                     job.status === 'Under Review' ? 'bg-amber-50 text-amber-500' : 'bg-slate-100 text-slate-500'
                                     }`}>
                                     <Briefcase size={28} />
                                 </div>
-                                <div>
-                                    <div className="flex items-center gap-3 mb-1">
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-3 mb-1 flex-wrap">
                                         <h3
                                             onClick={() => navigate(`/employer/jobs/${job.id}`)}
-                                            className="text-xl font-black text-slate-900 tracking-tighter hover:text-primary cursor-pointer transition-colors"
+                                            className="text-xl font-black text-slate-900 tracking-tighter hover:text-primary cursor-pointer transition-colors truncate pr-4"
                                         >
                                             {job.title}
                                         </h3>
-                                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${job.status === 'Live' ? 'bg-emerald-100 text-emerald-600' :
+                                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shrink-0 ${job.status === 'Live' ? 'bg-emerald-100 text-emerald-600' :
                                             job.status === 'Under Review' ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-500'
                                             }`}>
                                             {job.status}
@@ -574,12 +574,12 @@ const EmployerJobPosts = () => {
                                     <div className="flex items-center gap-4 text-slate-400 text-xs font-bold">
                                         <span className="flex items-center gap-1.5"><Clock size={14} /> Posted {job.postedDate}</span>
                                         <div className="w-1 h-1 rounded-full bg-slate-200" />
-                                        <span>{job.category}</span>
+                                        <span className="truncate">{job.category}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-10 lg:pr-8">
+                            <div className="flex flex-wrap items-center gap-10 lg:pr-8 shrink-0">
                                 <div className="text-center md:text-left">
                                     <div className="flex items-center gap-2 mb-1 justify-center md:justify-start">
                                         <Users size={16} className="text-slate-300" />
