@@ -18,7 +18,9 @@ import {
     Clock,
     DollarSign,
     Target,
-    MapPin
+    MapPin,
+    PauseCircle,
+    PlayCircle
 } from 'lucide-react';
 import CalendarView from '../../components/CalendarView';
 import { useUser } from '../../context/UserContext';
@@ -598,6 +600,37 @@ const EmployerJobPosts = () => {
                                 </div>
 
                                 <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={async (e) => {
+                                            e.stopPropagation();
+                                            const newStatus = job.status === 'Live' ? 'paused' : 'active';
+                                            // Optimistic update
+                                            setJobs(jobs.map(j => j.id === job.id ? { ...j, status: newStatus === 'active' ? 'Live' : 'Paused' } : j));
+
+                                            try {
+                                                const { error } = await supabase
+                                                    .from('job_posts')
+                                                    .update({ status: newStatus })
+                                                    .eq('id', job.id);
+
+                                                if (error) throw error;
+                                            } catch (err) {
+                                                console.error("Error updating status:", err);
+                                                // Revert on error
+                                                setJobs(jobs.map(j => j.id === job.id ? { ...j, status: job.status } : j));
+                                                alert("Failed to update status");
+                                            }
+                                        }}
+                                        className={`px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 border ${job.status === 'Live'
+                                            ? 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100'
+                                            : 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100'
+                                            }`}
+                                        title={job.status === 'Live' ? "Pause Listing" : "Resume Listing"}
+                                    >
+                                        {job.status === 'Live' ? <PauseCircle size={16} /> : <PlayCircle size={16} />}
+                                        {job.status === 'Live' ? 'Pause' : 'Resume'}
+                                    </button>
+
                                     <button
                                         onClick={() => navigate(`/employer/edit-post/${job.id}`)}
                                         className="px-6 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 transition-all"
