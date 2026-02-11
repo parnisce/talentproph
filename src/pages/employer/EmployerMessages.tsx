@@ -36,10 +36,18 @@ const EmployerMessages = () => {
                         last_message,
                         last_message_at,
                         created_at,
+                        seeker_id,
+                        job_id,
                         seeker:seeker_id (
                             full_name,
                             avatar_url,
-                            title
+                            title,
+                            location,
+                            email,
+                            phone,
+                            website,
+                            experience_years,
+                            bio
                         ),
                         job:job_id (
                             title
@@ -53,6 +61,8 @@ const EmployerMessages = () => {
                 if (data) {
                     const mapped = data.map((conv: any) => ({
                         id: conv.id,
+                        seeker_id: conv.seeker_id,
+                        job_id: conv.job_id,
                         sender: conv.seeker?.full_name || 'Unknown User',
                         avatar: conv.seeker?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${conv.seeker?.full_name}`,
                         role: conv.seeker?.title || 'Job Seeker',
@@ -64,7 +74,8 @@ const EmployerMessages = () => {
                         pinned: false,
                         read: true, // TODO: Implement read status
                         type: 'received',
-                        archived: false
+                        archived: false,
+                        seeker: conv.seeker
                     }));
                     setMessages(mapped);
 
@@ -83,6 +94,27 @@ const EmployerMessages = () => {
         };
 
         fetchConversations();
+
+        // Real-time subscription for conversation updates (previews, timestamps)
+        const channel = supabase
+            .channel('conversation_updates')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'conversations',
+                    filter: `employer_id=eq.${userId}`
+                },
+                () => {
+                    fetchConversations();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, [userId, searchParams]);
 
     // Filter Logic
