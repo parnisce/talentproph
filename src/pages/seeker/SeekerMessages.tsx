@@ -1,94 +1,118 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
     Search,
     Star,
-    Paperclip,
     ChevronDown,
     Mail,
     Inbox,
     Pin,
     Send,
     Archive,
-    Building2,
     Tag
 } from 'lucide-react';
 import SeekerConversation from './SeekerConversation';
+import { supabase } from '../../services/supabase';
+import { useUser } from '../../context/UserContext';
 
 const SeekerMessages = () => {
+    const { id: userId } = useUser();
+    const [searchParams] = useSearchParams();
     const [selectedTab, setSelectedTab] = useState('inbox');
     const [selectedMessage, setSelectedMessage] = useState<any>(null);
+    const [messages, setMessages] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    // Mock Messages for Seeker (Recruiters/Companies contacting them)
-    const messages = [
-        {
-            id: '1',
-            sender: 'TechFlow Solutions',
-            count: 2,
-            subject: 'Interview Invitation: Senior React Developer',
-            preview: 'We were impressed by your profile and would like to schedule...',
-            role: 'Senior React Developer',
-            date: 'Feb 6, 2026, 09:30 AM',
-            avatar: 'https://ui-avatars.com/api/?name=Tech+Flow&background=0D8ABC&color=fff',
-            pinned: true,
-            selected: false,
-            read: false,
-            type: 'received',
-            archived: false,
-            isCompany: true
-        },
-        {
-            id: '2',
-            sender: 'Sarah Peterson',
-            count: 0,
-            subject: 'Regarding your application for VA Role',
-            preview: 'Hi! Thanks for applying. Are you available for a quick chat?',
-            role: 'Virtual Assistant',
-            date: 'Feb 5, 2026, 02:15 PM',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah&backgroundColor=b6e3f4',
-            pinned: true,
-            selected: false,
-            read: true,
-            type: 'received',
-            archived: false,
-            isCompany: false
-        },
-        {
-            id: '3',
-            sender: 'Global Nomads Inc.',
-            count: 0,
-            subject: 'Application Status Update',
-            preview: 'Your application has been moved to the next stage.',
-            role: 'Frontend Engineer',
-            date: 'Feb 4, 2026, 11:00 AM',
-            avatar: 'https://ui-avatars.com/api/?name=Global+Nomads&background=6366f1&color=fff',
-            pinned: false,
-            selected: false,
-            read: true,
-            type: 'received',
-            archived: false,
-            isCompany: true
-        },
-        // Mock Sent Message
-        {
-            id: '11',
-            sender: 'You',
-            count: 0,
-            subject: 'Re: Interview Availability',
-            preview: 'Yes, I am available tomorrow at 10 AM EST.',
-            role: '',
-            date: 'Feb 6, 2026, 10:00 AM',
-            avatar: 'https://ui-avatars.com/api/?name=You&background=10b981&color=fff',
-            pinned: false,
-            selected: false,
-            read: true,
-            attachment: false,
-            type: 'sent',
-            archived: false
-        }
-    ];
+    // Fetch Conversations
+    useEffect(() => {
+        const fetchConversations = async () => {
+            if (!userId) return;
+            setLoading(true);
+            try {
+                // Fetch conversations where I (seeker) am a participant
+                const { data, error } = await supabase
+                    .from('conversations')
+                    .select(`
+                        id,
+                        last_message,
+                        last_message_at,
+                        created_at,
+                        employer_id,
+                        job_id,
+                        employer:employer_id (
+                            full_name,
+                            avatar_url,
+                            company_name
+                        ),
+                        job:job_id (
+                            title
+                        )
+                    `)
+                    .eq('seeker_id', userId)
+                    .order('last_message_at', { ascending: false });
+
+                if (error) throw error;
+
+                if (data) {
+                    const mapped = data.map((conv: any) => ({
+                        id: conv.id,
+                        sender: conv.employer?.company_name || conv.employer?.full_name || 'Unknown Employer',
+                        avatar: conv.employer?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${conv.employer?.company_name || 'Employer'}`,
+                        role: conv.job?.title || 'General Inquiry',
+                        subject: conv.job?.title ? `Regarding: ${conv.job.title}` : 'General Inquiry',
+                        date: new Date(conv.last_message_at).toLocaleDateString(),
+                        timestamp: conv.last_message_at,
+                        preview: conv.last_message,
+                        count: 0, // Unread count logic TODO
+                        pinned: false,
+                        read: true, // Read status logic TODO
+                        type: 'received',
+                        archived: false,
+                        employer: conv.employer,
+                        job: conv.job
+                    }));
+                    setMessages(mapped);
+
+                    // Auto-select conversation from URL
+                    const linkedConvId = searchParams.get('conversationId');
+                    if (linkedConvId) {
+                        const target = mapped.find(m => m.id === linkedConvId);
+                        if (target) setSelectedMessage(target);
+                    }
+                }
+            } catch (err) {
+                console.error("Error fetching conversations:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchConversations();
+
+        // Real-time subscription for conversation updates
+        const channel = supabase
+            .channel('seeker_conversation_updates')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'conversations',
+                    filter: `seeker_id=eq.${userId}`
+                },
+                () => {
+                    fetchConversations();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [userId, searchParams]);
 
     const filteredMessages = messages.filter(msg => {
-        if (selectedTab === 'inbox') return msg.type === 'received' && !msg.archived;
+        if (selectedTab === 'inbox') return !msg.archived;
         if (selectedTab === 'unread') return !msg.read && !msg.archived;
         if (selectedTab === 'pinned') return msg.pinned && !msg.archived;
         if (selectedTab === 'sent') return msg.type === 'sent' && !msg.archived;
@@ -98,14 +122,14 @@ const SeekerMessages = () => {
 
     const sidebarItems = [
         { id: 'messages', icon: Inbox, label: 'Messages' },
-        { id: 'unread', icon: Mail, label: 'Unread', badge: 1 },
+        { id: 'unread', icon: Mail, label: 'Unread', badge: 0 },
         { id: 'pinned', icon: Pin, label: 'Pinned' },
         { id: 'sent', icon: Send, label: 'Sent' },
         { id: 'archive', icon: Archive, label: 'Archive' },
     ];
 
     return (
-        <div className="flex h-[calc(100vh-140px)] gap-6 -mt-4">
+        <div className="flex h-[calc(100vh-140px)] gap-6 -mt-4 font-outfit">
             {/* Sidebar */}
             <div className="w-64 flex flex-col gap-8 shrink-0">
                 <div className="space-y-1">
@@ -113,19 +137,19 @@ const SeekerMessages = () => {
                         <button
                             key={item.id}
                             onClick={() => {
-                                setSelectedTab(item.id);
+                                setSelectedTab(item.id === 'messages' ? 'inbox' : item.id);
                                 setSelectedMessage(null);
                             }}
-                            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all ${selectedTab === item.id
+                            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all ${((selectedTab === 'inbox' && item.id === 'messages') || selectedTab === item.id)
                                 ? 'bg-white text-primary shadow-sm ring-1 ring-slate-100'
                                 : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
                                 }`}
                         >
                             <div className="flex items-center gap-3">
-                                <item.icon size={18} className={selectedTab === item.id ? 'text-primary' : 'text-slate-400'} />
+                                <item.icon size={18} className={((selectedTab === 'inbox' && item.id === 'messages') || selectedTab === item.id) ? 'text-primary' : 'text-slate-400'} />
                                 <span>{item.label}</span>
                             </div>
-                            {item.badge && (
+                            {(item.badge ?? 0) > 0 && (
                                 <span className="text-[10px] font-black bg-rose-500 text-white px-1.5 py-0.5 rounded-md min-w-[20px] text-center">
                                     {item.badge}
                                 </span>
@@ -183,10 +207,14 @@ const SeekerMessages = () => {
 
                         {/* Message List */}
                         <div className="flex-1 overflow-y-auto">
-                            {filteredMessages.length === 0 ? (
+                            {loading ? (
+                                <div className="flex items-center justify-center p-20">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                </div>
+                            ) : filteredMessages.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full text-slate-400 space-y-4">
                                     <Inbox size={48} className="opacity-20" />
-                                    <p className="font-bold text-sm">No messages found in {selectedTab}</p>
+                                    <p className="font-bold text-sm">No messages found</p>
                                 </div>
                             ) : (
                                 filteredMessages.map((msg) => (
@@ -195,7 +223,6 @@ const SeekerMessages = () => {
                                         onClick={() => setSelectedMessage(msg)}
                                         className={`group flex items-center gap-4 px-6 py-4 border-b border-slate-50 hover:bg-slate-50 transition-all cursor-pointer ${!msg.read ? 'bg-slate-50/50' : ''}`}
                                     >
-                                        {/* Checkbox & Pin */}
                                         <div className="flex flex-col items-center gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
                                             <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary/20 accent-primary cursor-pointer" />
                                             <Star
@@ -204,33 +231,19 @@ const SeekerMessages = () => {
                                             />
                                         </div>
 
-                                        {/* Content */}
                                         <div className="flex-1 min-w-0 grid grid-cols-[auto_1fr] gap-x-4 items-center">
-                                            {/* Avatar */}
                                             <div className="relative">
                                                 <img src={msg.avatar} alt={msg.sender} className="w-10 h-10 rounded-full bg-slate-100 object-cover ring-2 ring-white shadow-sm" />
-                                                {msg.count > 0 && (
-                                                    <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-slate-500 px-1 text-[9px] font-bold text-white ring-2 ring-white">
-                                                        {msg.count}
-                                                    </span>
-                                                )}
-                                                {msg.isCompany && (
-                                                    <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-sm">
-                                                        <Building2 size={10} className="text-slate-400" />
-                                                    </span>
-                                                )}
                                             </div>
 
-                                            {/* Details */}
                                             <div className="min-w-0">
                                                 <div className="flex items-baseline gap-2 mb-0.5">
                                                     <h4 className={`text-sm truncate ${!msg.read ? 'font-black text-slate-900' : 'font-bold text-slate-700'}`}>
                                                         {msg.sender}
-                                                        {msg.count > 0 && <span className="text-slate-400 ml-1 font-medium">({msg.count})</span>}
                                                     </h4>
                                                 </div>
                                                 <p className={`text-xs truncate mb-1.5 ${!msg.read ? 'font-bold text-slate-800' : 'font-medium text-slate-600'}`}>
-                                                    {msg.subject}
+                                                    {msg.preview || 'New Conversation'}
                                                 </p>
 
                                                 {msg.role && (
@@ -241,12 +254,8 @@ const SeekerMessages = () => {
                                             </div>
                                         </div>
 
-                                        {/* Meta */}
                                         <div className="text-right shrink-0 flex flex-col items-end gap-2">
                                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{msg.date}</span>
-                                            {msg.preview.includes('attach') && (
-                                                <Paperclip size={14} className="text-slate-400" />
-                                            )}
                                         </div>
                                     </div>
                                 ))

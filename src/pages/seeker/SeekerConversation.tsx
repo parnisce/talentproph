@@ -11,32 +11,141 @@ import {
     AlignLeft,
     Image,
     Send,
-    Globe,
-    MapPin,
     AlertCircle,
     Trash2,
     Building2,
-    Briefcase
+    Briefcase,
+    Calendar
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../services/supabase';
+import { useUser } from '../../context/UserContext';
 
 interface ConversationProps {
-    message: any;
+    message: any; // The selected conversation object
     onBack: () => void;
 }
 
 const SeekerConversation = ({ message, onBack }: ConversationProps) => {
     const navigate = useNavigate();
+    const { id: seekerId, photo: seekerPhoto, name: seekerName } = useUser();
     const [isPinned, setIsPinned] = useState(message?.pinned || false);
     const [isArchived, setIsArchived] = useState(false);
     const [showMoreMenu, setShowMoreMenu] = useState(false);
+
+    const [messages, setMessages] = useState<any[]>([]);
+    const [newMessage, setNewMessage] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [sending, setSending] = useState(false);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    useEffect(() => {
+        fetchMessages();
+
+        // Subscribe to real-time messages
+        const channel = supabase
+            .channel(`seeker_conv_${message.id}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'messages',
+                    filter: `conversation_id=eq.${message.id}`
+                },
+                (payload) => {
+                    setMessages(prev => {
+                        if (prev.find(m => m.id === payload.new.id)) return prev;
+                        return [...prev, payload.new];
+                    });
+                    setTimeout(scrollToBottom, 100);
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [message.id]);
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
+    const fetchMessages = async () => {
+        setLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('messages')
+                .select('*')
+                .eq('conversation_id', message.id)
+                .order('created_at', { ascending: true });
+
+            if (error) throw error;
+            setMessages(data || []);
+        } catch (err) {
+            console.error("Error fetching messages:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSendMessage = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (!newMessage.trim() || !seekerId || sending) return;
+
+        setSending(true);
+        const content = newMessage.trim();
+        setNewMessage('');
+
+        try {
+            const { data, error: insertError } = await supabase
+                .from('messages')
+                .insert({
+                    conversation_id: message.id,
+                    sender_id: seekerId,
+                    content: content,
+                    type: 'text'
+                })
+                .select()
+                .single();
+
+            if (insertError) throw insertError;
+
+            if (data) {
+                setMessages(prev => {
+                    if (prev.find(m => m.id === data.id)) return prev;
+                    return [...prev, data];
+                });
+            }
+
+            await supabase
+                .from('conversations')
+                .update({
+                    last_message: content,
+                    last_message_at: new Date().toISOString()
+                })
+                .eq('id', message.id);
+
+        } catch (err: any) {
+            console.error("Error sending message:", err);
+            alert(`Failed to send message: ${err.message}`);
+        } finally {
+            setSending(false);
+            scrollToBottom();
+        }
+    };
 
     const togglePin = () => setIsPinned(!isPinned);
     const handleArchive = () => setIsArchived(!isArchived);
 
     return (
-        <div className="flex h-full flex-col lg:flex-row">
+        <div className="flex h-full flex-col lg:flex-row font-outfit">
             {/* Left/Main Chat Area */}
             <div className="flex-1 flex flex-col h-full overflow-hidden border-r border-slate-100">
                 {/* Header */}
@@ -60,44 +169,44 @@ const SeekerConversation = ({ message, onBack }: ConversationProps) => {
 
                 {/* Messages Thread */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-slate-50/30">
-                    {/* Company Message (Incoming) */}
-                    <div className="flex gap-4">
-                        <img src={message.avatar} alt={message.sender} className="w-10 h-10 rounded-xl bg-slate-100 object-cover ring-2 ring-white shadow-sm shrink-0" />
-                        <div className="flex-1 space-y-2">
-                            <div className="flex items-baseline justify-between">
-                                <div className="space-y-0.5">
-                                    <h4 className="font-black text-slate-900 text-sm">{message.sender}</h4>
-                                    <p className="text-[10px] text-slate-400 font-bold">Recruiter</p>
+                    {loading ? (
+                        <div className="flex items-center justify-center py-20">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        </div>
+                    ) : (
+                        messages.map((msg, idx) => {
+                            const isMe = msg.sender_id === seekerId;
+                            return (
+                                <div key={msg.id || idx} className={`flex gap-4 ${isMe ? 'flex-row-reverse text-right' : ''}`}>
+                                    <img
+                                        src={isMe ? seekerPhoto : message.avatar}
+                                        alt={isMe ? 'Me' : message.sender}
+                                        className="w-10 h-10 rounded-full bg-slate-100 object-cover ring-2 ring-white shadow-sm shrink-0"
+                                    />
+                                    <div className={`flex-1 space-y-2`}>
+                                        <div className={`flex items-baseline gap-3 ${isMe ? 'flex-row-reverse' : ''}`}>
+                                            <h4 className="font-black text-slate-900 text-sm">{isMe ? seekerName : message.sender}</h4>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+                                                {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </span>
+                                        </div>
+
+                                        <div className={`text-sm font-medium leading-relaxed p-4 rounded-2xl shadow-sm inline-block max-w-[80%] text-left ${isMe
+                                            ? 'bg-slate-900 text-white rounded-tr-none'
+                                            : 'bg-white text-slate-700 rounded-tl-none border border-slate-100'
+                                            }`}>
+                                            {msg.content}
+                                        </div>
+                                    </div>
                                 </div>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{message.date}</span>
-                            </div>
-
-                            <div className="text-sm font-medium text-slate-700 leading-relaxed bg-white p-6 rounded-2xl rounded-tl-none border border-slate-100 shadow-sm space-y-4">
-                                <p>Hi! We've reviewed your profile and we're very interested in your experience with React and Node.js.</p>
-                                <p>Are you available for a quick 15-minute introductory call later this week? Let us know your availability.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Me (Outgoing) Loop for mock - if we had outgoing messages */}
-                    <div className="flex gap-4 flex-row-reverse">
-                        <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shrink-0 shadow-lg shadow-primary/20 text-white font-black text-xs">
-                            ME
-                        </div>
-                        <div className="flex-1 space-y-2 text-right">
-                            <div className="flex items-baseline justify-between flex-row-reverse">
-                                <h4 className="font-black text-slate-900 text-sm">You</h4>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Feb 6, 2026, 10:15 AM</span>
-                            </div>
-                            <div className="text-sm font-medium text-white leading-relaxed bg-primary p-6 rounded-2xl rounded-tr-none shadow-lg shadow-primary/20 text-left">
-                                <p>Hi! Thank you for reaching out. Yes, I am available this Thursday or Friday afternoon (EST). Looking forward to it!</p>
-                            </div>
-                        </div>
-                    </div>
+                            );
+                        })
+                    )}
+                    <div ref={messagesEndRef} />
                 </div>
 
                 {/* Editor Area */}
-                <div className="p-6 bg-white border-t border-slate-100 shrink-0">
+                <form onSubmit={handleSendMessage} className="p-6 bg-white border-t border-slate-100 shrink-0">
                     <div className="border border-slate-200 rounded-2xl overflow-hidden focus-within:ring-4 focus-within:ring-primary/5 focus-within:border-primary/50 transition-all shadow-sm">
                         {/* Toolbar */}
                         <div className="flex items-center gap-1 p-2 border-b border-slate-100 bg-slate-50/50">
@@ -109,31 +218,43 @@ const SeekerConversation = ({ message, onBack }: ConversationProps) => {
                                 { icon: AlignLeft, label: 'Align' },
                                 { icon: Image, label: 'Image' }
                             ].map((tool, idx) => (
-                                <button key={idx} className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
+                                <button key={idx} type="button" className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
                                     <tool.icon size={16} />
                                 </button>
                             ))}
                             <div className="h-4 w-px bg-slate-200 mx-1" />
-                            <button className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
+                            <button type="button" className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
                                 <Paperclip size={16} />
                             </button>
                         </div>
 
                         {/* Textarea */}
                         <textarea
-                            rows={4}
-                            placeholder="Type your reply here..."
+                            rows={3}
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSendMessage();
+                                }
+                            }}
+                            placeholder="Type your message here..."
                             className="w-full p-4 text-sm font-medium text-slate-700 outline-none resize-none bg-white placeholder:text-slate-300"
                         />
 
                         {/* Footer */}
                         <div className="flex items-center justify-end p-3 bg-white">
-                            <button className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-slate-900/10 hover:bg-slate-800 transition-all flex items-center gap-2">
-                                <Send size={14} /> Send Message
+                            <button
+                                type="submit"
+                                disabled={!newMessage.trim() || sending}
+                                className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-slate-900/10 hover:bg-slate-800 transition-all flex items-center gap-2 disabled:opacity-50"
+                            >
+                                {sending ? 'Sending...' : <><Send size={14} /> Send Message</>}
                             </button>
                         </div>
                     </div>
-                </div>
+                </form>
             </div>
 
             {/* Right Sidebar - Company Details */}
@@ -143,9 +264,6 @@ const SeekerConversation = ({ message, onBack }: ConversationProps) => {
                         <img src={message.avatar} alt={message.sender} className="w-full h-full object-contain" />
                     </div>
                     <h3 className="text-lg font-black text-slate-900 tracking-tighter">{message.sender}</h3>
-                    <p className="text-xs font-bold text-slate-400 mt-1 flex items-center justify-center gap-1">
-                        <MapPin size={12} /> New York, USA
-                    </p>
 
                     <div className="flex gap-2 mt-6">
                         <button
@@ -187,19 +305,15 @@ const SeekerConversation = ({ message, onBack }: ConversationProps) => {
                         <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest">About Company</h4>
                         <div className="space-y-3">
                             <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
-                                <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 shrink-0"><Globe size={14} /></div>
-                                <span className="truncate">https://company.com</span>
-                            </div>
-                            <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
                                 <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 shrink-0"><Building2 size={14} /></div>
-                                <span className="truncate">Tech & Software</span>
+                                <span className="truncate">{message.employer?.company_name || 'Hiring Manager'}</span>
                             </div>
                         </div>
                     </div>
 
                     <div className="space-y-3 pt-4 border-t border-slate-50">
                         <button
-                            onClick={() => navigate(`/seeker/company/${message.id}`)}
+                            onClick={() => navigate(`/seeker/company/${message.employer_id}`)}
                             className="w-full py-3.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm flex items-center justify-center gap-2"
                         >
                             <Building2 size={14} /> View Company
@@ -207,7 +321,7 @@ const SeekerConversation = ({ message, onBack }: ConversationProps) => {
                         <button
                             className="w-full py-3.5 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10 flex items-center justify-center gap-2"
                         >
-                            <CalendarIcon size={14} /> Schedule Meeting
+                            <Calendar size={14} /> Schedule Meeting
                         </button>
                     </div>
                 </div>
@@ -215,10 +329,5 @@ const SeekerConversation = ({ message, onBack }: ConversationProps) => {
         </div>
     );
 };
-
-// Simplified icon component for missing Lucide icon if needed, or use existing Lucide icons
-const CalendarIcon = ({ size, className }: { size?: number, className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size || 24} height={size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="18" height="18" x="3" y="4" rx="2" ry="2" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" /></svg>
-);
 
 export default SeekerConversation;
