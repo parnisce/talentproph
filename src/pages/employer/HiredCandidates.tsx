@@ -9,12 +9,82 @@ import {
     User,
     ExternalLink,
     Briefcase,
-    Zap,
-    Download
+    Star,
+    X,
+    Download,
+    Zap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUser } from '../../context/UserContext';
 import { supabase } from '../../services/supabase';
+
+const ReviewModal = ({ isOpen, onClose, applicantName, onSubmit, isSubmitting }: any) => {
+    const [rating, setRating] = useState(0);
+    const [review, setReview] = useState('');
+    const [hover, setHover] = useState(0);
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="bg-white w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden"
+            >
+                <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                    <h3 className="text-xl font-black text-slate-900 tracking-tighter">Review {applicantName}</h3>
+                    <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
+                        <X size={20} className="text-slate-400" />
+                    </button>
+                </div>
+
+                <div className="p-8 space-y-6">
+                    <div className="flex flex-col items-center gap-2">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rate Performance</p>
+                        <div className="flex items-center gap-2">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                                <button
+                                    key={star}
+                                    type="button"
+                                    className="transition-transform hover:scale-110 focus:outline-none"
+                                    onClick={() => setRating(star)}
+                                    onMouseEnter={() => setHover(star)}
+                                    onMouseLeave={() => setHover(0)}
+                                >
+                                    <Star
+                                        size={32}
+                                        className={`${star <= (hover || rating) ? 'text-yellow-400 fill-yellow-400' : 'text-slate-200'}`}
+                                    />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Review Message</label>
+                        <textarea
+                            rows={4}
+                            value={review}
+                            onChange={(e) => setReview(e.target.value)}
+                            placeholder={`Share your experience working with ${applicantName}...`}
+                            className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-medium focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all resize-none"
+                        />
+                    </div>
+
+                    <button
+                        onClick={() => onSubmit(rating, review)}
+                        disabled={isSubmitting || rating === 0 || !review.trim()}
+                        className="w-full py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {isSubmitting ? 'Submitting...' : 'Submit Review'}
+                    </button>
+                </div>
+            </motion.div>
+        </div>
+    );
+};
 
 const HiredCandidates = () => {
     const { id: employerId } = useUser();
@@ -22,6 +92,11 @@ const HiredCandidates = () => {
     const [applicants, setApplicants] = useState<any[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);
+
+    // Modal state
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedApplicant, setSelectedApplicant] = useState<any>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         const fetchHired = async () => {
@@ -54,6 +129,8 @@ const HiredCandidates = () => {
                 if (data) {
                     const mapped = data.map(app => ({
                         id: app.id,
+                        seekerId: app.seeker_id,
+                        jobId: app.job_id,
                         name: app.profiles?.full_name || 'Anonymous',
                         photo: app.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${app.seeker_id}`,
                         role: app.profiles?.title || 'Team Member',
@@ -76,6 +153,44 @@ const HiredCandidates = () => {
         fetchHired();
     }, [employerId]);
 
+    const handleOpenReview = (applicant: any) => {
+        setSelectedApplicant(applicant);
+        setIsModalOpen(true);
+    };
+
+    const handleSubmitReview = async (rating: number, review: string) => {
+        if (!selectedApplicant || !employerId) return;
+
+        setIsSubmitting(true);
+        try {
+            const { error } = await supabase
+                .from('reviews')
+                .insert({
+                    seeker_id: selectedApplicant.seekerId,
+                    employer_id: employerId,
+                    job_id: selectedApplicant.jobId,
+                    rating,
+                    review_text: review
+                });
+
+            if (error) {
+                if (error.code === '23505') { // Unique violation
+                    alert("You have already reviewed this candidate for this job.");
+                } else {
+                    throw error;
+                }
+            } else {
+                alert("Review submitted successfully!");
+                setIsModalOpen(false);
+            }
+        } catch (err) {
+            console.error("Error submitting review:", err);
+            alert("Failed to submit review.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     const filteredApplicants = applicants.filter(app => {
         return app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             app.jobTitle.toLowerCase().includes(searchQuery.toLowerCase());
@@ -91,6 +206,13 @@ const HiredCandidates = () => {
 
     return (
         <div className="space-y-10 pb-32">
+            <ReviewModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                applicantName={selectedApplicant?.name}
+                onSubmit={handleSubmitReview}
+                isSubmitting={isSubmitting}
+            />
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
@@ -177,8 +299,17 @@ const HiredCandidates = () => {
 
                                 {/* Actions */}
                                 <div className="flex items-center gap-3">
-                                    <button className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-emerald-50 hover:text-emerald-600 transition-all border border-slate-100 group/btn shadow-sm">
+                                    <button
+                                        className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-emerald-50 hover:text-emerald-600 transition-all border border-slate-100 group/btn shadow-sm"
+                                        title="Send Message"
+                                    >
                                         <MessageSquare size={20} />
+                                    </button>
+                                    <button
+                                        onClick={() => handleOpenReview(applicant)}
+                                        className="px-6 py-4 bg-white border-2 border-slate-100 text-slate-500 hover:border-yellow-400 hover:text-yellow-500 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center gap-2 shadow-sm"
+                                    >
+                                        <Star size={16} /> Write Review
                                     </button>
                                     <button
                                         onClick={() => navigate(`/employer/applicants/review/${applicant.id}`)}

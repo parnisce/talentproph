@@ -20,6 +20,8 @@ import {
     GraduationCap
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { supabase } from '../../services/supabase';
 import { useUser } from '../../context/UserContext';
 
 const SeekerProfile = () => {
@@ -47,7 +49,38 @@ const SeekerProfile = () => {
         id
     } = useUser();
 
-    // Format member since date
+    // Fetch Reviews
+    const [reviews, setReviews] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchReviews = async () => {
+            if (!id) return;
+            try {
+                const { data, error } = await supabase
+                    .from('reviews')
+                    .select(`
+                        id,
+                        rating,
+                        review_text,
+                        created_at,
+                        job_posts (
+                            title,
+                            company_name
+                        )
+                    `)
+                    .eq('seeker_id', id)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                setReviews(data || []);
+            } catch (err) {
+                console.error("Error fetching reviews:", err);
+            }
+        };
+
+        fetchReviews();
+    }, [id]);
+
     const memberSince = created_at ? new Date(created_at).toLocaleDateString('en-US', {
         month: 'long',
         year: 'numeric'
@@ -242,25 +275,40 @@ const SeekerProfile = () => {
                             <MessageSquare size={16} className="text-primary" /> Verified Employer Reviews
                         </h3>
                         <div className="space-y-6">
-                            <div className="p-8 rounded-[32px] bg-slate-50/50 border border-slate-100 relative">
-                                <div className="flex items-center gap-4 mb-4">
-                                    <div className="w-12 h-12 rounded-2xl bg-slate-200" />
-                                    <div>
-                                        <p className="text-sm font-black text-slate-900">TechFlow Systems</p>
-                                        <div className="flex gap-1 text-yellow-400">
-                                            {[...Array(5)].map((_, i) => <Star key={i} size={12} fill="currentColor" />)}
+                            {reviews.length > 0 ? (
+                                reviews.map((review) => (
+                                    <div key={review.id} className="p-8 rounded-[32px] bg-slate-50/50 border border-slate-100 relative">
+                                        <div className="flex items-center gap-4 mb-4">
+                                            <div className="w-12 h-12 rounded-2xl bg-slate-200 flex items-center justify-center text-slate-400 font-black text-xl">
+                                                {review.job_posts?.company_name?.[0]?.toUpperCase() || 'C'}
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-black text-slate-900">{review.job_posts?.company_name || 'Verified Employer'}</p>
+                                                <div className="flex gap-1 text-yellow-400">
+                                                    {[...Array(5)].map((_, i) => (
+                                                        <Star
+                                                            key={i}
+                                                            size={12}
+                                                            fill={i < review.rating ? "currentColor" : "none"}
+                                                            className={i < review.rating ? "text-yellow-400" : "text-slate-300"}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <span className="ml-auto text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                                                {new Date(review.created_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
+                                            </span>
                                         </div>
+                                        <p className="text-sm text-slate-500 font-medium leading-relaxed italic">
+                                            "{review.review_text}"
+                                        </p>
                                     </div>
-                                    <span className="ml-auto text-[10px] font-black text-slate-300 uppercase tracking-widest">Dec 2025</span>
+                                ))
+                            ) : (
+                                <div className="p-12 rounded-[40px] border-2 border-dashed border-slate-100 flex flex-col items-center justify-center text-center opacity-40">
+                                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">No verified reviews yet</p>
                                 </div>
-                                <p className="text-sm text-slate-500 font-medium leading-relaxed italic">
-                                    "Exceptional attention to detail and a proactive approach to solving complex problems. Highly recommended for any senior role."
-                                </p>
-                            </div>
-
-                            <div className="p-12 rounded-[40px] border-2 border-dashed border-slate-100 flex flex-col items-center justify-center text-center opacity-40">
-                                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">More Reviews Pending Verification</p>
-                            </div>
+                            )}
                         </div>
                     </section>
                 </div>
