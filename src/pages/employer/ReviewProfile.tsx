@@ -22,6 +22,7 @@ import {
     Star
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useUser } from '../../context/UserContext';
 
 // Mock data for profiles
 const mockApplicantsData: Record<string, any> = {
@@ -180,6 +181,7 @@ const ScheduleInterviewModal = ({ isOpen, onClose, applicant, onSchedule }: { is
 const ReviewProfile = () => {
     const { applicantId } = useParams();
     const navigate = useNavigate();
+    const { id: employerId } = useUser();
     const [applicant, setApplicant] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
@@ -318,18 +320,23 @@ const ReviewProfile = () => {
             // 3. Send Automated Message
             try {
                 // Find or create conversation
-                const { data: existingConv } = await supabase
+                const { data: existingConv, error: fetchError } = await supabase
                     .from('conversations')
                     .select('id')
                     .eq('job_id', applicant.job_id)
                     .eq('seeker_id', applicant.seeker_id)
                     .eq('employer_id', applicant.employer_id)
-                    .single();
+                    .maybeSingle();
+
+                if (fetchError) {
+                    console.error("Error fetching conversation:", fetchError);
+                }
 
                 let conversationId = existingConv?.id;
 
                 if (!conversationId) {
-                    const { data: newConv } = await supabase
+                    console.log("No existing conversation found, creating one...");
+                    const { data: newConv, error: createError } = await supabase
                         .from('conversations')
                         .insert({
                             job_id: applicant.job_id,
@@ -339,8 +346,24 @@ const ReviewProfile = () => {
                             last_message_at: new Date().toISOString()
                         })
                         .select()
-                        .single();
-                    conversationId = newConv?.id;
+                        .maybeSingle();
+
+                    if (createError) {
+                        console.error("Error creating conversation:", createError);
+                        // If it's a unique constraint error, try fetching again
+                        if (createError.code === '23505') {
+                            const { data: retryConv } = await supabase
+                                .from('conversations')
+                                .select('id')
+                                .eq('job_id', applicant.job_id)
+                                .eq('seeker_id', applicant.seeker_id)
+                                .eq('employer_id', applicant.employer_id)
+                                .maybeSingle();
+                            conversationId = retryConv?.id;
+                        }
+                    } else {
+                        conversationId = newConv?.id;
+                    }
                 }
 
                 if (conversationId) {
@@ -367,7 +390,7 @@ Looking forward to speaking with you!`;
 
                     await supabase.from('messages').insert({
                         conversation_id: conversationId,
-                        sender_id: applicant.employer_id,
+                        sender_id: employerId,
                         content: autoMessage,
                         type: 'text'
                     });
@@ -491,7 +514,7 @@ Looking forward to speaking with you!`;
                 .eq('job_id', applicant.job_id)
                 .eq('seeker_id', applicant.seeker_id)
                 .eq('employer_id', applicant.employer_id)
-                .single();
+                .maybeSingle();
 
             let conversationId = existingConv?.id;
 
@@ -507,7 +530,7 @@ Looking forward to speaking with you!`;
                         last_message_at: new Date().toISOString()
                     })
                     .select()
-                    .single();
+                    .maybeSingle();
 
                 if (createError) throw createError;
                 conversationId = newConv.id;
