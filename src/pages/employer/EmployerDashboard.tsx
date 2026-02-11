@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import DashboardLayout from '../../components/DashboardLayout';
 import { motion } from 'framer-motion';
@@ -656,6 +656,7 @@ const EmployerJobPosts = () => {
 const EmployerDashboard = () => {
     const { id: employerId } = useUser();
     const [interviews, setInterviews] = useState<any[]>([]);
+    const location = useLocation();
 
     useEffect(() => {
         const fetchInterviews = async () => {
@@ -698,8 +699,11 @@ const EmployerDashboard = () => {
             }
         };
 
-        fetchInterviews();
-    }, [employerId]);
+        // Fetch primarily when on dashboard or calendar views
+        if (location.pathname === '/employer' || location.pathname === '/employer/' || location.pathname.includes('/calendar')) {
+            fetchInterviews();
+        }
+    }, [employerId, location.pathname]);
 
     return (
         <DashboardLayout role="employer">
