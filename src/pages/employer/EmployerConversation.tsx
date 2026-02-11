@@ -32,9 +32,10 @@ import { useUser } from '../../context/UserContext';
 interface ConversationProps {
     message: any; // The selected conversation object
     onBack: () => void;
+    onDataUpdate?: () => void;
 }
 
-const EmployerConversation = ({ message, onBack }: ConversationProps) => {
+const EmployerConversation = ({ message, onBack, onDataUpdate }: ConversationProps) => {
     const navigate = useNavigate();
     const { id: employerId, photo: employerPhoto, name: employerName } = useUser();
     const [rating, setRating] = useState(0);
@@ -80,15 +81,11 @@ const EmployerConversation = ({ message, onBack }: ConversationProps) => {
     const toggleLabel = async (labelId: string) => {
         const isSelected = convLabels.some(l => l.id === labelId);
         try {
-            if (isSelected) {
-                await supabase.from('conversation_labels').delete().eq('conversation_id', message.id).eq('label_id', labelId);
-            } else {
-                await supabase.from('conversation_labels').insert({ conversation_id: message.id, label_id: labelId });
-            }
+            if (isSelected) await supabase.from('conversation_labels').delete().eq('conversation_id', message.id).eq('label_id', labelId);
+            else await supabase.from('conversation_labels').insert({ conversation_id: message.id, label_id: labelId });
             fetchConvLabels();
-        } catch (err) {
-            console.error("Error toggling label:", err);
-        }
+            if (onDataUpdate) onDataUpdate();
+        } catch (err) { console.error("Error toggling label:", err); }
     };
 
     const handleHire = async () => {
@@ -97,14 +94,18 @@ const EmployerConversation = ({ message, onBack }: ConversationProps) => {
 
         setStatusUpdating(true);
         try {
-            const { error } = await supabase
-                .from('job_applications')
-                .update({ status: 'Hired' })
-                .eq('job_id', message.job_id)
-                .eq('seeker_id', message.seeker_id);
-
-            if (error) throw error;
-            alert("Candidate marked as HIRED!");
+            // Update application status
+            await supabase.from('job_applications').update({ status: 'Hired' }).eq('job_id', message.job_id).eq('seeker_id', message.seeker_id);
+            // Send Hired message
+            const { data } = await supabase.from('messages').insert({
+                conversation_id: message.id,
+                sender_id: employerId,
+                content: `Congratulations! We are pleased to offer you the position.`,
+                type: 'text'
+            }).select().single();
+            if (data) setMessages(prev => [...prev, data]);
+            alert("Candidate marked as Hired!");
+            if (onDataUpdate) onDataUpdate();
         } catch (err: any) {
             alert(err.message);
         } finally {
@@ -117,6 +118,7 @@ const EmployerConversation = ({ message, onBack }: ConversationProps) => {
         setIsSpam(newVal);
         try {
             await supabase.from('conversations').update({ is_spam_employer: newVal }).eq('id', message.id);
+            if (onDataUpdate) onDataUpdate();
             if (newVal) onBack();
         } catch (err) {
             console.error("Error marking spam:", err);
@@ -127,6 +129,7 @@ const EmployerConversation = ({ message, onBack }: ConversationProps) => {
         if (!confirm("Are you sure you want to delete this conversation? It will be hidden from your inbox.")) return;
         try {
             await supabase.from('conversations').update({ is_deleted_employer: true }).eq('id', message.id);
+            if (onDataUpdate) onDataUpdate();
             onBack();
         } catch (err) {
             console.error("Error deleting:", err);
@@ -217,13 +220,20 @@ const EmployerConversation = ({ message, onBack }: ConversationProps) => {
     const togglePin = async () => {
         const newVal = !isPinned;
         setIsPinned(newVal);
-        try { await supabase.from('conversations').update({ is_pinned_employer: newVal }).eq('id', message.id); } catch (err) { console.error(err); }
+        try {
+            await supabase.from('conversations').update({ is_pinned_employer: newVal }).eq('id', message.id);
+            if (onDataUpdate) onDataUpdate();
+        } catch (err) { console.error(err); }
     };
 
     const handleArchive = async () => {
         const newVal = !isArchived;
         setIsArchived(newVal);
-        try { await supabase.from('conversations').update({ is_archived_employer: newVal }).eq('id', message.id); if (newVal) onBack(); } catch (err) { console.error(err); }
+        try {
+            await supabase.from('conversations').update({ is_archived_employer: newVal }).eq('id', message.id);
+            if (onDataUpdate) onDataUpdate();
+            if (newVal) onBack();
+        } catch (err) { console.error(err); }
     };
 
     return (
@@ -386,7 +396,7 @@ const EmployerConversation = ({ message, onBack }: ConversationProps) => {
                             <span className="text-[9px] font-bold">Label</span>
                         </button>
                         {showLabelMenu && (
-                            <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-[60] p-1.5 animate-in fade-in zoom-in-95 duration-200">
+                            <div className="absolute top-[calc(100%+8px)] right-0 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-[100] p-1.5 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
                                 <p className="px-3 py-2 text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-50 mb-1">Select Labels</p>
                                 {allLabels.length === 0 ? (
                                     <p className="px-3 py-4 text-xs font-bold text-slate-400 text-center">No labels created yet</p>
@@ -399,11 +409,11 @@ const EmployerConversation = ({ message, onBack }: ConversationProps) => {
                                                 onClick={() => toggleLabel(l.id)}
                                                 className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${isSelected ? 'bg-slate-50 text-slate-900' : 'text-slate-600 hover:bg-slate-50'}`}
                                             >
-                                                <div className="flex items-center gap-2">
-                                                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: l.color }} />
-                                                    {l.name}
+                                                <div className="flex items-center gap-2 overflow-hidden">
+                                                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: l.color }} />
+                                                    <span className="truncate">{l.name}</span>
                                                 </div>
-                                                {isSelected && <CheckCircle size={14} className="text-secondary" />}
+                                                {isSelected && <CheckCircle size={14} className="text-secondary shrink-0" />}
                                             </button>
                                         );
                                     })

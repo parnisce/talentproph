@@ -98,7 +98,6 @@ const EmployerMessages = () => {
                     )
                 `)
                 .eq('employer_id', userId)
-                .eq('is_deleted_employer', false) // Default hide deleted
                 .order('last_message_at', { ascending: false });
 
             if (convError) throw convError;
@@ -154,6 +153,7 @@ const EmployerMessages = () => {
     };
 
     useEffect(() => {
+        if (!userId) return;
         fetchConversations();
         fetchLabels();
 
@@ -282,7 +282,7 @@ const EmployerMessages = () => {
             {/* Main Content */}
             <div className="flex-1 bg-white border-2 border-slate-50 rounded-[32px] shadow-sm flex flex-col overflow-hidden">
                 {selectedMessage ? (
-                    <EmployerConversation message={selectedMessage} onBack={() => setSelectedMessage(null)} />
+                    <EmployerConversation message={selectedMessage} onBack={() => setSelectedMessage(null)} onDataUpdate={fetchConversations} />
                 ) : (
                     <>
                         {/* Message Header */}
