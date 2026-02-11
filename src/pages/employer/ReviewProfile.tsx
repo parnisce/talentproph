@@ -315,12 +315,79 @@ const ReviewProfile = () => {
 
             if (appError) throw appError;
 
-            // 3. Update Local State
+            // 3. Send Automated Message
+            try {
+                // Find or create conversation
+                const { data: existingConv } = await supabase
+                    .from('conversations')
+                    .select('id')
+                    .eq('job_id', applicant.job_id)
+                    .eq('seeker_id', applicant.seeker_id)
+                    .eq('employer_id', applicant.employer_id)
+                    .single();
+
+                let conversationId = existingConv?.id;
+
+                if (!conversationId) {
+                    const { data: newConv } = await supabase
+                        .from('conversations')
+                        .insert({
+                            job_id: applicant.job_id,
+                            seeker_id: applicant.seeker_id,
+                            employer_id: applicant.employer_id,
+                            last_message: 'Interview Scheduled',
+                            last_message_at: new Date().toISOString()
+                        })
+                        .select()
+                        .single();
+                    conversationId = newConv?.id;
+                }
+
+                if (conversationId) {
+                    const dateObj = new Date(details.scheduledAt);
+                    const formattedDate = dateObj.toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                    const formattedTime = dateObj.toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+
+                    const autoMessage = `Hello! I have scheduled an interview for your application.
+                    
+Details:
+📅 Date: ${formattedDate}
+⏰ Time: ${formattedTime}
+📍 Location: ${details.location} ${details.details ? `(${details.details})` : ''}
+
+Looking forward to speaking with you!`;
+
+                    await supabase.from('messages').insert({
+                        conversation_id: conversationId,
+                        sender_id: applicant.employer_id,
+                        content: autoMessage,
+                        type: 'text'
+                    });
+
+                    await supabase.from('conversations').update({
+                        last_message: 'Interview Scheduled',
+                        last_message_at: new Date().toISOString()
+                    }).eq('id', conversationId);
+                }
+            } catch (msgErr) {
+                console.error("Error sending automated message:", msgErr);
+                // Don't fail the whole process if just the message fails
+            }
+
+            // 4. Update Local State
             setApplicant((prev: any) => ({ ...prev, status: 'Interviewed' }));
             setIsAlreadyScheduled(true);
             setActiveInterview(details);
             setIsScheduleModalOpen(false);
-            alert("Interview successfully scheduled!");
+            alert("Interview successfully scheduled and message sent to candidate!");
         } catch (err: any) {
             console.error("Error scheduling interview:", err);
             alert("Failed to schedule interview: " + (err.message || "Please ensure the 'interviews' table exists in your database."));
