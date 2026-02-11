@@ -21,7 +21,8 @@ import {
     MapPin,
     AlertCircle,
     Trash2,
-    Briefcase
+    Briefcase,
+    Calendar
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -45,11 +46,34 @@ const EmployerConversation = ({ message, onBack }: ConversationProps) => {
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
+    const [interview, setInterview] = useState<any>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
+
+    useEffect(() => {
+        const fetchInterviewStatus = async () => {
+            if (!employerId || !message.seeker_id || !message.job_id) return;
+            try {
+                const { data } = await supabase
+                    .from('interviews')
+                    .select('*')
+                    .eq('employer_id', employerId)
+                    .eq('seeker_id', message.seeker_id)
+                    .eq('job_id', message.job_id)
+                    .order('scheduled_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+
+                if (data) setInterview(data);
+            } catch (err) {
+                console.error("Error fetching interview status:", err);
+            }
+        };
+        fetchInterviewStatus();
+    }, [employerId, message.seeker_id, message.job_id]);
 
     useEffect(() => {
         fetchMessages();
@@ -418,6 +442,19 @@ const EmployerConversation = ({ message, onBack }: ConversationProps) => {
                             className="w-full py-3.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm flex items-center justify-center gap-2 font-outfit"
                         >
                             <User size={14} /> View Applicant Review
+                        </button>
+                        <button
+                            onClick={() => {
+                                if (interview) {
+                                    navigate('/employer/calendar');
+                                } else {
+                                    handleViewProfile();
+                                }
+                            }}
+                            className={`w-full py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-2 ${interview ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-slate-900 text-white shadow-slate-900/10 hover:bg-slate-800'
+                                }`}
+                        >
+                            <Calendar size={14} /> {interview ? 'View Interview Details' : 'Schedule Interview'}
                         </button>
                     </div>
                 </div>

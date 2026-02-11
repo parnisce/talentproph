@@ -40,9 +40,33 @@ const SeekerConversation = ({ message, onBack }: ConversationProps) => {
     const [sending, setSending] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
+    const [interview, setInterview] = useState<any>(null);
+
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
+
+    useEffect(() => {
+        const fetchInterviewStatus = async () => {
+            if (!seekerId || !message.employer_id || !message.job_id) return;
+            try {
+                const { data } = await supabase
+                    .from('interviews')
+                    .select('*')
+                    .eq('seeker_id', seekerId)
+                    .eq('employer_id', message.employer_id)
+                    .eq('job_id', message.job_id)
+                    .order('scheduled_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+
+                if (data) setInterview(data);
+            } catch (err) {
+                console.error("Error fetching interview status:", err);
+            }
+        };
+        fetchInterviewStatus();
+    }, [seekerId, message.employer_id, message.job_id]);
 
     useEffect(() => {
         fetchMessages();
@@ -313,15 +337,17 @@ const SeekerConversation = ({ message, onBack }: ConversationProps) => {
 
                     <div className="space-y-3 pt-4 border-t border-slate-50">
                         <button
-                            onClick={() => navigate(`/seeker/company/${message.employer_id}`)}
+                            onClick={() => navigate(`/company/${message.employer_id}`)}
                             className="w-full py-3.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm flex items-center justify-center gap-2"
                         >
                             <Building2 size={14} /> View Company
                         </button>
                         <button
-                            className="w-full py-3.5 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10 flex items-center justify-center gap-2"
+                            onClick={() => navigate('/seeker/calendar')}
+                            className={`w-full py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-2 ${interview ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-slate-900 text-white shadow-slate-900/10 hover:bg-slate-800'
+                                }`}
                         >
-                            <Calendar size={14} /> Schedule Meeting
+                            <Calendar size={14} /> {interview ? 'View Interview Details' : 'Schedule Meeting'}
                         </button>
                     </div>
                 </div>

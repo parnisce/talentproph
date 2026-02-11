@@ -69,7 +69,9 @@ const SeekerMessages = () => {
                         type: 'received',
                         archived: false,
                         employer: conv.employer,
-                        job: conv.job
+                        job: conv.job,
+                        employer_id: conv.employer_id,
+                        job_id: conv.job_id
                     }));
                     setMessages(mapped);
 
