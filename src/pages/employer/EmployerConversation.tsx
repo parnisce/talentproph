@@ -357,126 +357,128 @@ const EmployerConversation = ({ message, onBack, onDataUpdate }: ConversationPro
             </div>
 
             {/* Right Sidebar - Applicant Details */}
-            <div className="w-96 bg-white shrink-0 h-full overflow-y-auto border-l border-slate-100 relative">
-                <div className="p-8 text-center border-b border-slate-100">
-                    <div className="w-24 h-24 rounded-full bg-slate-100 mx-auto mb-4 overflow-hidden ring-4 ring-slate-50 shadow-xl">
-                        <img src={message.avatar} alt={message.sender} className="w-full h-full object-cover" />
-                    </div>
-                    <h3 className="text-xl font-black text-slate-900 tracking-tighter">{message.sender}</h3>
-                    <p className="text-xs font-bold text-slate-400 mt-1">{message.role}</p>
+            <div className="w-96 bg-white shrink-0 h-full border-l border-slate-100 flex flex-col relative z-20">
+                <div className="shrink-0">
+                    <div className="p-8 text-center border-b border-slate-100">
+                        <div className="w-24 h-24 rounded-full bg-slate-100 mx-auto mb-4 overflow-hidden ring-4 ring-slate-50 shadow-xl">
+                            <img src={message.avatar} alt={message.sender} className="w-full h-full object-cover" />
+                        </div>
+                        <h3 className="text-xl font-black text-slate-900 tracking-tighter">{message.sender}</h3>
+                        <p className="text-xs font-bold text-slate-400 mt-1">{message.role}</p>
 
-                    <div className="flex items-center justify-center gap-1 mt-6 text-amber-400">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-300 mr-2">Applicant Rating</span>
-                        {[1, 2, 3, 4, 5].map(star => (
-                            <Star
-                                key={star}
-                                size={14}
-                                className={`cursor-pointer transition-colors ${rating >= star ? 'fill-amber-400 text-amber-400' : 'fill-slate-100 text-slate-200 hover:text-amber-200'}`}
-                                onClick={() => setRating(star)}
-                            />
-                        ))}
+                        <div className="flex items-center justify-center gap-1 mt-6 text-amber-400">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-300 mr-2">Applicant Rating</span>
+                            {[1, 2, 3, 4, 5].map(star => (
+                                <Star
+                                    key={star}
+                                    size={14}
+                                    className={`cursor-pointer transition-colors ${rating >= star ? 'fill-amber-400 text-amber-400' : 'fill-slate-100 text-slate-200 hover:text-amber-200'}`}
+                                    onClick={() => setRating(star)}
+                                />
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="p-4 grid grid-cols-5 gap-2 border-b border-slate-100 relative">
+                        <button
+                            onClick={togglePin}
+                            className={`flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-slate-50 transition-all group ${isPinned ? 'text-primary' : 'text-slate-400 hover:text-primary'}`}
+                        >
+                            <Pin size={18} className={`group-hover:scale-110 transition-transform ${isPinned ? 'fill-primary' : ''}`} />
+                            <span className="text-[9px] font-bold">Pin</span>
+                        </button>
+
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowLabelMenu(!showLabelMenu)}
+                                className={`flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-slate-50 transition-all group w-full ${showLabelMenu || convLabels.length > 0 ? 'text-secondary font-bold' : 'text-slate-400 hover:text-secondary'}`}
+                            >
+                                <Tag size={18} className={`group-hover:scale-110 transition-transform ${convLabels.length > 0 ? 'fill-secondary text-secondary' : ''}`} />
+                                <span className="text-[9px] font-bold">Label</span>
+                            </button>
+                            {showLabelMenu && (
+                                <div className="absolute top-[calc(100%+8px)] right-[-80px] w-64 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-[100] p-1.5 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                                    <p className="px-3 py-2 text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-50 mb-1">Select Labels</p>
+                                    {allLabels.length === 0 ? (
+                                        <p className="px-3 py-4 text-xs font-bold text-slate-400 text-center">No labels created yet</p>
+                                    ) : (
+                                        allLabels.map(l => {
+                                            const isSelected = convLabels.some(cl => cl.id === l.id);
+                                            return (
+                                                <button
+                                                    key={l.id}
+                                                    onClick={() => toggleLabel(l.id)}
+                                                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${isSelected ? 'bg-slate-50 text-slate-900' : 'text-slate-600 hover:bg-slate-50'}`}
+                                                >
+                                                    <div className="flex items-center gap-2 overflow-hidden">
+                                                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: l.color }} />
+                                                        <span className="truncate">{l.name}</span>
+                                                    </div>
+                                                    {isSelected && <CheckCircle size={14} className="text-secondary shrink-0" />}
+                                                </button>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        <button
+                            onClick={handleHire}
+                            disabled={statusUpdating}
+                            className="flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-slate-50 text-slate-400 hover:text-emerald-500 transition-all group disabled:opacity-50"
+                        >
+                            <CheckCircle size={18} className="group-hover:scale-110 transition-transform" />
+                            <span className="text-[9px] font-bold whitespace-nowrap">Hire</span>
+                        </button>
+
+                        <button
+                            onClick={handleArchive}
+                            className={`flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-slate-50 transition-all group ${isArchived ? 'text-primary' : 'text-slate-400 hover:text-primary'}`}
+                        >
+                            <Archive size={18} className={`group-hover:scale-110 transition-transform ${isArchived ? 'fill-primary' : ''}`} />
+                            <span className="text-[9px] font-bold">Archive</span>
+                        </button>
+
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowMoreMenu(!showMoreMenu)}
+                                className={`flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-slate-50 text-slate-400 hover:text-primary transition-all group w-full ${showMoreMenu ? 'bg-slate-50 text-primary' : ''}`}
+                            >
+                                <MoreHorizontal size={18} className="group-hover:scale-110 transition-transform" />
+                                <span className="text-[9px] font-bold">More</span>
+                            </button>
+
+                            {showMoreMenu && (
+                                <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-50 p-1.5 animate-in fade-in zoom-in-95 duration-200">
+                                    <button
+                                        onClick={handleMarkSpam}
+                                        type="button"
+                                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-colors text-left ${isSpam ? 'text-rose-600 bg-rose-50' : 'text-slate-600 hover:bg-slate-50'}`}
+                                    >
+                                        <AlertCircle size={16} /> {isSpam ? 'Unmark as Spam' : 'Mark as Spam'}
+                                    </button>
+                                    <button
+                                        onClick={handleDelete}
+                                        type="button"
+                                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-rose-500 hover:bg-rose-50 transition-colors text-left"
+                                    >
+                                        <Trash2 size={16} /> Delete Conversation
+                                    </button>
+                                    <button
+                                        onClick={handleViewProfile}
+                                        type="button"
+                                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors text-left lg:hidden"
+                                    >
+                                        <User size={16} /> View Profile
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                <div className="p-4 grid grid-cols-5 gap-2 border-b border-slate-100 relative">
-                    <button
-                        onClick={togglePin}
-                        className={`flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-slate-50 transition-all group ${isPinned ? 'text-primary' : 'text-slate-400 hover:text-primary'}`}
-                    >
-                        <Pin size={18} className={`group-hover:scale-110 transition-transform ${isPinned ? 'fill-primary' : ''}`} />
-                        <span className="text-[9px] font-bold">Pin</span>
-                    </button>
-
-                    <div className="relative">
-                        <button
-                            onClick={() => setShowLabelMenu(!showLabelMenu)}
-                            className={`flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-slate-50 transition-all group w-full ${showLabelMenu || convLabels.length > 0 ? 'text-secondary font-bold' : 'text-slate-400 hover:text-secondary'}`}
-                        >
-                            <Tag size={18} className={`group-hover:scale-110 transition-transform ${convLabels.length > 0 ? 'fill-secondary text-secondary' : ''}`} />
-                            <span className="text-[9px] font-bold">Label</span>
-                        </button>
-                        {showLabelMenu && (
-                            <div className="absolute top-[calc(100%+8px)] right-0 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-[100] p-1.5 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
-                                <p className="px-3 py-2 text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-50 mb-1">Select Labels</p>
-                                {allLabels.length === 0 ? (
-                                    <p className="px-3 py-4 text-xs font-bold text-slate-400 text-center">No labels created yet</p>
-                                ) : (
-                                    allLabels.map(l => {
-                                        const isSelected = convLabels.some(cl => cl.id === l.id);
-                                        return (
-                                            <button
-                                                key={l.id}
-                                                onClick={() => toggleLabel(l.id)}
-                                                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${isSelected ? 'bg-slate-50 text-slate-900' : 'text-slate-600 hover:bg-slate-50'}`}
-                                            >
-                                                <div className="flex items-center gap-2 overflow-hidden">
-                                                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: l.color }} />
-                                                    <span className="truncate">{l.name}</span>
-                                                </div>
-                                                {isSelected && <CheckCircle size={14} className="text-secondary shrink-0" />}
-                                            </button>
-                                        );
-                                    })
-                                )}
-                            </div>
-                        )}
-                    </div>
-
-                    <button
-                        onClick={handleHire}
-                        disabled={statusUpdating}
-                        className="flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-slate-50 text-slate-400 hover:text-emerald-500 transition-all group disabled:opacity-50"
-                    >
-                        <CheckCircle size={18} className="group-hover:scale-110 transition-transform" />
-                        <span className="text-[9px] font-bold whitespace-nowrap">Hire</span>
-                    </button>
-
-                    <button
-                        onClick={handleArchive}
-                        className={`flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-slate-50 transition-all group ${isArchived ? 'text-primary' : 'text-slate-400 hover:text-primary'}`}
-                    >
-                        <Archive size={18} className={`group-hover:scale-110 transition-transform ${isArchived ? 'fill-primary' : ''}`} />
-                        <span className="text-[9px] font-bold">Archive</span>
-                    </button>
-
-                    <div className="relative">
-                        <button
-                            onClick={() => setShowMoreMenu(!showMoreMenu)}
-                            className={`flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-slate-50 text-slate-400 hover:text-primary transition-all group w-full ${showMoreMenu ? 'bg-slate-50 text-primary' : ''}`}
-                        >
-                            <MoreHorizontal size={18} className="group-hover:scale-110 transition-transform" />
-                            <span className="text-[9px] font-bold">More</span>
-                        </button>
-
-                        {showMoreMenu && (
-                            <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-50 p-1.5 animate-in fade-in zoom-in-95 duration-200">
-                                <button
-                                    onClick={handleMarkSpam}
-                                    type="button"
-                                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-colors text-left ${isSpam ? 'text-rose-600 bg-rose-50' : 'text-slate-600 hover:bg-slate-50'}`}
-                                >
-                                    <AlertCircle size={16} /> {isSpam ? 'Unmark as Spam' : 'Mark as Spam'}
-                                </button>
-                                <button
-                                    onClick={handleDelete}
-                                    type="button"
-                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-rose-500 hover:bg-rose-50 transition-colors text-left"
-                                >
-                                    <Trash2 size={16} /> Delete Conversation
-                                </button>
-                                <button
-                                    onClick={handleViewProfile}
-                                    type="button"
-                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors text-left lg:hidden"
-                                >
-                                    <User size={16} /> View Profile
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                <div className="p-8 space-y-8">
+                <div className="flex-1 overflow-y-auto p-8 space-y-8">
                     <div className="space-y-4">
                         <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest">Contact Information</h4>
                         <div className="space-y-3">
