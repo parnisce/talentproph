@@ -18,7 +18,8 @@ import {
     User,
     Calendar,
     Trash2,
-    UserCheck
+    UserCheck,
+    Star
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -378,6 +379,42 @@ const ReviewProfile = () => {
         }
     };
 
+    const handleRejectApplicant = async () => {
+        if (!confirm(`Are you sure you want to REJECT ${applicant.name}?`)) return;
+
+        try {
+            const { error } = await supabase
+                .from('job_applications')
+                .update({ status: 'Rejected' })
+                .eq('id', applicant.id);
+
+            if (error) throw error;
+
+            setApplicant((prev: any) => ({ ...prev, status: 'Rejected' }));
+            alert("Candidate has been rejected.");
+        } catch (err: any) {
+            console.error("Error rejecting applicant:", err);
+            alert("Failed to reject: " + err.message);
+        }
+    };
+
+    const handleShortlistApplicant = async () => {
+        try {
+            const { error } = await supabase
+                .from('job_applications')
+                .update({ status: 'Shortlisted' })
+                .eq('id', applicant.id);
+
+            if (error) throw error;
+
+            setApplicant((prev: any) => ({ ...prev, status: 'Shortlisted' }));
+            alert("Candidate has been shortlisted!");
+        } catch (err: any) {
+            console.error("Error shortlisting applicant:", err);
+            alert("Failed to shortlist: " + err.message);
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center py-20 min-h-[40vh]">
@@ -416,20 +453,33 @@ const ReviewProfile = () => {
                         <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${applicant.status === 'Shortlisted' ? 'bg-amber-100 text-amber-600' :
                             applicant.status === 'New' || applicant.status === 'Interviewed' ? 'bg-blue-100 text-blue-600' :
                                 applicant.status === 'Hired' ? 'bg-emerald-100 text-emerald-600' :
-                                    'bg-slate-100 text-slate-500'
+                                    applicant.status === 'Rejected' ? 'bg-rose-100 text-rose-600' :
+                                        'bg-slate-100 text-slate-500'
                             }`}>
-                            {applicant.status}
+                            {applicant.status === 'Interviewed' ? 'Reviewed' : applicant.status}
                         </span>
                     </div>
                 </div>
                 <div className="flex flex-wrap items-center justify-end gap-3 max-w-full">
                     {/* Rejected Button */}
-                    {applicant.status !== 'Hired' && (
+                    {applicant.status !== 'Hired' && applicant.status !== 'Rejected' && (
                         <button
+                            onClick={handleRejectApplicant}
                             className="p-4 bg-white border-2 border-slate-100 text-rose-500 rounded-2xl hover:bg-rose-50 transition-all shadow-sm"
                             title="Reject Candidate"
                         >
                             <XCircle size={22} />
+                        </button>
+                    )}
+
+                    {/* Shortlist Button */}
+                    {applicant.status !== 'Shortlisted' && applicant.status !== 'Hired' && applicant.status !== 'Rejected' && (
+                        <button
+                            onClick={handleShortlistApplicant}
+                            className="p-4 bg-white border-2 border-slate-100 text-amber-500 rounded-2xl hover:bg-amber-50 transition-all shadow-sm"
+                            title="Shortlist Candidate"
+                        >
+                            <Star size={22} />
                         </button>
                     )}
 

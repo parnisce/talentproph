@@ -68,17 +68,35 @@ const ViewApplicants = () => {
                 if (error) throw error;
 
                 if (data) {
-                    const mappedApplicants = data.map(app => ({
-                        id: app.id,
-                        name: app.profiles?.full_name || 'Anonymous Seeker',
-                        photo: app.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${app.seeker_id}`,
-                        role: app.profiles?.title || 'Job Seeker',
-                        experience: app.profiles?.experience_years || 'No',
-                        appliedDate: new Date(app.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit' }),
-                        status: app.status || 'New',
-                        topSkills: app.profiles?.skills_list?.slice(0, 3) || [],
-                        score: app.profiles?.iq ? Math.min(Math.round((app.profiles.iq / 160) * 100), 100) : 85, // Mock score logic based on IQ
-                    }));
+                    const mappedApplicants = data.map(app => {
+                        const appliedDate = new Date(app.created_at);
+                        const isRecent = (new Date().getTime() - appliedDate.getTime()) < 24 * 60 * 60 * 1000;
+
+                        let displayStatus = app.status || 'New';
+
+                        // Logic: "New" tag only for first 24 hours. After that, it becomes "Applied" (hidden from New tab)
+                        if (displayStatus === 'New' && !isRecent) {
+                            displayStatus = 'Applied';
+                        }
+
+                        // Map DB 'Interviewed' to UI 'Reviewed'
+                        if (displayStatus === 'Interviewed') {
+                            displayStatus = 'Reviewed';
+                        }
+
+                        return {
+                            id: app.id,
+                            name: app.profiles?.full_name || 'Anonymous Seeker',
+                            photo: app.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${app.seeker_id}`,
+                            role: app.profiles?.title || 'Job Seeker',
+                            experience: app.profiles?.experience_years || 'No',
+                            appliedDate: appliedDate.toLocaleDateString('en-US', { month: 'short', day: '2-digit' }),
+                            status: displayStatus,
+                            originalStatus: app.status, // Keep track of DB status
+                            topSkills: app.profiles?.skills_list?.slice(0, 3) || [],
+                            score: app.profiles?.iq ? Math.min(Math.round((app.profiles.iq / 160) * 100), 100) : 85,
+                        };
+                    });
                     setApplicants(mappedApplicants);
                 }
             } catch (err) {
