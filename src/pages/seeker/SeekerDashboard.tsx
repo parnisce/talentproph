@@ -18,7 +18,9 @@ import {
     GraduationCap,
     ExternalLink,
     Eye,
-    Calendar
+    Calendar,
+    Building2,
+    MapPin
 } from 'lucide-react';
 import CalendarView from '../../components/CalendarView';
 import { useUser } from '../../context/UserContext';
@@ -31,7 +33,7 @@ import SeekerFindJobs from './SeekerFindJobs';
 import JobDetails from './JobDetails';
 import SavedJobs from './SavedJobs';
 
-const SeekerOverview = ({ interviews = [], employers = [] }: { interviews?: any[], employers?: any[] }) => {
+const SeekerOverview = ({ interviews = [], employers = [], savedJobs = [] }: { interviews?: any[], employers?: any[], savedJobs?: any[] }) => {
     const { userPhoto, updateUserProfile, userName, title, website, salary, education, skills, resume_url } = useUser();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -241,18 +243,33 @@ const SeekerOverview = ({ interviews = [], employers = [] }: { interviews?: any[
                             <div className="p-3 bg-secondary/10 rounded-2xl text-secondary group-hover:scale-110 transition-transform">
                                 <Bookmark size={22} />
                             </div>
-                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.3em]">Bookmarked Positions</h3>
+                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.3em]">Bookmark Jobs</h3>
                         </div>
                         <Link to="/seeker/saved-jobs" className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline decoration-transparent">View All</Link>
                     </div>
-                    <div className="py-12 flex flex-col items-center justify-center text-center">
-                        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6 text-slate-200">
-                            <Bookmark size={32} />
-                        </div>
-                        <Link to="/seeker/jobs" className="text-slate-400 font-bold text-sm tracking-tight hover:text-primary transition-colors decoration-transparent">
-                            Browse jobs to bookmark<br />
-                            <span className="text-primary font-black uppercase text-[10px] mt-2 block tracking-widest hover:underline">Start Exploring</span>
-                        </Link>
+                    <div className="space-y-4 max-h-[280px] overflow-y-auto pr-2 custom-scrollbar">
+                        {savedJobs.length > 0 ? (
+                            savedJobs.slice(0, 3).map((job) => (
+                                <Link to={`/seeker/jobs/${job.id}`} key={job.savedId} className="block p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:border-primary/20 hover:bg-white transition-all group/item decoration-transparent">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <h4 className="text-sm font-black text-slate-900 truncate pr-4 group-hover/item:text-primary transition-colors">{job.title}</h4>
+                                        <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest shrink-0">{job.type}</span>
+                                    </div>
+                                    <div className="flex items-center gap-3 text-[10px] font-bold text-slate-400">
+                                        <span className="flex items-center gap-1"><Building2 size={12} /> {job.company}</span>
+                                        <span className="flex items-center gap-1"><MapPin size={12} /> {job.location}</span>
+                                    </div>
+                                </Link>
+                            ))
+                        ) : (
+                            <div className="py-8 flex flex-col items-center justify-center text-center">
+                                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-200">
+                                    <Bookmark size={28} />
+                                </div>
+                                <p className="text-slate-400 font-bold text-sm tracking-tight italic">No jobs bookmarked yet.</p>
+                                <Link to="/seeker/jobs" className="text-primary font-black uppercase text-[10px] mt-2 block tracking-widest hover:underline decoration-transparent">Start Exploring</Link>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -457,6 +474,7 @@ const SeekerDashboard = () => {
     const { id: seekerId } = useUser();
     const [interviews, setInterviews] = useState<any[]>([]);
     const [employers, setEmployers] = useState<any[]>([]);
+    const [savedJobs, setSavedJobs] = useState<any[]>([]);
 
     useEffect(() => {
         const fetchInterviews = async () => {
@@ -525,14 +543,52 @@ const SeekerDashboard = () => {
             }
         };
 
+        const fetchSavedJobs = async () => {
+            if (!seekerId) return;
+            try {
+                const { data, error } = await supabase
+                    .from('saved_jobs')
+                    .select(`
+                        id,
+                        created_at,
+                        job_posts (
+                            id,
+                            title,
+                            company_name,
+                            location,
+                            engagement
+                        )
+                    `)
+                    .eq('seeker_id', seekerId)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                if (data) {
+                    const formatted = data.map((item: any) => ({
+                        savedId: item.id,
+                        id: item.job_posts.id,
+                        title: item.job_posts.title,
+                        company: item.job_posts.company_name,
+                        location: item.job_posts.location,
+                        type: item.job_posts.engagement?.split(' ')[0] || 'Full-Time'
+                    }));
+                    setSavedJobs(formatted);
+                }
+            } catch (err) {
+                console.error("Error fetching saved jobs:", err);
+            }
+        };
+
         fetchInterviews();
         fetchEmployers();
+        fetchSavedJobs();
     }, [seekerId]);
 
     return (
         <DashboardLayout role="seeker">
             <Routes>
-                <Route path="/" element={<SeekerOverview interviews={interviews} employers={employers} />} />
+                <Route path="/" element={<SeekerOverview interviews={interviews} employers={employers} savedJobs={savedJobs} />} />
                 <Route path="/jobs" element={<SeekerFindJobs />} />
                 <Route path="/jobs/:id" element={<JobDetails />} />
                 <Route path="/profile" element={<SeekerProfile />} />
