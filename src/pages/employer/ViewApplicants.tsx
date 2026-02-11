@@ -12,20 +12,29 @@ import {
     Briefcase,
     Zap,
     Download,
-    Target
+    Target,
+    X,
+    Send
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { supabase } from '../../services/supabase';
+import { useUser } from '../../context/UserContext';
 
 const ViewApplicants = () => {
     const { id } = useParams();
+    const { id: employerId } = useUser();
     const navigate = useNavigate();
     const [applicants, setApplicants] = useState<any[]>([]);
     const [jobTitle, setJobTitle] = useState('Position');
     const [filter, setFilter] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);
+
+    // Bulk Message State
+    const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+    const [bulkMessage, setBulkMessage] = useState('');
+    const [sendingBulk, setSendingBulk] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -86,6 +95,7 @@ const ViewApplicants = () => {
 
                         return {
                             id: app.id,
+                            seekerId: app.seeker_id,
                             name: app.profiles?.full_name || 'Anonymous Seeker',
                             photo: app.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${app.seeker_id}`,
                             role: app.profiles?.title || 'Job Seeker',
@@ -108,6 +118,102 @@ const ViewApplicants = () => {
 
         fetchData();
     }, [id]);
+
+    const handleMessageAll = async () => {
+        if (!bulkMessage.trim() || !employerId) return;
+        setSendingBulk(true);
+
+        try {
+            // Send to all CURRENTLY FILTERED applicants
+            const targets = filteredApplicants;
+
+            for (const app of targets) {
+                // Find or Create Conversation
+                const { data: conv } = await supabase
+                    .from('conversations')
+                    .select('id')
+                    .eq('employer_id', employerId)
+                    .eq('seeker_id', app.seekerId)
+                    .eq('job_id', id === 'all' ? null : id)
+                    .maybeSingle();
+
+                let conversationId = conv?.id;
+
+                if (!conversationId) {
+                    const { data: newConv, error: createError } = await supabase
+                        .from('conversations')
+                        .insert({
+                            employer_id: employerId,
+                            seeker_id: app.seekerId,
+                            job_id: id === 'all' ? null : id,
+                            last_message: bulkMessage,
+                            last_message_at: new Date().toISOString()
+                        })
+                        .select()
+                        .single();
+
+                    if (createError) continue;
+                    conversationId = newConv.id;
+                }
+
+                // Send Message
+                await supabase.from('messages').insert({
+                    conversation_id: conversationId,
+                    sender_id: employerId,
+                    content: bulkMessage,
+                    type: 'text'
+                });
+
+                // Update Conversation
+                await supabase.from('conversations')
+                    .update({ last_message: bulkMessage, last_message_at: new Date().toISOString() })
+                    .eq('id', conversationId);
+            }
+
+            alert(`Successfully sent message to ${targets.length} candidates!`);
+            setIsBulkModalOpen(false);
+            setBulkMessage('');
+        } catch (err) {
+            console.error("Error sending bulk messages:", err);
+            alert("An error occurred while sending messages.");
+        } finally {
+            setSendingBulk(false);
+        }
+    };
+
+    const handleSingleMessage = async (applicant: any) => {
+        if (!employerId) return;
+        try {
+            const { data: conv } = await supabase
+                .from('conversations')
+                .select('id')
+                .eq('employer_id', employerId)
+                .eq('seeker_id', applicant.seekerId)
+                .eq('job_id', id === 'all' ? null : id)
+                .maybeSingle();
+
+            let conversationId = conv?.id;
+
+            if (!conversationId) {
+                const { data: newConv } = await supabase
+                    .from('conversations')
+                    .insert({
+                        employer_id: employerId,
+                        seeker_id: applicant.seekerId,
+                        job_id: id === 'all' ? null : id,
+                        last_message: 'Conversation Started',
+                        last_message_at: new Date().toISOString()
+                    })
+                    .select()
+                    .single();
+                conversationId = newConv.id;
+            }
+
+            navigate(`/employer/messages?conversationId=${conversationId}`);
+        } catch (err) {
+            console.error("Error starting conversation:", err);
+        }
+    };
 
     const filteredApplicants = applicants.filter(app => {
         const matchesSearch = app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -144,6 +250,12 @@ const ViewApplicants = () => {
                     <p className="text-slate-500 font-medium mt-1">Reviewing candidates for <span className="text-slate-900 font-bold">"{jobTitle}"</span>.</p>
                 </div>
                 <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setIsBulkModalOpen(true)}
+                        className="px-6 py-3.5 bg-slate-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-slate-900/10 hover:bg-slate-800 transition-all flex items-center gap-3"
+                    >
+                        <MessageSquare size={18} /> Message All
+                    </button>
                     <button className="px-6 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-primary transition-all shadow-sm flex items-center gap-2">
                         <Download size={18} /> Export List
                     </button>
@@ -236,7 +348,10 @@ const ViewApplicants = () => {
                                     </div>
 
                                     <div className="flex items-center gap-3">
-                                        <button className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-primary/10 hover:text-primary transition-all border border-slate-100 group/btn shadow-sm">
+                                        <button
+                                            onClick={() => handleSingleMessage(applicant)}
+                                            className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-primary/10 hover:text-primary transition-all border border-slate-100 group/btn shadow-sm"
+                                        >
                                             <MessageSquare size={20} />
                                         </button>
                                         <button className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-rose-50 hover:text-rose-500 transition-all border border-slate-100 group/btn shadow-sm">
@@ -269,6 +384,71 @@ const ViewApplicants = () => {
                     )}
                 </AnimatePresence>
             </div>
+
+            {/* Bulk Message Modal */}
+            <AnimatePresence>
+                {isBulkModalOpen && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="bg-white rounded-[40px] shadow-2xl w-full max-w-2xl overflow-hidden border-2 border-slate-50"
+                        >
+                            <div className="px-10 py-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
+                                <div>
+                                    <h2 className="text-2xl font-black text-slate-900 tracking-tighter">Message Candidates</h2>
+                                    <p className="text-slate-500 text-sm font-medium">Sending to {filteredApplicants.length} filtered candidates</p>
+                                </div>
+                                <button
+                                    onClick={() => setIsBulkModalOpen(false)}
+                                    className="p-3 bg-white hover:bg-rose-50 hover:text-rose-500 rounded-2xl transition-all shadow-sm border border-slate-100"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <div className="p-10 space-y-6">
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Your Message</label>
+                                    <textarea
+                                        value={bulkMessage}
+                                        onChange={(e) => setBulkMessage(e.target.value)}
+                                        placeholder="Type your message to all candidates..."
+                                        className="w-full h-48 px-6 py-5 bg-slate-50 border-2 border-slate-50 rounded-[32px] text-sm font-bold focus:outline-none focus:border-primary/20 focus:bg-white transition-all resize-none"
+                                    ></textarea>
+                                </div>
+
+                                <div className="flex items-center justify-end gap-3 pt-4">
+                                    <button
+                                        onClick={() => setIsBulkModalOpen(false)}
+                                        className="px-8 py-4 text-slate-400 font-black text-[11px] uppercase tracking-widest hover:text-slate-600 transition-all font-outfit"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleMessageAll}
+                                        disabled={sendingBulk || !bulkMessage.trim()}
+                                        className="px-10 py-4 bg-primary text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50 disabled:scale-100 font-outfit"
+                                    >
+                                        {sendingBulk ? (
+                                            <>
+                                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                                Sending...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Send size={18} />
+                                                Send Message
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

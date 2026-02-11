@@ -415,6 +415,45 @@ const ReviewProfile = () => {
         }
     };
 
+    const handleSendMessage = async () => {
+        try {
+            // 1. Check if conversation exists
+            const { data: existingConv } = await supabase
+                .from('conversations')
+                .select('id')
+                .eq('job_id', applicant.job_id)
+                .eq('seeker_id', applicant.seeker_id)
+                .eq('employer_id', applicant.employer_id)
+                .single();
+
+            let conversationId = existingConv?.id;
+
+            // 2. If not, create it
+            if (!conversationId) {
+                const { data: newConv, error: createError } = await supabase
+                    .from('conversations')
+                    .insert({
+                        job_id: applicant.job_id,
+                        seeker_id: applicant.seeker_id,
+                        employer_id: applicant.employer_id,
+                        last_message: 'Conversation Started',
+                        last_message_at: new Date().toISOString()
+                    })
+                    .select()
+                    .single();
+
+                if (createError) throw createError;
+                conversationId = newConv.id;
+            }
+
+            // 3. Navigate to messages
+            navigate(`/employer/messages?conversationId=${conversationId}`);
+        } catch (err: any) {
+            console.error("Error starting conversation:", err);
+            alert("Failed to start conversation: " + err.message);
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center py-20 min-h-[40vh]">
@@ -465,10 +504,11 @@ const ReviewProfile = () => {
                     {applicant.status !== 'Hired' && applicant.status !== 'Rejected' && (
                         <button
                             onClick={handleRejectApplicant}
-                            className="p-4 bg-white border-2 border-slate-100 text-rose-500 rounded-2xl hover:bg-rose-50 transition-all shadow-sm"
+                            className="p-4 bg-white border-2 border-slate-100 text-rose-500 rounded-2xl hover:bg-rose-50 transition-all shadow-sm relative group"
                             title="Reject Candidate"
                         >
                             <XCircle size={22} />
+                            <div className="absolute top-0 right-0 p-8 opacity-[0.0] group-hover:opacity-100 transition-opacity whitespace-nowrap bg-slate-900 text-white text-[10px] rounded px-2 py-1 -mt-8">Reject</div>
                         </button>
                     )}
 
@@ -570,7 +610,10 @@ const ReviewProfile = () => {
                                 </div>
                             </div>
 
-                            <button className="w-full mt-10 py-5 bg-slate-900 text-white rounded-[24px] text-[10px] font-black uppercase tracking-widest shadow-2xl shadow-slate-900/10 hover:bg-slate-800 transition-all flex items-center justify-center gap-3">
+                            <button
+                                onClick={handleSendMessage}
+                                className="w-full mt-10 py-5 bg-slate-900 text-white rounded-[24px] text-[10px] font-black uppercase tracking-widest shadow-2xl shadow-slate-900/10 hover:bg-slate-800 transition-all flex items-center justify-center gap-3"
+                            >
                                 <MessageSquare size={16} /> Send Message
                             </button>
                         </div>
