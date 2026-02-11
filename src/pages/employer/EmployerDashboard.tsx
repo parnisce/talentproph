@@ -618,7 +618,7 @@ const EmployerJobPosts = () => {
                                                 console.error("Error updating status:", err);
                                                 // Revert on error
                                                 setJobs(jobs.map(j => j.id === job.id ? { ...j, status: job.status } : j));
-                                                alert("Failed to update status");
+                                                alert(`Failed to update status: ${(err as any).message}`);
                                             }
                                         }}
                                         className={`px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 border ${job.status === 'Live'
