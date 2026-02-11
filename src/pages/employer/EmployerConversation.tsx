@@ -18,8 +18,6 @@ import {
     Mail,
     Phone,
     Globe,
-    Clock,
-    GraduationCap,
     MapPin,
     AlertCircle,
     Trash2,
@@ -212,8 +210,8 @@ const EmployerConversation = ({ message, onBack }: ConversationProps) => {
                                         </div>
 
                                         <div className={`text-sm font-medium leading-relaxed p-4 rounded-2xl shadow-sm inline-block max-w-[80%] text-left ${isMe
-                                                ? 'bg-slate-900 text-white rounded-tr-none'
-                                                : 'bg-white text-slate-700 rounded-tl-none border border-slate-100'
+                                            ? 'bg-slate-900 text-white rounded-tr-none'
+                                            : 'bg-white text-slate-700 rounded-tl-none border border-slate-100'
                                             }`}>
                                             {msg.content}
                                         </div>
