@@ -39,13 +39,18 @@ const EmployerConversation = ({ message, onBack }: ConversationProps) => {
     const { id: employerId, photo: employerPhoto, name: employerName } = useUser();
     const [rating, setRating] = useState(0);
     const [isPinned, setIsPinned] = useState(message?.pinned || false);
-    const [isArchived, setIsArchived] = useState(false);
+    const [isArchived, setIsArchived] = useState(message?.archived || false);
+    const [isSpam, setIsSpam] = useState(message?.spam || false);
     const [showMoreMenu, setShowMoreMenu] = useState(false);
+    const [showLabelMenu, setShowLabelMenu] = useState(false);
 
     const [messages, setMessages] = useState<any[]>([]);
+    const [allLabels, setAllLabels] = useState<any[]>([]);
+    const [convLabels, setConvLabels] = useState<any[]>(message?.labels || []);
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
+    const [statusUpdating, setStatusUpdating] = useState(false);
     const [interview, setInterview] = useState<any>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -53,160 +58,172 @@ const EmployerConversation = ({ message, onBack }: ConversationProps) => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
+    // Fetch All User Labels
     useEffect(() => {
-        const fetchInterviewStatus = async () => {
-            if (!employerId || !message.seeker_id || !message.job_id) return;
-            try {
-                const { data } = await supabase
-                    .from('interviews')
-                    .select('*')
-                    .eq('employer_id', employerId)
-                    .eq('seeker_id', message.seeker_id)
-                    .eq('job_id', message.job_id)
-                    .order('scheduled_at', { ascending: false })
-                    .limit(1)
-                    .maybeSingle();
-
-                if (data) setInterview(data);
-            } catch (err) {
-                console.error("Error fetching interview status:", err);
-            }
+        const fetchAllLabels = async () => {
+            if (!employerId) return;
+            const { data } = await supabase.from('labels').select('*').eq('user_id', employerId).order('name');
+            if (data) setAllLabels(data);
         };
-        fetchInterviewStatus();
-    }, [employerId, message.seeker_id, message.job_id]);
+        fetchAllLabels();
+    }, [employerId]);
 
+    // Fetch Conversation Labels
+    const fetchConvLabels = async () => {
+        const { data } = await supabase
+            .from('conversation_labels')
+            .select('label:label_id (id, name, color)')
+            .eq('conversation_id', message.id);
+        if (data) setConvLabels(data.map((cl: any) => cl.label));
+    };
+
+    const toggleLabel = async (labelId: string) => {
+        const isSelected = convLabels.some(l => l.id === labelId);
+        try {
+            if (isSelected) {
+                await supabase.from('conversation_labels').delete().eq('conversation_id', message.id).eq('label_id', labelId);
+            } else {
+                await supabase.from('conversation_labels').insert({ conversation_id: message.id, label_id: labelId });
+            }
+            fetchConvLabels();
+        } catch (err) {
+            console.error("Error toggling label:", err);
+        }
+    };
+
+    const handleHire = async () => {
+        if (!message.job_id || !message.seeker_id) return;
+        if (!confirm(`Are you sure you want to HIRE this candidate?`)) return;
+
+        setStatusUpdating(true);
+        try {
+            const { error } = await supabase
+                .from('job_applications')
+                .update({ status: 'Hired' })
+                .eq('job_id', message.job_id)
+                .eq('seeker_id', message.seeker_id);
+
+            if (error) throw error;
+            alert("Candidate marked as HIRED!");
+        } catch (err: any) {
+            alert(err.message);
+        } finally {
+            setStatusUpdating(false);
+        }
+    };
+
+    const handleMarkSpam = async () => {
+        const newVal = !isSpam;
+        setIsSpam(newVal);
+        try {
+            await supabase.from('conversations').update({ is_spam_employer: newVal }).eq('id', message.id);
+            if (newVal) onBack();
+        } catch (err) {
+            console.error("Error marking spam:", err);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!confirm("Are you sure you want to delete this conversation? It will be hidden from your inbox.")) return;
+        try {
+            await supabase.from('conversations').update({ is_deleted_employer: true }).eq('id', message.id);
+            onBack();
+        } catch (err) {
+            console.error("Error deleting:", err);
+        }
+    };
+
+
+
+    // Real-time messages sync
     useEffect(() => {
         fetchMessages();
+        markAsRead();
+        fetchInterviewStatus();
 
-        // Subscribe to real-time messages
-        const channel = supabase
-            .channel(`conv_${message.id}`)
-            .on(
-                'postgres_changes',
-                {
-                    event: 'INSERT',
-                    schema: 'public',
-                    table: 'messages',
-                    filter: `conversation_id=eq.${message.id}`
-                },
-                (payload) => {
-                    setMessages(prev => {
-                        // Avoid duplicates if the insert also comes from the local send handler
-                        if (prev.find(m => m.id === payload.new.id)) return prev;
-                        return [...prev, payload.new];
-                    });
-                    setTimeout(scrollToBottom, 100);
-                }
-            )
-            .subscribe();
+        const channel = supabase.channel(`conv_${message.id}`).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${message.id}` }, (p) => {
+            setMessages(prev => {
+                if (prev.find(m => m.id === p.new.id)) return prev;
+                if (p.new.sender_id !== employerId) markAsRead();
+                return [...prev, p.new];
+            });
+            setTimeout(scrollToBottom, 100);
+        }).subscribe();
 
-        return () => {
-            supabase.removeChannel(channel);
-        };
+        return () => { supabase.removeChannel(channel); };
     }, [message.id]);
 
-    useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
+    const markAsRead = async () => {
+        if (!employerId) return;
+        try {
+            await supabase.from('messages').update({ is_read: true }).eq('conversation_id', message.id).neq('sender_id', employerId).eq('is_read', false);
+        } catch (err) { console.error("Error marking read:", err); }
+    };
+
+    const fetchInterviewStatus = async () => {
+        if (!employerId || !message.seeker_id || !message.job_id) return;
+        try {
+            const { data } = await supabase
+                .from('interviews')
+                .select('*')
+                .eq('employer_id', employerId)
+                .eq('seeker_id', message.seeker_id)
+                .eq('job_id', message.job_id)
+                .order('scheduled_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+            if (data) setInterview(data);
+        } catch (err) { console.error(err); }
+    };
+
+    useEffect(() => { scrollToBottom(); }, [messages]);
 
     const fetchMessages = async () => {
         setLoading(true);
         try {
-            const { data, error } = await supabase
-                .from('messages')
-                .select('*')
-                .eq('conversation_id', message.id)
-                .order('created_at', { ascending: true });
-
-            if (error) throw error;
-            setMessages(data || []);
-        } catch (err) {
-            console.error("Error fetching messages:", err);
-        } finally {
-            setLoading(false);
-        }
+            const { data } = await supabase.from('messages').select('*').eq('conversation_id', message.id).order('created_at', { ascending: true });
+            if (data) setMessages(data);
+        } catch (err) { console.error("Error fetching messages:", err); } finally { setLoading(false); }
     };
 
     const handleSendMessage = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
         if (!newMessage.trim() || !employerId || sending) return;
-
         setSending(true);
         const content = newMessage.trim();
         setNewMessage('');
-
         try {
-            // 1. Insert the message
-            const { data, error: insertError } = await supabase
-                .from('messages')
-                .insert({
-                    conversation_id: message.id,
-                    sender_id: employerId,
-                    content: content,
-                    type: 'text'
-                })
-                .select()
-                .single();
-
-            if (insertError) throw insertError;
-
-            // Update local state immediately if needed (real-time handle might be slow)
-            if (data) {
-                setMessages(prev => {
-                    if (prev.find(m => m.id === data.id)) return prev;
-                    return [...prev, data];
-                });
-            }
-
-            // 2. Update conversation last message preview
-            await supabase
-                .from('conversations')
-                .update({
-                    last_message: content,
-                    last_message_at: new Date().toISOString()
-                })
-                .eq('id', message.id);
-
-        } catch (err: any) {
-            console.error("Error sending message:", err);
-            alert(`Failed to send message: ${err.message}`);
-        } finally {
-            setSending(false);
-            scrollToBottom();
-        }
+            const { data } = await supabase.from('messages').insert({ conversation_id: message.id, sender_id: employerId, content, type: 'text' }).select().single();
+            if (data) setMessages(prev => [...prev.filter(m => m.id !== data.id), data]);
+            await supabase.from('conversations').update({ last_message: content, last_message_at: new Date().toISOString() }).eq('id', message.id);
+        } catch (err: any) { alert(err.message); } finally { setSending(false); scrollToBottom(); }
     };
+
+
+
+
+
+
+
 
     const handleViewProfile = async () => {
-        if (!message.seeker_id || !message.job_id) {
-            console.error("Missing seeker or job info for profile view");
-            return;
-        }
-
+        if (!message.seeker_id || !message.job_id) return;
         try {
-            // Fetch the application ID for this seeker/job combo
-            const { data, error } = await supabase
-                .from('job_applications')
-                .select('id')
-                .eq('seeker_id', message.seeker_id)
-                .eq('job_id', message.job_id)
-                .single();
-
-            if (error || !data) {
-                console.error("No application found for this conversation:", error);
-                alert("Could not find a specific job application to review.");
-                return;
-            }
-
-            navigate(`/employer/applicants/review/${data.id}`);
-        } catch (err) {
-            console.error("Error navigating to review profile:", err);
-        }
+            const { data } = await supabase.from('job_applications').select('id').eq('seeker_id', message.seeker_id).eq('job_id', message.job_id).single();
+            if (data) navigate(`/employer/applicants/review/${data.id}`);
+        } catch (err) { console.error(err); }
     };
 
-    const togglePin = () => setIsPinned(!isPinned);
+    const togglePin = async () => {
+        const newVal = !isPinned;
+        setIsPinned(newVal);
+        try { await supabase.from('conversations').update({ is_pinned_employer: newVal }).eq('id', message.id); } catch (err) { console.error(err); }
+    };
 
-    const handleArchive = () => {
-        setIsArchived(!isArchived);
+    const handleArchive = async () => {
+        const newVal = !isArchived;
+        setIsArchived(newVal);
+        try { await supabase.from('conversations').update({ is_archived_employer: newVal }).eq('id', message.id); if (newVal) onBack(); } catch (err) { console.error(err); }
     };
 
     return (
@@ -220,7 +237,14 @@ const EmployerConversation = ({ message, onBack }: ConversationProps) => {
                             <ArrowLeft size={20} />
                         </button>
                         <div>
-                            <h2 className="text-lg font-black text-slate-900 tracking-tight leading-tight">{message.subject}</h2>
+                            <div className="flex items-center gap-2">
+                                <h2 className="text-lg font-black text-slate-900 tracking-tight leading-tight">{message.subject}</h2>
+                                <div className="flex gap-1">
+                                    {convLabels.map(l => (
+                                        <span key={l.id} className="w-2 h-2 rounded-full" style={{ backgroundColor: l.color }} title={l.name} />
+                                    ))}
+                                </div>
+                            </div>
                             {message.role && (
                                 <div className="flex items-center gap-2 mt-1">
                                     <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[10px] font-bold uppercase tracking-wide flex items-center gap-1">
@@ -353,12 +377,46 @@ const EmployerConversation = ({ message, onBack }: ConversationProps) => {
                         <span className="text-[9px] font-bold">Pin</span>
                     </button>
 
-                    <button className="flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-slate-50 text-slate-400 hover:text-primary transition-all group">
-                        <Tag size={18} className="group-hover:scale-110 transition-transform" />
-                        <span className="text-[9px] font-bold">Label</span>
-                    </button>
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowLabelMenu(!showLabelMenu)}
+                            className={`flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-slate-50 transition-all group w-full ${showLabelMenu || convLabels.length > 0 ? 'text-secondary font-bold' : 'text-slate-400 hover:text-secondary'}`}
+                        >
+                            <Tag size={18} className={`group-hover:scale-110 transition-transform ${convLabels.length > 0 ? 'fill-secondary text-secondary' : ''}`} />
+                            <span className="text-[9px] font-bold">Label</span>
+                        </button>
+                        {showLabelMenu && (
+                            <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-[60] p-1.5 animate-in fade-in zoom-in-95 duration-200">
+                                <p className="px-3 py-2 text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-50 mb-1">Select Labels</p>
+                                {allLabels.length === 0 ? (
+                                    <p className="px-3 py-4 text-xs font-bold text-slate-400 text-center">No labels created yet</p>
+                                ) : (
+                                    allLabels.map(l => {
+                                        const isSelected = convLabels.some(cl => cl.id === l.id);
+                                        return (
+                                            <button
+                                                key={l.id}
+                                                onClick={() => toggleLabel(l.id)}
+                                                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${isSelected ? 'bg-slate-50 text-slate-900' : 'text-slate-600 hover:bg-slate-50'}`}
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: l.color }} />
+                                                    {l.name}
+                                                </div>
+                                                {isSelected && <CheckCircle size={14} className="text-secondary" />}
+                                            </button>
+                                        );
+                                    })
+                                )}
+                            </div>
+                        )}
+                    </div>
 
-                    <button className="flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-slate-50 text-slate-400 hover:text-emerald-500 transition-all group">
+                    <button
+                        onClick={handleHire}
+                        disabled={statusUpdating}
+                        className="flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-slate-50 text-slate-400 hover:text-emerald-500 transition-all group disabled:opacity-50"
+                    >
                         <CheckCircle size={18} className="group-hover:scale-110 transition-transform" />
                         <span className="text-[9px] font-bold whitespace-nowrap">Hire</span>
                     </button>
@@ -382,11 +440,26 @@ const EmployerConversation = ({ message, onBack }: ConversationProps) => {
 
                         {showMoreMenu && (
                             <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-50 p-1.5 animate-in fade-in zoom-in-95 duration-200">
-                                <button type="button" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors text-left">
-                                    <AlertCircle size={16} /> Mark as Spam
+                                <button
+                                    onClick={handleMarkSpam}
+                                    type="button"
+                                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-colors text-left ${isSpam ? 'text-rose-600 bg-rose-50' : 'text-slate-600 hover:bg-slate-50'}`}
+                                >
+                                    <AlertCircle size={16} /> {isSpam ? 'Unmark as Spam' : 'Mark as Spam'}
                                 </button>
-                                <button type="button" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-rose-500 hover:bg-rose-50 transition-colors text-left">
-                                    <Trash2 size={16} /> Delete
+                                <button
+                                    onClick={handleDelete}
+                                    type="button"
+                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-rose-500 hover:bg-rose-50 transition-colors text-left"
+                                >
+                                    <Trash2 size={16} /> Delete Conversation
+                                </button>
+                                <button
+                                    onClick={handleViewProfile}
+                                    type="button"
+                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors text-left lg:hidden"
+                                >
+                                    <User size={16} /> View Profile
                                 </button>
                             </div>
                         )}

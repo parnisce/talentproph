@@ -7,7 +7,8 @@ import {
     Mail,
     Inbox,
     Pin,
-    Send,
+    AlertCircle,
+    Tag,
     Archive,
     Plus
 } from 'lucide-react';
@@ -21,118 +22,172 @@ const EmployerMessages = () => {
     const [selectedTab, setSelectedTab] = useState('inbox');
     const [selectedMessage, setSelectedMessage] = useState<any>(null);
     const [messages, setMessages] = useState<any[]>([]);
+    const [labels, setLabels] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [showNewLabelModal, setShowNewLabelModal] = useState(false);
+    const [newLabelName, setNewLabelName] = useState('');
+
+    // Fetch Labels
+    const fetchLabels = async () => {
+        if (!userId) return;
+        try {
+            const { data } = await supabase
+                .from('labels')
+                .select('*')
+                .eq('user_id', userId)
+                .order('name');
+            if (data) setLabels(data);
+        } catch (err) {
+            console.error("Error fetching labels:", err);
+        }
+    };
+
+    // Create Label
+    const handleCreateLabel = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newLabelName.trim() || !userId) return;
+        try {
+            const { error } = await supabase
+                .from('labels')
+                .insert({ name: newLabelName.trim(), user_id: userId });
+            if (error) throw error;
+            setNewLabelName('');
+            setShowNewLabelModal(false);
+            fetchLabels();
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
 
     // Fetch Conversations
-    useEffect(() => {
-        const fetchConversations = async () => {
-            if (!userId) return;
-            setLoading(true);
-            try {
-                const { data, error } = await supabase
-                    .from('conversations')
-                    .select(`
+    const fetchConversations = async () => {
+        if (!userId) return;
+        setLoading(true);
+        try {
+            // 1. Fetch conversations with labels
+            const { data: convData, error: convError } = await supabase
+                .from('conversations')
+                .select(`
+                    id,
+                    last_message,
+                    last_message_at,
+                    created_at,
+                    seeker_id,
+                    job_id,
+                    is_pinned_employer,
+                    is_archived_employer,
+                    is_spam_employer,
+                    is_deleted_employer,
+                    seeker:seeker_id (
+                        full_name,
+                        avatar_url,
+                        title,
+                        location,
+                        email,
+                        phone,
+                        website,
+                        experience_years,
+                        bio
+                    ),
+                    job:job_id (
                         id,
-                        last_message,
-                        last_message_at,
-                        created_at,
-                        seeker_id,
-                        job_id,
-                        seeker:seeker_id (
-                            full_name,
-                            avatar_url,
-                            title,
-                            location,
-                            email,
-                            phone,
-                            website,
-                            experience_years,
-                            bio
-                        ),
-                        job:job_id (
-                            title
-                        )
-                    `)
-                    .eq('employer_id', userId)
-                    .order('last_message_at', { ascending: false });
+                        title
+                    ),
+                    conversation_labels (
+                        label:label_id (id, name, color)
+                    )
+                `)
+                .eq('employer_id', userId)
+                .eq('is_deleted_employer', false) // Default hide deleted
+                .order('last_message_at', { ascending: false });
 
-                if (error) throw error;
+            if (convError) throw convError;
 
-                if (data) {
-                    const mapped = data.map((conv: any) => ({
-                        id: conv.id,
-                        seeker_id: conv.seeker_id,
-                        job_id: conv.job_id,
-                        sender: conv.seeker?.full_name || 'Unknown User',
-                        avatar: conv.seeker?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${conv.seeker?.full_name}`,
-                        role: conv.seeker?.title || 'Job Seeker',
-                        subject: conv.job?.title || 'General Inquiry',
-                        date: new Date(conv.last_message_at).toLocaleDateString(),
-                        timestamp: conv.last_message_at,
-                        preview: conv.last_message,
-                        count: 0, // TODO: Implement unread count logic
-                        pinned: false,
-                        read: true, // TODO: Implement read status
-                        type: 'received',
-                        archived: false,
-                        seeker: conv.seeker
-                    }));
-                    setMessages(mapped);
+            // 2. Fetch unread counts
+            const { data: unreadData } = await supabase
+                .from('messages')
+                .select('conversation_id')
+                .eq('is_read', false)
+                .neq('sender_id', userId);
 
-                    // Check for auto-select from URL
-                    const linkedConvId = searchParams.get('conversationId');
-                    if (linkedConvId) {
-                        const target = mapped.find((m: any) => m.id === linkedConvId);
-                        if (target) setSelectedMessage(target);
-                    }
+            const unreadCounts = (unreadData || []).reduce((acc: any, msg: any) => {
+                acc[msg.conversation_id] = (acc[msg.conversation_id] || 0) + 1;
+                return acc;
+            }, {});
+
+            if (convData) {
+                const mapped = convData.map((conv: any) => ({
+                    id: conv.id,
+                    seeker_id: conv.seeker_id,
+                    job_id: conv.job_id,
+                    sender: conv.seeker?.full_name || 'Unknown User',
+                    avatar: conv.seeker?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${conv.seeker?.full_name}`,
+                    role: conv.seeker?.title || 'Job Seeker',
+                    subject: conv.job?.title || 'General Inquiry',
+                    date: new Date(conv.last_message_at).toLocaleDateString(),
+                    timestamp: conv.last_message_at,
+                    preview: conv.last_message,
+                    count: unreadCounts[conv.id] || 0,
+                    pinned: conv.is_pinned_employer || false,
+                    read: (unreadCounts[conv.id] || 0) === 0,
+                    type: 'received',
+                    archived: conv.is_archived_employer || false,
+                    spam: conv.is_spam_employer || false,
+                    deleted: conv.is_deleted_employer || false,
+                    seeker: conv.seeker,
+                    labels: conv.conversation_labels?.map((cl: any) => cl.label) || []
+                }));
+                setMessages(mapped);
+
+                // Check for auto-select
+                const linkedConvId = searchParams.get('conversationId');
+                if (linkedConvId) {
+                    const target = mapped.find((m: any) => m.id === linkedConvId);
+                    if (target) setSelectedMessage(target);
                 }
-            } catch (err) {
-                console.error("Error fetching conversations:", err);
-            } finally {
-                setLoading(false);
             }
-        };
+        } catch (err) {
+            console.error("Error fetching conversations:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchConversations();
+        fetchLabels();
 
-        // Real-time subscription for conversation updates (previews, timestamps)
-        const channel = supabase
-            .channel('conversation_updates')
-            .on(
-                'postgres_changes',
-                {
-                    event: '*',
-                    schema: 'public',
-                    table: 'conversations',
-                    filter: `employer_id=eq.${userId}`
-                },
-                () => {
-                    fetchConversations();
-                }
-            )
-            .subscribe();
+        const convChannel = supabase.channel('conv_changes').on('postgres_changes', { event: '*', schema: 'public', table: 'conversations', filter: `employer_id=eq.${userId}` }, () => fetchConversations()).subscribe();
+        const msgChannel = supabase.channel('msg_changes').on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => fetchConversations()).subscribe();
+        const labelChannel = supabase.channel('label_changes').on('postgres_changes', { event: '*', schema: 'public', table: 'conversation_labels' }, () => fetchConversations()).subscribe();
 
         return () => {
-            supabase.removeChannel(channel);
+            supabase.removeChannel(convChannel);
+            supabase.removeChannel(msgChannel);
+            supabase.removeChannel(labelChannel);
         };
     }, [userId, searchParams]);
 
     // Filter Logic
     const filteredMessages = messages.filter(msg => {
-        if (selectedTab === 'inbox') return !msg.archived; // Show all for now
-        if (selectedTab === 'unread') return !msg.read && !msg.archived;
-        if (selectedTab === 'pinned') return msg.pinned && !msg.archived;
-        if (selectedTab === 'sent') return msg.type === 'sent' && !msg.archived;
-        if (selectedTab === 'archive') return msg.archived;
+        if (selectedTab === 'inbox') return !msg.archived && !msg.spam && !msg.deleted;
+        if (selectedTab === 'unread') return !msg.read && !msg.archived && !msg.spam && !msg.deleted;
+        if (selectedTab === 'pinned') return msg.pinned && !msg.archived && !msg.spam && !msg.deleted;
+        if (selectedTab === 'archive') return msg.archived && !msg.deleted;
+        if (selectedTab === 'spam') return msg.spam && !msg.deleted;
+        if (selectedTab.startsWith('label:')) {
+            const labelId = selectedTab.split(':')[1];
+            return msg.labels.some((l: any) => l.id === labelId) && !msg.deleted;
+        }
         return true;
     });
 
     const sidebarItems = [
         { id: 'messages', icon: Inbox, label: 'All Messages' },
-        { id: 'unread', icon: Mail, label: 'Unread', badge: 0 },
+        { id: 'unread', icon: Mail, label: 'Unread', badge: messages.filter(m => !m.read && !m.archived && !m.spam && !m.deleted).length },
         { id: 'pinned', icon: Pin, label: 'Pinned' },
-        { id: 'sent', icon: Send, label: 'Sent' }, // Placeholder logic for now
         { id: 'archive', icon: Archive, label: 'Archive' },
+        { id: 'spam', icon: AlertCircle, label: 'Spam' },
     ];
 
     return (
@@ -168,9 +223,60 @@ const EmployerMessages = () => {
                 <div className="space-y-3 px-2">
                     <div className="flex items-center justify-between text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
                         <span>Labels</span>
-                        <button className="hover:text-primary"><Plus size={14} /></button>
+                        <button onClick={() => setShowNewLabelModal(true)} className="hover:text-primary"><Plus size={14} /></button>
+                    </div>
+                    <div className="space-y-1">
+                        {labels.map(label => (
+                            <button
+                                key={label.id}
+                                onClick={() => {
+                                    setSelectedTab(`label:${label.id}`);
+                                    setSelectedMessage(null);
+                                }}
+                                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-all ${selectedTab === `label:${label.id}`
+                                    ? 'bg-slate-100 text-slate-900'
+                                    : 'text-slate-500 hover:bg-slate-50'
+                                    }`}
+                            >
+                                <Tag size={14} style={{ color: label.color }} />
+                                <span className="truncate">{label.name}</span>
+                            </button>
+                        ))}
                     </div>
                 </div>
+
+                {showNewLabelModal && (
+                    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                        <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in duration-200">
+                            <h3 className="text-lg font-black text-slate-900 mb-4">Create New Label</h3>
+                            <form onSubmit={handleCreateLabel}>
+                                <input
+                                    autoFocus
+                                    type="text"
+                                    placeholder="Label Name"
+                                    value={newLabelName}
+                                    onChange={(e) => setNewLabelName(e.target.value)}
+                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/50 mb-4"
+                                />
+                                <div className="flex gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowNewLabelModal(false)}
+                                        className="flex-1 py-3 text-sm font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="flex-1 py-3 bg-slate-900 text-white text-sm font-black rounded-xl hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10"
+                                    >
+                                        Create
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Main Content */}
