@@ -440,10 +440,41 @@ Looking forward to speaking with you!`;
                 setApplicant((prev: any) => ({ ...prev, status: 'Shortlisted' }));
             }
 
-            // 3. Reset local state
+            // 3. Send Automated Cancellation Message
+            try {
+                const { data: conv } = await supabase
+                    .from('conversations')
+                    .select('id')
+                    .eq('job_id', applicant.job_id)
+                    .eq('seeker_id', applicant.seeker_id)
+                    .eq('employer_id', employerId)
+                    .maybeSingle();
+
+                if (conv?.id) {
+                    const cancelMessage = `I'm writing to let you know that the scheduled interview has been cancelled.
+                    
+If you have any questions, please feel free to message me here. We will reach out if there are any further updates regarding your application.`;
+
+                    await supabase.from('messages').insert({
+                        conversation_id: conv.id,
+                        sender_id: employerId,
+                        content: cancelMessage,
+                        type: 'text'
+                    });
+
+                    await supabase.from('conversations').update({
+                        last_message: 'Interview Cancelled',
+                        last_message_at: new Date().toISOString()
+                    }).eq('id', conv.id);
+                }
+            } catch (msgErr) {
+                console.error("Error sending cancellation message:", msgErr);
+            }
+
+            // 4. Update Local State
             setIsAlreadyScheduled(false);
             setActiveInterview(null);
-            alert("Interview cancelled successfully.");
+            alert("Interview cancelled successfully and candidate notified.");
         } catch (err: any) {
             console.error("Error cancelling interview:", err);
             alert("Failed to cancel: " + err.message);
