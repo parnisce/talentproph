@@ -400,7 +400,11 @@ const EmployerMessages = () => {
                         {/* Message Header */}
                         <div className="px-8 py-5 border-b border-slate-100 flex items-center justify-between bg-white z-10">
                             <button className="flex items-center gap-2 text-slate-900 font-extrabold text-lg hover:text-primary transition-colors">
-                                {selectedTab === 'inbox' ? 'All Messages' : selectedTab.charAt(0).toUpperCase() + selectedTab.slice(1)}
+                                {selectedTab === 'inbox'
+                                    ? 'All Messages'
+                                    : selectedTab.startsWith('label:')
+                                        ? labels.find((l: any) => l.id === selectedTab.split(':')[1])?.name || 'Label'
+                                        : selectedTab.charAt(0).toUpperCase() + selectedTab.slice(1)}
                                 <ChevronDown size={20} className="text-slate-400" />
                             </button>
                             <div className="flex items-center gap-2">
