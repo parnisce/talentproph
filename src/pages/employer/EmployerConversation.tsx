@@ -443,19 +443,14 @@ const EmployerConversation = ({ message, onBack }: ConversationProps) => {
                         >
                             <User size={14} /> View Applicant Review
                         </button>
-                        <button
-                            onClick={() => {
-                                if (interview) {
-                                    navigate('/employer/calendar');
-                                } else {
-                                    handleViewProfile();
-                                }
-                            }}
-                            className={`w-full py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-2 ${interview ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-slate-900 text-white shadow-slate-900/10 hover:bg-slate-800'
-                                }`}
-                        >
-                            <Calendar size={14} /> {interview ? 'View Interview Details' : 'Schedule Interview'}
-                        </button>
+                        {interview && (
+                            <button
+                                onClick={() => navigate('/employer/calendar')}
+                                className="w-full py-3.5 bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
+                            >
+                                <Calendar size={14} /> View Scheduled Interview
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
