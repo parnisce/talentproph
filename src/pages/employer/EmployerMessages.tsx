@@ -10,7 +10,10 @@ import {
     AlertCircle,
     Tag,
     Archive,
-    Plus
+    Plus,
+    MoreVertical,
+    Edit2,
+    Trash
 } from 'lucide-react';
 import EmployerConversation from './EmployerConversation';
 import { supabase } from '../../services/supabase';
@@ -25,7 +28,12 @@ const EmployerMessages = () => {
     const [labels, setLabels] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [showNewLabelModal, setShowNewLabelModal] = useState(false);
+
     const [newLabelName, setNewLabelName] = useState('');
+    const [editingLabel, setEditingLabel] = useState<any>(null);
+    const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+    const [renameLabelName, setRenameLabelName] = useState('');
+    const [activeLabelMenu, setActiveLabelMenu] = useState<string | null>(null);
 
     // Fetch Labels
     const fetchLabels = async () => {
@@ -53,6 +61,37 @@ const EmployerMessages = () => {
             if (error) throw error;
             setNewLabelName('');
             setShowNewLabelModal(false);
+            fetchLabels();
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
+
+    // Delete Label
+    const handleDeleteLabel = async (labelId: string) => {
+        if (!confirm('Are you sure you want to delete this label?')) return;
+        try {
+            const { error } = await supabase.from('labels').delete().eq('id', labelId);
+            if (error) throw error;
+            fetchLabels();
+            if (selectedTab === `label:${labelId}`) setSelectedTab('inbox');
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
+
+    // Rename Label
+    const handleRenameLabel = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!renameLabelName.trim() || !editingLabel) return;
+        try {
+            const { error } = await supabase
+                .from('labels')
+                .update({ name: renameLabelName.trim() })
+                .eq('id', editingLabel.id);
+            if (error) throw error;
+            setEditingLabel(null);
+            setIsRenameModalOpen(false);
             fetchLabels();
         } catch (err: any) {
             alert(err.message);
@@ -226,22 +265,62 @@ const EmployerMessages = () => {
                         <button onClick={() => setShowNewLabelModal(true)} className="hover:text-primary"><Plus size={14} /></button>
                     </div>
                     <div className="space-y-1">
-                        {labels.map(label => (
-                            <button
-                                key={label.id}
-                                onClick={() => {
-                                    setSelectedTab(`label:${label.id}`);
-                                    setSelectedMessage(null);
-                                }}
-                                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-all ${selectedTab === `label:${label.id}`
-                                    ? 'bg-slate-100 text-slate-900'
-                                    : 'text-slate-500 hover:bg-slate-50'
-                                    }`}
-                            >
-                                <Tag size={14} style={{ color: label.color }} />
-                                <span className="truncate">{label.name}</span>
-                            </button>
-                        ))}
+                        <div className="space-y-1">
+                            {labels.map(label => (
+                                <div key={label.id} className="group relative flex items-center">
+                                    <button
+                                        onClick={() => {
+                                            setSelectedTab(`label:${label.id}`);
+                                            setSelectedMessage(null);
+                                        }}
+                                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-bold transition-all pr-8 ${selectedTab === `label:${label.id}`
+                                            ? 'bg-slate-100 text-slate-900'
+                                            : 'text-slate-500 hover:bg-slate-50'
+                                            }`}
+                                    >
+                                        <Tag size={14} style={{ color: label.color }} />
+                                        <span className="truncate">{label.name}</span>
+                                    </button>
+                                    <div className="absolute right-1">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setActiveLabelMenu(activeLabelMenu === label.id ? null : label.id);
+                                            }}
+                                            className={`p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-200 opacity-0 group-hover:opacity-100 transition-all ${activeLabelMenu === label.id ? 'opacity-100 bg-slate-200' : ''}`}
+                                        >
+                                            <MoreVertical size={14} />
+                                        </button>
+                                        {activeLabelMenu === label.id && (
+                                            <div className="absolute left-full top-0 ml-2 w-32 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-[60] p-1 flex flex-col gap-0.5">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setEditingLabel(label);
+                                                        setRenameLabelName(label.name);
+                                                        setIsRenameModalOpen(true);
+                                                        setActiveLabelMenu(null);
+                                                    }}
+                                                    className="flex items-center gap-2 px-3 py-2 text-[10px] font-bold text-slate-600 hover:bg-slate-50 rounded-lg w-full text-left"
+                                                >
+                                                    <Edit2 size={12} /> Rename
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeleteLabel(label.id);
+                                                        setActiveLabelMenu(null);
+                                                    }}
+                                                    className="flex items-center gap-2 px-3 py-2 text-[10px] font-bold text-rose-500 hover:bg-rose-50 rounded-lg w-full text-left"
+                                                >
+                                                    <Trash size={12} /> Remove
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
 
@@ -271,6 +350,39 @@ const EmployerMessages = () => {
                                         className="flex-1 py-3 bg-slate-900 text-white text-sm font-black rounded-xl hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10"
                                     >
                                         Create
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
+                {isRenameModalOpen && (
+                    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                        <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in duration-200">
+                            <h3 className="text-lg font-black text-slate-900 mb-4">Rename Label</h3>
+                            <form onSubmit={handleRenameLabel}>
+                                <input
+                                    autoFocus
+                                    type="text"
+                                    placeholder="Label Name"
+                                    value={renameLabelName}
+                                    onChange={(e) => setRenameLabelName(e.target.value)}
+                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/50 mb-4"
+                                />
+                                <div className="flex gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsRenameModalOpen(false)}
+                                        className="flex-1 py-3 text-sm font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="flex-1 py-3 bg-slate-900 text-white text-sm font-black rounded-xl hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10"
+                                    >
+                                        Save
                                     </button>
                                 </div>
                             </form>
