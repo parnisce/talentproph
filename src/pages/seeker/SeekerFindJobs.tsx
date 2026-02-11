@@ -15,6 +15,7 @@ import {
     Loader2
 } from 'lucide-react';
 import { supabase } from '../../services/supabase';
+import { useUser } from '../../context/UserContext';
 
 interface Job {
     id: string;
@@ -27,21 +28,28 @@ interface Job {
     description: string;
     skills: string[];
     verified: boolean;
+    category: string;
 }
-
-// Mock data removed in favor of Supabase
 
 const SeekerFindJobs = () => {
     const navigate = useNavigate();
+    const { id: seekerId } = useUser();
     const [searchQuery, setSearchQuery] = useState('');
     const [employmentTypes, setEmploymentTypes] = useState<string[]>(['Full-Time', 'Part-Time', 'Gig']);
     const [activeCategory, setActiveCategory] = useState('All Jobs');
     const [jobs, setJobs] = useState<Job[]>([]);
+    const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
 
     const categories = ['All Jobs', 'Design', 'Development', 'Marketing', 'Admin', 'Writing'];
 
     useEffect(() => {
+        const fetchJobsAndSavedWrapper = async () => {
+            setLoading(true);
+            await Promise.all([fetchJobs(), fetchSavedJobs()]);
+            setLoading(false);
+        };
+
         const fetchJobs = async () => {
             const { data, error } = await supabase
                 .from('job_posts')
@@ -61,15 +69,70 @@ const SeekerFindJobs = () => {
                     description: job.preview,
                     skills: job.skills || [],
                     verified: true,
-                    category: job.category || 'Other' // Add category to Job interface or treat as 'any' for now in filter if needed
+                    category: job.category || 'Other'
                 }));
                 setJobs(mappedJobs);
             }
-            setLoading(false);
         };
 
-        fetchJobs();
-    }, []);
+        const fetchSavedJobs = async () => {
+            if (!seekerId) return;
+            const { data } = await supabase
+                .from('saved_jobs')
+                .select('job_id')
+                .eq('seeker_id', seekerId);
+
+            if (data) {
+                setSavedJobIds(new Set(data.map(item => item.job_id)));
+            }
+        };
+
+        fetchJobsAndSavedWrapper();
+    }, [seekerId]);
+
+    const handleToggleSave = async (e: React.MouseEvent, jobId: string) => {
+        e.stopPropagation();
+        if (!seekerId) {
+            alert("Please log in to bookmark jobs.");
+            return;
+        }
+
+        const isSaved = savedJobIds.has(jobId);
+
+        // Optimistic update
+        setSavedJobIds(prev => {
+            const newSet = new Set(prev);
+            if (isSaved) newSet.delete(jobId);
+            else newSet.add(jobId);
+            return newSet;
+        });
+
+        try {
+            if (isSaved) {
+                const { error } = await supabase
+                    .from('saved_jobs')
+                    .delete()
+                    .eq('seeker_id', seekerId)
+                    .eq('job_id', jobId);
+                if (error) throw error;
+            } else {
+                const { error } = await supabase
+                    .from('saved_jobs')
+                    .insert({ seeker_id: seekerId, job_id: jobId });
+                if (error) throw error;
+            }
+        } catch (err) {
+            console.error("Error toggling bookmark:", err);
+            // Revert on error
+            setSavedJobIds(prev => {
+                const newSet = new Set(prev);
+                if (isSaved) newSet.add(jobId);
+                else newSet.delete(jobId);
+                return newSet;
+            });
+            alert("Failed to update bookmark.");
+        }
+    };
 
     const filteredJobs = jobs.filter(job => {
         const query = searchQuery.toLowerCase();
@@ -98,7 +161,10 @@ const SeekerFindJobs = () => {
                     <p className="text-slate-400 font-bold text-xs uppercase tracking-[0.2em] mt-1">Direct hiring from global executive teams</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button className="px-6 py-2.5 bg-white border border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-primary transition-all flex items-center gap-2">
+                    <button
+                        onClick={() => navigate('/seeker/saved-jobs')}
+                        className="px-6 py-2.5 bg-white border border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-primary transition-all flex items-center gap-2"
+                    >
                         <Bookmark size={14} /> Saved Jobs
                     </button>
                     <button className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-xl shadow-slate-900/10">
@@ -233,10 +299,14 @@ const SeekerFindJobs = () => {
 
                             <div className="shrink-0 self-center flex md:flex-col gap-3 w-full md:w-auto mt-4 md:mt-0">
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); }}
-                                    className="flex-1 md:flex-none p-2.5 rounded-full border-2 border-slate-100 text-slate-300 hover:text-rose-500 hover:border-rose-100 transition-all flex items-center justify-center"
+                                    onClick={(e) => handleToggleSave(e, job.id)}
+                                    className={`flex-1 md:flex-none p-2.5 rounded-full border-2 transition-all flex items-center justify-center ${savedJobIds.has(job.id)
+                                            ? 'bg-secondary/10 border-secondary text-secondary hover:bg-secondary/20'
+                                            : 'border-slate-100 text-slate-300 hover:text-secondary hover:border-secondary/30'
+                                        }`}
+                                    title={savedJobIds.has(job.id) ? "Remove Bookmark" : "Bookmark Job"}
                                 >
-                                    <Bookmark size={16} />
+                                    <Bookmark size={16} fill={savedJobIds.has(job.id) ? "currentColor" : "none"} />
                                 </button>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); navigate(`/seeker/jobs/${job.id}`); }}

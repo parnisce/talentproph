@@ -29,6 +29,7 @@ import SeekerProfile from './SeekerProfile';
 import SeekerEditProfile from './SeekerEditProfile';
 import SeekerFindJobs from './SeekerFindJobs';
 import JobDetails from './JobDetails';
+import SavedJobs from './SavedJobs';
 
 const SeekerOverview = ({ interviews = [], employers = [] }: { interviews?: any[], employers?: any[] }) => {
     const { userPhoto, updateUserProfile, userName, title, website, salary, education, skills, resume_url } = useUser();
@@ -242,17 +243,16 @@ const SeekerOverview = ({ interviews = [], employers = [] }: { interviews?: any[
                             </div>
                             <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.3em]">Bookmarked Positions</h3>
                         </div>
-                        <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">Explore Jobs</button>
+                        <Link to="/seeker/saved-jobs" className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline decoration-transparent">View All</Link>
                     </div>
                     <div className="py-12 flex flex-col items-center justify-center text-center">
                         <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6 text-slate-200">
                             <Bookmark size={32} />
                         </div>
-                        <p className="text-slate-400 font-bold text-sm tracking-tight">
-                            You haven't bookmarked any jobs yet.
-                            <br />
-                            <span className="text-primary font-black uppercase text-[10px] mt-2 block tracking-widest cursor-pointer hover:underline">Get started here</span>
-                        </p>
+                        <Link to="/seeker/jobs" className="text-slate-400 font-bold text-sm tracking-tight hover:text-primary transition-colors decoration-transparent">
+                            Browse jobs to bookmark<br />
+                            <span className="text-primary font-black uppercase text-[10px] mt-2 block tracking-widest hover:underline">Start Exploring</span>
+                        </Link>
                     </div>
                 </div>
 
@@ -542,6 +542,7 @@ const SeekerDashboard = () => {
                 } />
                 <Route path="/messages" element={<SeekerMessages />} />
                 <Route path="/company/:id" element={<CompanyProfile />} />
+                <Route path="/saved-jobs" element={<SavedJobs />} />
             </Routes>
         </DashboardLayout>
     );

@@ -195,6 +195,7 @@ const JobDetails = () => {
     const [isApplied, setIsApplied] = useState(false);
     const [appliedDate, setAppliedDate] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isSaved, setIsSaved] = useState(false);
     const [loading, setLoading] = useState(true);
 
     const isDashboard = location.pathname.startsWith('/seeker') || location.pathname.startsWith('/employer');
@@ -256,6 +257,16 @@ const JobDetails = () => {
                             year: 'numeric'
                         }));
                     }
+
+                    // Check if job is saved
+                    const { data: savedData } = await supabase
+                        .from('saved_jobs')
+                        .select('id')
+                        .eq('job_id', id)
+                        .eq('seeker_id', seekerId)
+                        .maybeSingle();
+
+                    if (savedData) setIsSaved(true);
                 }
 
                 // Increment views
@@ -274,6 +285,36 @@ const JobDetails = () => {
 
         fetchJob();
     }, [id, navigate, seekerId]);
+
+    const handleToggleSave = async () => {
+        if (!seekerId) {
+            alert("Please log in to save this job.");
+            return;
+        }
+
+        // Optimistic update
+        setIsSaved(!isSaved);
+
+        try {
+            if (isSaved) {
+                const { error } = await supabase
+                    .from('saved_jobs')
+                    .delete()
+                    .eq('seeker_id', seekerId)
+                    .eq('job_id', id);
+                if (error) throw error;
+            } else {
+                const { error } = await supabase
+                    .from('saved_jobs')
+                    .insert({ seeker_id: seekerId, job_id: id });
+                if (error) throw error;
+            }
+        } catch (err) {
+            console.error("Error toggling save:", err);
+            setIsSaved(!isSaved); // Revert
+            alert("Failed to update bookmark.");
+        }
+    };
 
     if (loading) {
         return (
@@ -329,8 +370,11 @@ const JobDetails = () => {
                         <button className="p-3 bg-white border border-slate-100 rounded-2xl text-slate-300 hover:text-primary transition-all shadow-sm">
                             <Share2 size={20} />
                         </button>
-                        <button className="p-3 bg-white border border-slate-100 rounded-2xl text-slate-300 hover:text-rose-500 transition-all shadow-sm">
-                            <Bookmark size={20} />
+                        <button
+                            onClick={handleToggleSave}
+                            className={`p-3 border rounded-2xl transition-all shadow-sm ${isSaved ? 'bg-secondary/10 border-secondary text-secondary' : 'bg-white border-slate-100 text-slate-300 hover:text-secondary'}`}
+                        >
+                            <Bookmark size={20} fill={isSaved ? "currentColor" : "none"} />
                         </button>
                     </div>
                 </div>
@@ -489,8 +533,14 @@ const JobDetails = () => {
                                     )}
 
                                     {!isApplied && (
-                                        <button className="w-full py-5 border-2 border-slate-100 rounded-3xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:text-rose-500 hover:border-rose-100 transition-all flex items-center justify-center gap-2">
-                                            <Bookmark size={16} /> Save for Later
+                                        <button
+                                            onClick={handleToggleSave}
+                                            className={`w-full py-5 border-2 rounded-3xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${isSaved
+                                                    ? 'bg-secondary/10 border-secondary text-secondary'
+                                                    : 'border-slate-100 text-slate-400 hover:text-secondary hover:border-secondary/30'
+                                                }`}
+                                        >
+                                            <Bookmark size={16} fill={isSaved ? "currentColor" : "none"} /> {isSaved ? 'Saved to Bookmarks' : 'Save for Later'}
                                         </button>
                                     )}
                                 </div>
