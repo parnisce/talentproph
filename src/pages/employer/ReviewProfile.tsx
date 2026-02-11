@@ -600,6 +600,65 @@ Wishing you the very best in your career journey!`;
         }
     };
 
+    const handleUnhireApplicant = async () => {
+        if (!confirm(`Are you sure you want to unhire ${applicant.name}? This will change their status back to Interviewed.`)) return;
+
+        try {
+            const { error } = await supabase
+                .from('job_applications')
+                .update({ status: 'Interviewed' })
+                .eq('job_id', applicant.job_id)
+                .eq('seeker_id', applicant.seeker_id);
+
+            if (error) throw error;
+
+            // Notify via message
+            try {
+                // Check/Create Conversation
+                let convId;
+                const { data: conv } = await supabase
+                    .from('conversations')
+                    .select('id')
+                    .eq('job_id', applicant.job_id)
+                    .eq('seeker_id', applicant.seeker_id)
+                    .eq('employer_id', employerId)
+                    .maybeSingle();
+
+                convId = conv?.id;
+
+                if (!convId) {
+                    const { data: newConv } = await supabase
+                        .from('conversations')
+                        .insert({
+                            job_id: applicant.job_id,
+                            seeker_id: applicant.seeker_id,
+                            employer_id: employerId,
+                            last_message: 'Application Status Updated',
+                            last_message_at: new Date().toISOString()
+                        })
+                        .select()
+                        .maybeSingle();
+                    convId = newConv?.id;
+                }
+
+                if (convId) {
+                    await supabase.from('messages').insert({
+                        conversation_id: convId,
+                        sender_id: employerId,
+                        content: `Hello ${applicant.name}, your hiring status for this position has been updated. Please check your dashboard or contact us for more details.`,
+                        type: 'text'
+                    });
+                }
+            } catch (msgErr) { console.error("Error sending unhire message:", msgErr); }
+
+            setApplicant((prev: any) => ({ ...prev, status: 'Interviewed' }));
+            alert("Candidate has been unhired.");
+        } catch (err: any) {
+            console.error("Error unhiring:", err);
+            alert(err.message);
+        }
+    };
+
     const handleShortlistApplicant = async () => {
         try {
             const { error } = await supabase
@@ -725,35 +784,37 @@ Wishing you the very best in your career journey!`;
                         </button>
                     )}
 
-                    {/* Schedule / Cancel Button */}
-                    <div className="relative group/cancel flex items-center gap-2">
-                        <button
-                            onClick={() => !isAlreadyScheduled && setIsScheduleModalOpen(true)}
-                            title={isAlreadyScheduled && activeInterview ? `Next interview: ${new Date(activeInterview.scheduled_at).toLocaleString()}` : ''}
-                            className={`px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl transition-all flex items-center gap-3 ${isAlreadyScheduled
-                                ? 'bg-emerald-50 text-emerald-600 border-2 border-emerald-100 shadow-none'
-                                : 'bg-slate-900 text-white shadow-slate-900/10 hover:scale-[1.02] active:scale-95'
-                                }`}
-                        >
-                            {isAlreadyScheduled ? (
-                                <><CheckCircle2 size={18} /> Already Scheduled</>
-                            ) : (
-                                <><Calendar size={18} /> Schedule Interview</>
-                            )}
-                        </button>
-
-                        {isAlreadyScheduled && (
+                    {/* Schedule / Cancel Button - Hidden if Hired */}
+                    {applicant.status !== 'Hired' && (
+                        <div className="relative group/cancel flex items-center gap-2">
                             <button
-                                onClick={handleCancelInterview}
-                                className="p-4 bg-white border-2 border-rose-100 text-rose-500 rounded-2xl hover:bg-rose-50 transition-all shadow-sm"
-                                title="Cancel Scheduled Interview"
+                                onClick={() => !isAlreadyScheduled && setIsScheduleModalOpen(true)}
+                                title={isAlreadyScheduled && activeInterview ? `Next interview: ${new Date(activeInterview.scheduled_at).toLocaleString()}` : ''}
+                                className={`px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl transition-all flex items-center gap-3 ${isAlreadyScheduled
+                                    ? 'bg-emerald-50 text-emerald-600 border-2 border-emerald-100 shadow-none'
+                                    : 'bg-slate-900 text-white shadow-slate-900/10 hover:scale-[1.02] active:scale-95'
+                                    }`}
                             >
-                                <Trash2 size={20} />
+                                {isAlreadyScheduled ? (
+                                    <><CheckCircle2 size={18} /> Already Scheduled</>
+                                ) : (
+                                    <><Calendar size={18} /> Schedule Interview</>
+                                )}
                             </button>
-                        )}
-                    </div>
 
-                    {/* Hire Button */}
+                            {isAlreadyScheduled && (
+                                <button
+                                    onClick={handleCancelInterview}
+                                    className="p-4 bg-white border-2 border-rose-100 text-rose-500 rounded-2xl hover:bg-rose-50 transition-all shadow-sm"
+                                    title="Cancel Scheduled Interview"
+                                >
+                                    <Trash2 size={20} />
+                                </button>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Hire / Unhire Button */}
                     {applicant.status !== 'Hired' ? (
                         <button
                             onClick={handleHireApplicant}
@@ -762,9 +823,12 @@ Wishing you the very best in your career journey!`;
                             <UserCheck size={18} /> Hire Candidate
                         </button>
                     ) : (
-                        <div className="px-8 py-4 bg-emerald-500 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20 flex items-center gap-3">
-                            <ShieldCheck size={18} /> Officially Hired
-                        </div>
+                        <button
+                            onClick={handleUnhireApplicant}
+                            className="px-8 py-4 bg-white border-2 border-rose-100 text-rose-500 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-rose-500/10 hover:bg-rose-50 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3"
+                        >
+                            <XCircle size={18} /> Unhire Candidate
+                        </button>
                     )}
                 </div>
             </div>
