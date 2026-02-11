@@ -173,7 +173,7 @@ const EmployerMessages = () => {
                     spam: conv.is_spam_employer || false,
                     deleted: conv.is_deleted_employer || false,
                     seeker: conv.seeker,
-                    labels: conv.conversation_labels?.map((cl: any) => cl.label) || []
+                    labels: conv.conversation_labels?.map((cl: any) => cl.label).filter((l: any) => l) || []
                 }));
                 setMessages(mapped);
 
@@ -216,7 +216,7 @@ const EmployerMessages = () => {
         if (selectedTab === 'spam') return msg.spam && !msg.deleted;
         if (selectedTab.startsWith('label:')) {
             const labelId = selectedTab.split(':')[1];
-            return msg.labels.some((l: any) => l.id === labelId) && !msg.deleted;
+            return msg.labels?.some((l: any) => l?.id === labelId) && !msg.deleted;
         }
         return true;
     });
