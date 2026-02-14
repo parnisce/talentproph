@@ -32,9 +32,22 @@ const FindTalent = () => {
                     .eq('role', 'seeker');
 
                 if (initialQuery) {
-                    // Search in full_name, title, bio, and skills
-                    // Note: full text search or ILIKE on multiple columns
+                    // Search in full_name, professional headline (title), bio, and core competencies (skills)
+                    // We use or with ILIKE for text and contains for skills array
                     query = query.or(`full_name.ilike.%${initialQuery}%,title.ilike.%${initialQuery}%,bio.ilike.%${initialQuery}%,skills.cs.{${initialQuery}}`);
+                }
+
+                // Apply active filters on top of search
+                if (activeFilter === 'Top Rated') {
+                    query = query.gt('talent_score', 90);
+                } else if (activeFilter === 'Verified PRO') {
+                    query = query.eq('is_verified_pro', true);
+                } else if (activeFilter === 'Highly Available') {
+                    query = query.eq('availability', 'Immediate');
+                } else if (activeFilter === 'Technical') {
+                    query = query.or('title.ilike.%Developer%,title.ilike.%Engineer%,title.ilike.%IT%,title.ilike.%React%,skills.cs.{React,Node,Python}');
+                } else if (activeFilter === 'Creative') {
+                    query = query.or('title.ilike.%Designer%,title.ilike.%Creative%,title.ilike.%Video%,title.ilike.%Editor%,skills.cs.{Figma,Photoshop,Design}');
                 }
 
                 const { data, error } = await query;
@@ -65,7 +78,7 @@ const FindTalent = () => {
         };
 
         fetchTalents();
-    }, [initialQuery]);
+    }, [initialQuery, activeFilter]);
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
