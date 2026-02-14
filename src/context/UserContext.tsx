@@ -35,6 +35,11 @@ export interface UserProfile {
     banner_photo: string;
     resume_url: string;
     verification_proof_url: string;
+    verification_status: string;
+    government_id_url: string;
+    billing_address: string;
+    mobile_number: string;
+    is_verified_pro: boolean;
     talent_score: number;
     // Employer specific
     company_logo: string;
@@ -105,6 +110,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             banner_photo: "",
             resume_url: "",
             verification_proof_url: "",
+            verification_status: "unverified",
+            government_id_url: "",
+            billing_address: "",
+            mobile_number: "",
+            is_verified_pro: false,
             talent_score: 0,
             company_logo: "",
             industry: "",
@@ -159,6 +169,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     banner_photo: data.banner_url || data.banner_photo || "",
                     resume_url: data.resume_url || "",
                     verification_proof_url: data.verification_proof_url || "",
+                    verification_status: data.verification_status || "unverified",
+                    government_id_url: data.government_id_url || "",
+                    billing_address: data.billing_address || "",
+                    mobile_number: data.mobile_number || "",
+                    is_verified_pro: data.is_verified_pro || false,
                     talent_score: data.talent_score || 0,
                     company_logo: data.company_logo || "",
                     industry: data.industry || "",
@@ -219,6 +234,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     banner_photo: "",
                     resume_url: "",
                     verification_proof_url: "",
+                    verification_status: "unverified",
+                    government_id_url: "",
+                    billing_address: "",
+                    mobile_number: "",
+                    is_verified_pro: false,
                     talent_score: 0,
                     company_logo: "",
                     industry: "",
@@ -261,7 +281,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             };
             syncScore();
         }
-    }, [userProfile.name, userProfile.photo, userProfile.resume_url, userProfile.education, userProfile.iq, userProfile.verification_proof_url, userProfile.skills, userProfile.linkedin, userProfile.twitter, userProfile.facebook, userProfile.instagram, loading, userProfile.id]);
+    }, [userProfile.name, userProfile.photo, userProfile.resume_url, userProfile.education, userProfile.iq, userProfile.verification_proof_url, userProfile.verification_status, userProfile.is_verified_pro, userProfile.skills, userProfile.linkedin, userProfile.twitter, userProfile.facebook, userProfile.instagram, loading, userProfile.id]);
 
     const updateUserProfile = async (data: Partial<UserProfile>) => {
         if (!userProfile.id) return;
@@ -294,6 +314,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
             if (data.resume_url !== undefined) dbData.resume_url = data.resume_url;
             if (data.verification_proof_url !== undefined) dbData.verification_proof_url = data.verification_proof_url;
+            if (data.verification_status !== undefined) dbData.verification_status = data.verification_status;
+            if (data.government_id_url !== undefined) dbData.government_id_url = data.government_id_url;
+            if (data.billing_address !== undefined) dbData.billing_address = data.billing_address;
+            if (data.mobile_number !== undefined) dbData.mobile_number = data.mobile_number;
+            if (data.is_verified_pro !== undefined) dbData.is_verified_pro = data.is_verified_pro;
             if (data.talent_score !== undefined) dbData.talent_score = data.talent_score;
             if (data.company_logo !== undefined) dbData.company_logo = data.company_logo;
             if (data.industry !== undefined) dbData.industry = data.industry;
@@ -389,6 +414,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 banner_photo: "",
                 resume_url: "",
                 verification_proof_url: "",
+                verification_status: "unverified",
+                government_id_url: "",
+                billing_address: "",
+                mobile_number: "",
+                is_verified_pro: false,
                 talent_score: 0,
                 company_logo: "",
                 industry: "",

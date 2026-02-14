@@ -33,10 +33,11 @@ import SeekerFindJobs from './SeekerFindJobs';
 import JobDetails from './JobDetails';
 import SavedJobs from './SavedJobs';
 import TalentScoreGuide from '../../components/seeker/TalentScoreGuide';
+import SeekerVerification from './SeekerVerification';
 
 
 const SeekerOverview = ({ interviews = [], employers = [], savedJobs = [] }: { interviews?: any[], employers?: any[], savedJobs?: any[] }) => {
-    const { userPhoto, updateUserProfile, userName, title, website, salary, education, skills, resume_url } = useUser();
+    const { userPhoto, updateUserProfile, userName, title, website, salary, education, skills, resume_url, is_verified_pro } = useUser();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -134,6 +135,9 @@ const SeekerOverview = ({ interviews = [], employers = [], savedJobs = [] }: { i
                             <Link to="/seeker/profile/edit" className="w-full py-3 px-6 bg-white/5 hover:bg-white/10 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-white/5 group decoration-transparent">
                                 <FileText size={14} className="text-primary group-hover:scale-110 transition-transform" /> Edit Profile
                             </Link>
+                            <Link to="/seeker/verification" className="w-full py-3 px-6 bg-primary/10 hover:bg-primary/20 text-primary rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-primary/5 group decoration-transparent">
+                                <ShieldCheck size={14} className="group-hover:scale-110 transition-transform" /> Verification
+                            </Link>
                             {resume_url ? (
                                 <button
                                     onClick={() => {
@@ -175,10 +179,17 @@ const SeekerOverview = ({ interviews = [], employers = [], savedJobs = [] }: { i
                         <div>
                             <div className="flex flex-wrap items-center gap-4 mb-4">
                                 <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter">{userName}</h1>
-                                <div className="flex items-center gap-2 px-4 py-1.5 bg-green-500/10 border border-green-500/20 rounded-full">
-                                    <ShieldCheck size={14} className="text-green-400" />
-                                    <span className="text-[10px] font-black text-green-400 uppercase tracking-widest">Verified Pro</span>
-                                </div>
+                                {is_verified_pro ? (
+                                    <div className="flex items-center gap-2 px-4 py-1.5 bg-green-500/10 border border-green-500/20 rounded-full">
+                                        <ShieldCheck size={14} className="text-green-400" />
+                                        <span className="text-[10px] font-black text-green-400 uppercase tracking-widest">Verified Pro</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-2 px-4 py-1.5 bg-slate-500/10 border border-slate-500/20 rounded-full">
+                                        <ShieldCheck size={14} className="text-slate-400" />
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Unverified</span>
+                                    </div>
+                                )}
                             </div>
                             <p className="text-blue-200/50 font-black text-xs uppercase tracking-[0.3em]">{title || 'Professional Headline Not Set'}</p>
                         </div>
@@ -599,6 +610,7 @@ const SeekerDashboard = () => {
                 <Route path="/jobs/:id" element={<JobDetails />} />
                 <Route path="/profile" element={<SeekerProfile />} />
                 <Route path="/profile/edit" element={<SeekerEditProfile />} />
+                <Route path="/verification" element={<SeekerVerification />} />
                 <Route path="/calendar" element={
                     <CalendarView interviews={interviews} />
                 } />

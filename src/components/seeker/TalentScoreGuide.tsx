@@ -41,8 +41,8 @@ const TalentScoreGuide: React.FC = () => {
             description: 'Provide your full legal name',
             icon: User,
             score: breakdown.name,
-            max: 10,
-            link: '/seeker/edit-profile?section=general'
+            max: 5,
+            link: '/seeker/profile/edit?section=general'
         },
         {
             id: 'picture',
@@ -50,8 +50,8 @@ const TalentScoreGuide: React.FC = () => {
             description: 'Add a professional portrait',
             icon: Camera,
             score: breakdown.picture,
-            max: 10,
-            link: '/seeker/edit-profile?section=general'
+            max: 5,
+            link: '/seeker/profile/edit?section=general'
         },
         {
             id: 'resume',
@@ -60,7 +60,7 @@ const TalentScoreGuide: React.FC = () => {
             icon: FileText,
             score: breakdown.resume,
             max: 20,
-            link: '/seeker/edit-profile?section=expertise'
+            link: '/seeker/profile/edit?section=expertise'
         },
         {
             id: 'education',
@@ -69,7 +69,7 @@ const TalentScoreGuide: React.FC = () => {
             icon: GraduationCap,
             score: breakdown.education,
             max: 10,
-            link: '/seeker/edit-profile?section=general'
+            link: '/seeker/profile/edit?section=general'
         },
         {
             id: 'psychometric',
@@ -78,16 +78,16 @@ const TalentScoreGuide: React.FC = () => {
             icon: Brain,
             score: breakdown.psychometric,
             max: 20,
-            link: '/seeker/edit-profile?section=assessments'
+            link: '/seeker/profile/edit?section=assessments'
         },
         {
             id: 'verification',
-            label: 'Verification Proof',
-            description: 'Verify your test results',
+            label: 'Verified PRO Status',
+            description: 'Verify your ID and Location',
             icon: Shield,
             score: breakdown.verification,
-            max: 10,
-            link: '/seeker/edit-profile?section=assessments'
+            max: 20,
+            link: '/seeker/verification'
         },
         {
             id: 'skills',
@@ -96,7 +96,7 @@ const TalentScoreGuide: React.FC = () => {
             icon: Award,
             score: breakdown.skills,
             max: 10,
-            link: '/seeker/edit-profile?section=expertise'
+            link: '/seeker/profile/edit?section=expertise'
         },
         {
             id: 'social',
@@ -105,7 +105,7 @@ const TalentScoreGuide: React.FC = () => {
             icon: Share2,
             score: breakdown.social,
             max: 10,
-            link: '/seeker/edit-profile?section=socials'
+            link: '/seeker/profile/edit?section=socials'
         },
     ];
 

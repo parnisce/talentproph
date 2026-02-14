@@ -14,12 +14,12 @@ export interface ScoreBreakdown {
 
 export const calculateTalentScore = (profile: Partial<UserProfile>): ScoreBreakdown => {
     const breakdown = {
-        name: profile.name ? 10 : 0,
-        picture: (profile.photo && !profile.photo.includes('seed=Guest')) ? 10 : 0,
+        name: profile.name ? 5 : 0,
+        picture: (profile.photo && !profile.photo.includes('seed=Guest')) ? 5 : 0,
         resume: profile.resume_url ? 20 : 0,
         education: profile.education ? 10 : 0,
-        psychometric: (profile.iq && profile.iq > 0) ? 20 : 0, // Simplified: check if IQ is set
-        verification: profile.verification_proof_url ? 10 : 0,
+        psychometric: (profile.iq && profile.iq > 0) ? 20 : 0,
+        verification: profile.is_verified_pro ? 20 : (profile.verification_status === 'pending' ? 10 : 0),
         skills: (profile.skills && profile.skills.length > 0) ? 10 : 0,
         social: (profile.linkedin || profile.twitter || profile.facebook || profile.instagram) ? 10 : 0,
     };
