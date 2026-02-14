@@ -57,6 +57,14 @@ const DashboardLayout = ({ children, role, userName: propUserName, userPhoto: pr
     const userPhoto = propUserPhoto || contextUserPhoto;
 
     const [showAccountMenu, setShowAccountMenu] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && searchQuery.trim() && role === 'employer') {
+            navigate(`/employer/talent?q=${encodeURIComponent(searchQuery.trim())}`);
+            setSearchQuery('');
+        }
+    };
 
     const handleLogout = async () => {
         await logout();
@@ -145,7 +153,10 @@ const DashboardLayout = ({ children, role, userName: propUserName, userPhoto: pr
                             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
                             <input
                                 type="text"
-                                placeholder="Search resources..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyDown={handleSearch}
+                                placeholder={role === 'employer' ? "Try: Facebook Ads, React, Lead Generation..." : "Search resources..."}
                                 className="pl-14 pr-8 py-4 bg-white border border-slate-100 rounded-[20px] focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none w-96 text-[13px] font-bold transition-all shadow-inner"
                             />
                         </div>
