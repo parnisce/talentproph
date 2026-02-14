@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import DashboardLayout from '../../components/DashboardLayout';
@@ -8,20 +8,19 @@ import {
     Briefcase,
     TrendingUp,
     Plus,
-    Target,
-    MapPin,
-    PauseCircle,
-    PlayCircle,
-    UserCheck,
     ChevronRight,
     MessageSquare,
     ShieldCheck,
     Star,
-    Crown,
     Zap,
+    Crown,
     CheckCircle2,
     Clock,
-    DollarSign
+    DollarSign,
+    Target,
+    MapPin,
+    PauseCircle,
+    PlayCircle
 } from 'lucide-react';
 import CalendarView from '../../components/CalendarView';
 import { useUser } from '../../context/UserContext';
@@ -42,7 +41,6 @@ const EmployerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
     const [jobCount, setJobCount] = useState(0);
     const [applicantCount, setApplicantCount] = useState(0);
     const [interviewCount, setInterviewCount] = useState(0);
-    const [hiredCount, setHiredCount] = useState(0);
     const [recentApplicants, setRecentApplicants] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -98,10 +96,8 @@ const EmployerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
                                     avatar_url,
                                     title,
                                     expected_salary,
-                                    iq,
-                                    talent_score
+                                    iq
                                 )
-
                             `)
                             .in('job_id', jobIds)
                             .order('created_at', { ascending: false })
@@ -116,23 +112,13 @@ const EmployerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
                                 status: app.status || 'New',
                                 rate: app.profiles?.expected_salary || 'TBD',
                                 time: new Date(app.created_at).toLocaleDateString(),
-                                score: app.profiles?.talent_score || (app.profiles?.iq ? Math.min(Math.round((app.profiles.iq / 160) * 100), 100) : 85),
+                                score: app.profiles?.iq ? Math.min(Math.round((app.profiles.iq / 160) * 100), 100) : 85,
                             }));
-
                             setRecentApplicants(mappedApps);
 
                             // Set total interviewed count
                             const interviewedTotal = apps.filter(a => a.status === 'Interviewed').length;
                             setInterviewCount(interviewedTotal);
-
-                            // Fetch Hired count
-                            const { count: hCount } = await supabase
-                                .from('job_applications')
-                                .select('*', { count: 'exact', head: true })
-                                .in('job_id', jobIds)
-                                .eq('status', 'Hired');
-
-                            if (hCount !== null) setHiredCount(hCount);
                         }
                     } catch (appErr) {
                         console.error("Applications table error in overview:", appErr);
@@ -151,7 +137,6 @@ const EmployerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
     const stats = [
         { label: 'Active Jobs', value: jobCount.toString(), secondary: `/ ${maxSlots} slots`, icon: Briefcase, color: 'text-blue-600 bg-blue-50', trend: `${jobCount} live now` },
         { label: 'Total Applicants', value: applicantCount.toString(), secondary: 'Across all posts', icon: Users, color: 'text-emerald-600 bg-emerald-50', trend: 'Updating...' },
-        { label: 'Hired Team', value: hiredCount.toString(), secondary: 'Candidates', icon: UserCheck, color: 'text-amber-600 bg-amber-50', trend: 'Growing!' },
         { label: 'Interviewed', value: (interviews.length || interviewCount).toString(), secondary: 'Candidates', icon: TrendingUp, color: 'text-violet-600 bg-violet-50', trend: 'Check schedule' },
     ];
 
@@ -174,18 +159,6 @@ const EmployerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
                     <p className="text-slate-500 font-medium mt-1">Manage your remote dream team and active job postings.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => navigate('/employer/applicants/all')}
-                        className="px-6 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-primary hover:border-primary transition-all shadow-sm flex items-center gap-2"
-                    >
-                        <Users size={16} /> View Applicants
-                    </button>
-                    <button
-                        onClick={() => navigate('/employer/hired')}
-                        className="px-6 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-emerald-500 hover:border-emerald-500 transition-all shadow-sm flex items-center gap-2"
-                    >
-                        <UserCheck size={16} /> Hired Team
-                    </button>
                     <button
                         onClick={() => navigate('/employer/upgrade')}
                         className="px-6 py-3.5 bg-white border-2 border-slate-100 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-primary hover:border-primary transition-all shadow-sm"
@@ -220,7 +193,7 @@ const EmployerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
                                     <span className="px-3 py-1 bg-primary/10 text-primary border border-primary/20 rounded-full text-[9px] font-black uppercase tracking-widest">Active Plan</span>
                                     <h2 className="text-3xl font-black text-slate-900 tracking-tighter">{subscription_plan === 'Free' ? 'Starter' : subscription_plan} Tier</h2>
                                 </div>
-                                <p className="text-slate-500 font-medium">Enjoying {subscription_plan} features • Upgrade to scale faster</p>
+                                <p className="text-slate-500 font-medium">Enjoying {subscription_plan} features ΓÇó Upgrade to scale faster</p>
                             </div>
                         </div>
 
@@ -301,7 +274,7 @@ const EmployerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {stats.map((stat, idx) => (
                     <motion.div
                         key={stat.label}
@@ -309,13 +282,7 @@ const EmployerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.1 }}
                         whileHover={{ y: -6, scale: 1.01 }}
-                        onClick={() => {
-                            if (stat.label === 'Total Applicants') navigate('/employer/applicants/all');
-                            else if (stat.label === 'Hired Team') navigate('/employer/hired');
-                            else if (stat.label === 'Active Jobs') navigate('/employer/posts');
-                            else if (stat.label === 'Interviewed') navigate('/employer/calendar');
-                        }}
-                        className="bg-white border-2 border-slate-50 p-8 rounded-[40px] shadow-sm hover:shadow-2xl hover:shadow-slate-200/50 transition-all group cursor-pointer"
+                        className="bg-white border-2 border-slate-50 p-8 rounded-[40px] shadow-sm hover:shadow-2xl hover:shadow-slate-200/50 transition-all group"
                     >
                         <div className="flex items-center justify-between mb-8">
                             <div className={`p-4 rounded-2xl ${stat.color} group-hover:scale-110 transition-transform`}>
