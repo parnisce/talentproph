@@ -8,6 +8,7 @@ import {
     ChevronRight,
     Clock,
     Plus,
+    X,
     Pin,
     Eye,
     ChevronDown,
@@ -39,6 +40,9 @@ const FindTalent = () => {
     const [includeHired, setIncludeHired] = useState(false);
 
     // Skill Filters
+    const [activeSkills, setActiveSkills] = useState<string[]>([]);
+    const [isAddingSkill, setIsAddingSkill] = useState(false);
+    const [newSkill, setNewSkill] = useState('');
 
     const fetchTalents = async () => {
         setLoading(true);
@@ -48,22 +52,26 @@ const FindTalent = () => {
                 .select('*', { count: 'exact' })
                 .eq('role', 'seeker');
 
-            // 1. Core Search Logic
+            // 1. Core Search Logic (Search Bar)
             if (searchQuery) {
                 const searchTerms = searchQuery.trim().split(/\s+/);
                 let searchClauses: string[] = [];
 
-                // Title/Headline search (always active)
+                // Searching for the full phrase first
                 searchClauses.push(`title.ilike.%${searchQuery}%`);
-
-                // Name search (default to true/always check if user wants)
                 searchClauses.push(`full_name.ilike.%${searchQuery}%`);
-
-                // Bio search (default to true)
                 searchClauses.push(`bio.ilike.%${searchQuery}%`);
 
-                // Skills search: Support matching any word from the query against an array
-                // Using overlap operator && for skill arrays
+                // Tokenized search for keywords in title/bio
+                searchTerms.forEach(term => {
+                    if (term.length > 2) {
+                        searchClauses.push(`title.ilike.%${term}%`);
+                        searchClauses.push(`bio.ilike.%${term}%`);
+                    }
+                });
+
+                // Skill matching: using overlap && for array
+                // We'll also try to match terms individually against the array
                 if (searchTerms.length > 0) {
                     const skillsArray = `{${searchTerms.join(',')}}`;
                     searchClauses.push(`skills.ov.${skillsArray}`);
@@ -72,15 +80,29 @@ const FindTalent = () => {
                 query = query.or(searchClauses.join(','));
             }
 
-            // 2. Sidebar Filters
+            // 2. Active Skill Filters (Sidebar Chips)
+            if (activeSkills.length > 0) {
+                // Seeker must have ALL of these skills
+                query = query.contains('skills', activeSkills);
+            }
+
+            // 3. Sidebar Numeric/Status Filters
             if (employmentType !== 'Any') {
                 query = query.eq('availability', employmentType);
             }
 
-            if (idProofScore !== 'Any' && idProofScore !== '40+') {
-                query = query.gte('talent_score', parseInt(idProofScore));
-            } else if (idProofScore === '40+') {
-                query = query.gte('talent_score', 40);
+            if (idProofScore !== 'Any') {
+                const score = parseInt(idProofScore);
+                if (!isNaN(score)) query = query.gte('talent_score', score);
+            }
+
+            if (iqScore !== 'Any') {
+                const score = parseInt(iqScore);
+                if (!isNaN(score)) query = query.gte('iq', score);
+            }
+
+            if (englishScore !== 'Any') {
+                query = query.eq('english', englishScore);
             }
 
             // Salary Range Filtering (Simulated if DB schema is text)
@@ -131,8 +153,22 @@ const FindTalent = () => {
         englishScore,
         searchDescriptions,
         searchNames,
-        includeHired
+        includeHired,
+        activeSkills
     ]);
+
+    const addSkillFilter = (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (newSkill.trim() && !activeSkills.includes(newSkill.trim())) {
+            setActiveSkills([...activeSkills, newSkill.trim()]);
+            setNewSkill('');
+            setIsAddingSkill(false);
+        }
+    };
+
+    const removeSkillFilter = (skillToRemove: string) => {
+        setActiveSkills(activeSkills.filter(s => s !== skillToRemove));
+    };
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -172,9 +208,43 @@ const FindTalent = () => {
                     <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm space-y-8">
                         <div>
                             <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">Active Skill Filters</p>
-                            <button className="text-secondary text-xs font-black hover:underline flex items-center gap-1">
-                                <Plus size={14} /> Add skill filters
-                            </button>
+
+                            <div className="flex flex-wrap gap-2 mb-4">
+                                {activeSkills.map(skill => (
+                                    <span key={skill} className="flex items-center gap-2 px-3 py-1.5 bg-primary/5 text-primary border border-primary/10 rounded-xl text-[10px] font-bold">
+                                        {skill}
+                                        <button onClick={() => removeSkillFilter(skill)} className="hover:text-primary/70 transition-colors">
+                                            <X size={12} />
+                                        </button>
+                                    </span>
+                                ))}
+                            </div>
+
+                            {!isAddingSkill ? (
+                                <button
+                                    onClick={() => setIsAddingSkill(true)}
+                                    className="text-secondary text-xs font-black hover:underline flex items-center gap-1"
+                                >
+                                    <Plus size={14} /> Add skill filters
+                                </button>
+                            ) : (
+                                <form onSubmit={addSkillFilter} className="flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                                    <input
+                                        autoFocus
+                                        type="text"
+                                        value={newSkill}
+                                        onChange={(e) => setNewSkill(e.target.value)}
+                                        placeholder="Enter skill..."
+                                        className="flex-1 bg-slate-50 border border-slate-100 p-2 rounded-lg text-xs font-bold outline-none focus:border-primary/30"
+                                    />
+                                    <button type="submit" className="p-2 bg-primary text-white rounded-lg hover:bg-primary/90">
+                                        <Plus size={14} />
+                                    </button>
+                                    <button type="button" onClick={() => setIsAddingSkill(false)} className="p-2 text-slate-400 hover:text-slate-600">
+                                        <X size={14} />
+                                    </button>
+                                </form>
+                            )}
                         </div>
 
                         <div className="space-y-6">
