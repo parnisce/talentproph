@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
     Search,
     Users,
-    Star,
-    Zap,
     DollarSign,
     ChevronRight,
-    ShieldCheck,
-    Clock
+    Clock,
+    Plus,
+    Pin,
+    Eye,
+    ChevronDown,
+    HelpCircle
 } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 
@@ -20,241 +22,458 @@ const FindTalent = () => {
     const [searchQuery, setSearchQuery] = useState(initialQuery);
     const [talents, setTalents] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeFilter, setActiveFilter] = useState('All');
+    const [totalCount, setTotalCount] = useState(0);
 
-    useEffect(() => {
-        const fetchTalents = async () => {
-            setLoading(true);
-            try {
-                let query = supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('role', 'seeker');
+    // Sidebar Filter States
+    const [employmentType, setEmploymentType] = useState('Any');
+    const [availabilityRange, setAvailabilityRange] = useState({ min: 2, max: 12 });
+    const [salaryRange, setSalaryRange] = useState({ min: 2, max: 40 });
+    const [idProofScore, setIdProofScore] = useState('Any');
+    const [lastActive, setLastActive] = useState('Any');
+    const [iqScore, setIqScore] = useState('Any');
+    const [englishScore, setEnglishScore] = useState('Any');
 
-                if (initialQuery) {
-                    // Search in full_name, professional headline (title), bio, and core competencies (skills)
-                    // We use or with ILIKE for text and contains for skills array
-                    query = query.or(`full_name.ilike.%${initialQuery}%,title.ilike.%${initialQuery}%,bio.ilike.%${initialQuery}%,skills.cs.{${initialQuery}}`);
+    // Checkbox Filters
+    const [searchDescriptions, setSearchDescriptions] = useState(false);
+    const [searchNames, setSearchNames] = useState(false);
+    const [includeHired, setIncludeHired] = useState(false);
+
+    // Skill Filters
+
+    const fetchTalents = async () => {
+        setLoading(true);
+        try {
+            let query = supabase
+                .from('profiles')
+                .select('*', { count: 'exact' })
+                .eq('role', 'seeker');
+
+            // 1. Core Search Logic
+            if (searchQuery) {
+                let searchClauses = [
+                    `title.ilike.%${searchQuery}%`,
+                    `skills.cs.{${searchQuery}}`
+                ];
+
+                if (searchNames) {
+                    searchClauses.push(`full_name.ilike.%${searchQuery}%`);
                 }
 
-                // Apply active filters on top of search
-                if (activeFilter === 'Top Rated') {
-                    query = query.gt('talent_score', 90);
-                } else if (activeFilter === 'Verified PRO') {
-                    query = query.eq('is_verified_pro', true);
-                } else if (activeFilter === 'Highly Available') {
-                    query = query.eq('availability', 'Immediate');
-                } else if (activeFilter === 'Technical') {
-                    query = query.or('title.ilike.%Developer%,title.ilike.%Engineer%,title.ilike.%IT%,title.ilike.%React%,skills.cs.{React,Node,Python}');
-                } else if (activeFilter === 'Creative') {
-                    query = query.or('title.ilike.%Designer%,title.ilike.%Creative%,title.ilike.%Video%,title.ilike.%Editor%,skills.cs.{Figma,Photoshop,Design}');
+                if (searchDescriptions) {
+                    searchClauses.push(`bio.ilike.%${searchQuery}%`);
                 }
 
-                const { data, error } = await query;
-
-                if (error) throw error;
-
-                if (data) {
-                    const mappedData = data.map(profile => ({
-                        id: profile.id,
-                        name: profile.full_name || 'Anonymous Seeker',
-                        photo: profile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.id}`,
-                        title: profile.title || 'Job Seeker',
-                        location: profile.location || 'Remote',
-                        rate: profile.expected_salary || 'TBD',
-                        skills: profile.skills || [],
-                        talentScore: profile.talent_score || 85,
-                        iq: profile.iq || 120,
-                        availability: profile.availability || 'Full-time',
-                        verified: profile.is_verified_pro
-                    }));
-                    setTalents(mappedData);
-                }
-            } catch (err) {
-                console.error("Error fetching talent:", err);
-            } finally {
-                setLoading(false);
+                query = query.or(searchClauses.join(','));
             }
-        };
 
-        fetchTalents();
-    }, [initialQuery, activeFilter]);
+            // 2. Sidebar Filters
+            if (employmentType !== 'Any') {
+                query = query.eq('availability', employmentType);
+            }
 
-    const handleSearchSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (searchQuery.trim()) {
-            navigate(`/employer/talent?q=${encodeURIComponent(searchQuery.trim())}`);
+            if (idProofScore !== 'Any' && idProofScore !== '40+') {
+                query = query.gte('talent_score', parseInt(idProofScore));
+            } else if (idProofScore === '40+') {
+                query = query.gte('talent_score', 40);
+            }
+
+            // Salary Range Filtering (Simulated if DB schema is text)
+            // Ideally should be numeric columns.
+
+            const { data, error, count } = await query;
+
+            if (error) throw error;
+
+            if (data) {
+                const mappedData = data.map(profile => ({
+                    id: profile.id,
+                    name: profile.full_name || 'Anonymous Seeker',
+                    photo: profile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.id}`,
+                    title: profile.title || 'Specialist',
+                    location: profile.location || 'Remote',
+                    rate: profile.expected_salary || '$5.00/hour',
+                    skills: profile.skills || [],
+                    talentScore: profile.talent_score || 85,
+                    iq: profile.iq || 120,
+                    availability: profile.availability || 'Full-time',
+                    verified: profile.is_verified_pro,
+                    bio: profile.bio || 'I am a dedicated professional with expertise in delivering high-quality results. My goal is to exceed client expectations through innovation and technical excellence.',
+                    education: profile.education || 'Bachelors degree',
+                    lastActive: 'Today'
+                }));
+                setTalents(mappedData);
+                setTotalCount(count || 0);
+            }
+        } catch (err) {
+            console.error("Error fetching talent:", err);
+        } finally {
+            setLoading(false);
         }
     };
 
-    return (
-        <div className="space-y-10 pb-20">
-            {/* Header & Search */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 py-4">
-                <div>
-                    <h1 className="text-4xl font-black text-slate-900 tracking-tighter font-outfit">Find Elite Talent</h1>
-                    <p className="text-slate-500 font-medium mt-1">Discover vetted professionals by skill, score, or performance.</p>
-                </div>
+    useEffect(() => {
+        fetchTalents();
+    }, [
+        initialQuery,
+        employmentType,
+        availabilityRange,
+        salaryRange,
+        idProofScore,
+        lastActive,
+        iqScore,
+        englishScore,
+        searchDescriptions,
+        searchNames,
+        includeHired
+    ]);
 
-                <form onSubmit={handleSearchSubmit} className="relative group">
-                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={20} />
-                    <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Lead Gen, React, FB Ads..."
-                        className="pl-14 pr-32 py-4 bg-white border-2 border-slate-100 rounded-[24px] focus:ring-[8px] focus:ring-primary/5 focus:border-primary outline-none w-full md:w-[400px] text-[14px] font-bold transition-all shadow-xl shadow-slate-200/50"
-                    />
+    const handleSearchSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        navigate(`/employer/talent?q=${encodeURIComponent(searchQuery.trim())}`);
+    };
+
+    return (
+        <div className="max-w-[1400px] mx-auto space-y-8 pb-20">
+            {/* Top Search Area */}
+            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40">
+                <form onSubmit={handleSearchSubmit} className="flex flex-col md:flex-row items-center gap-6">
+                    <div className="relative flex-1 group">
+                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={24} />
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Try: graphics designer, facebook ads, lead generation..."
+                            className="w-full pl-16 pr-8 py-5 bg-slate-50 border-2 border-slate-100 rounded-2xl text-lg font-bold focus:outline-none focus:border-primary/20 focus:bg-white transition-all"
+                        />
+                    </div>
                     <button
                         type="submit"
-                        className="absolute right-2 top-2 bottom-2 px-6 bg-slate-900 text-white rounded-[18px] text-[11px] font-black uppercase tracking-widest hover:bg-primary transition-all active:scale-95 shadow-lg shadow-slate-900/10"
+                        className="px-12 py-5 bg-slate-900 text-white rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-primary transition-all shadow-xl shadow-slate-900/10"
                     >
                         Search
                     </button>
+                    <a href="#" className="text-secondary text-sm font-bold hover:underline hidden lg:block whitespace-nowrap">
+                        Better Search Results?
+                    </a>
                 </form>
             </div>
 
-            {/* Quick Filters */}
-            <div className="flex flex-wrap items-center gap-3">
-                {['All', 'Top Rated', 'Highly Available', 'Verified PRO', 'Technical', 'Creative'].map((f) => (
-                    <button
-                        key={f}
-                        onClick={() => setActiveFilter(f)}
-                        className={`px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all ${activeFilter === f
-                            ? 'bg-primary text-white shadow-xl shadow-primary/20 scale-105'
-                            : 'bg-white border-2 border-slate-100 text-slate-400 hover:border-primary hover:text-primary'
-                            }`}
-                    >
-                        {f}
-                    </button>
-                ))}
-            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                {/* Sidebar Filters */}
+                <div className="lg:col-span-3 space-y-8">
+                    <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm space-y-8">
+                        <div>
+                            <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">Active Skill Filters</p>
+                            <button className="text-secondary text-xs font-black hover:underline flex items-center gap-1">
+                                <Plus size={14} /> Add skill filters
+                            </button>
+                        </div>
 
-            {/* Results Grid */}
-            {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {[1, 2, 3, 4, 5, 6].map((i) => (
-                        <div key={i} className="bg-white border-2 border-slate-50 rounded-[48px] p-8 animate-pulse space-y-6">
-                            <div className="flex items-center gap-6">
-                                <div className="w-20 h-20 bg-slate-100 rounded-[28px]" />
-                                <div className="flex-1 space-y-3">
-                                    <div className="h-5 bg-slate-100 rounded-full w-3/4" />
-                                    <div className="h-3 bg-slate-100 rounded-full w-1/2" />
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Employment Type</label>
+                                <div className="relative">
+                                    <select
+                                        value={employmentType}
+                                        onChange={(e) => setEmploymentType(e.target.value)}
+                                        className="w-full appearance-none bg-slate-50 border border-slate-100 p-4 rounded-xl text-xs font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/10"
+                                    >
+                                        <option>Any</option>
+                                        <option>Full-time</option>
+                                        <option>Part-time</option>
+                                    </select>
+                                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={16} />
                                 </div>
                             </div>
-                            <div className="h-20 bg-slate-50 rounded-[32px]" />
-                            <div className="h-12 bg-slate-100 rounded-2xl" />
-                        </div>
-                    ))}
-                </div>
-            ) : talents.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <AnimatePresence>
-                        {talents.map((talent, idx) => (
-                            <motion.div
-                                key={talent.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: idx * 0.05 }}
-                                whileHover={{ y: -6 }}
-                                className="bg-white border-2 border-slate-50 rounded-[48px] p-8 shadow-sm hover:shadow-2xl hover:shadow-slate-200/50 transition-all group relative overflow-hidden"
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Availability (Hours per day)</label>
+                                <div className="flex items-center gap-3">
+                                    <div className="relative flex-1">
+                                        <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={14} />
+                                        <input
+                                            type="number"
+                                            value={availabilityRange.min}
+                                            onChange={(e) => setAvailabilityRange({ ...availabilityRange, min: parseInt(e.target.value) })}
+                                            className="w-full pl-8 pr-3 py-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold"
+                                        />
+                                    </div>
+                                    <span className="text-slate-300">—</span>
+                                    <div className="relative flex-1">
+                                        <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={14} />
+                                        <input
+                                            type="number"
+                                            value={availabilityRange.max}
+                                            onChange={(e) => setAvailabilityRange({ ...availabilityRange, max: parseInt(e.target.value) })}
+                                            className="w-full pl-8 pr-3 py-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Hourly Salary Between (USD)</label>
+                                <div className="flex items-center gap-3">
+                                    <div className="relative flex-1">
+                                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={14} />
+                                        <input
+                                            type="number"
+                                            value={salaryRange.min}
+                                            onChange={(e) => setSalaryRange({ ...salaryRange, min: parseInt(e.target.value) })}
+                                            className="w-full pl-8 pr-3 py-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold"
+                                        />
+                                    </div>
+                                    <span className="text-slate-300">—</span>
+                                    <div className="relative flex-1">
+                                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={14} />
+                                        <input
+                                            type="number"
+                                            value={salaryRange.max}
+                                            onChange={(e) => setSalaryRange({ ...salaryRange, max: parseInt(e.target.value) })}
+                                            className="w-full pl-8 pr-3 py-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+                                    ID Proof Score <HelpCircle size={12} />
+                                </label>
+                                <div className="relative">
+                                    <select
+                                        value={idProofScore}
+                                        onChange={(e) => setIdProofScore(e.target.value)}
+                                        className="w-full appearance-none bg-slate-50 border border-slate-100 p-4 rounded-xl text-xs font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/10"
+                                    >
+                                        <option>Any</option>
+                                        <option>40+</option>
+                                        <option>60+</option>
+                                        <option>80+</option>
+                                    </select>
+                                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={16} />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">IQ Score</label>
+                                <div className="relative">
+                                    <select
+                                        value={iqScore}
+                                        onChange={(e) => setIqScore(e.target.value)}
+                                        className="w-full appearance-none bg-slate-50 border border-slate-100 p-4 rounded-xl text-xs font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/10"
+                                    >
+                                        <option>Any</option>
+                                        <option>100+</option>
+                                        <option>120+</option>
+                                        <option>130+</option>
+                                    </select>
+                                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={16} />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">English Score</label>
+                                <div className="relative">
+                                    <select
+                                        value={englishScore}
+                                        onChange={(e) => setEnglishScore(e.target.value)}
+                                        className="w-full appearance-none bg-slate-50 border border-slate-100 p-4 rounded-xl text-xs font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/10"
+                                    >
+                                        <option>Any</option>
+                                        <option>Advanced</option>
+                                        <option>Intermediate</option>
+                                        <option>Fluent</option>
+                                    </select>
+                                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={16} />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Last Active</label>
+                                <div className="relative">
+                                    <select
+                                        value={lastActive}
+                                        onChange={(e) => setLastActive(e.target.value)}
+                                        className="w-full appearance-none bg-slate-50 border border-slate-100 p-4 rounded-xl text-xs font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/10"
+                                    >
+                                        <option>Any</option>
+                                        <option>Today</option>
+                                        <option>This Week</option>
+                                        <option>This Month</option>
+                                    </select>
+                                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={16} />
+                                </div>
+                            </div>
+
+                            <div className="space-y-4 pt-4 border-t border-slate-50">
+                                <label className="flex items-center gap-3 cursor-pointer group">
+                                    <div className={`w-5 h-5 rounded-md border-2 transition-all flex items-center justify-center ${searchDescriptions ? 'bg-primary border-primary' : 'border-slate-200 group-hover:border-primary/50'}`}>
+                                        {searchDescriptions && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                                    </div>
+                                    <input type="checkbox" className="hidden" checked={searchDescriptions} onChange={() => setSearchDescriptions(!searchDescriptions)} />
+                                    <span className="text-[13px] font-bold text-slate-600">Search Profile Descriptions</span>
+                                </label>
+                                <label className="flex items-center gap-3 cursor-pointer group">
+                                    <div className={`w-5 h-5 rounded-md border-2 transition-all flex items-center justify-center ${searchNames ? 'bg-primary border-primary' : 'border-slate-200 group-hover:border-primary/50'}`}>
+                                        {searchNames && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                                    </div>
+                                    <input type="checkbox" className="hidden" checked={searchNames} onChange={() => setSearchNames(!searchNames)} />
+                                    <span className="text-[13px] font-bold text-slate-600">Search Name</span>
+                                </label>
+                                <label className="flex items-center gap-3 cursor-pointer group">
+                                    <div className={`w-5 h-5 rounded-md border-2 transition-all flex items-center justify-center ${includeHired ? 'bg-primary border-primary' : 'border-slate-200 group-hover:border-primary/50'}`}>
+                                        {includeHired && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                                    </div>
+                                    <input type="checkbox" className="hidden" checked={includeHired} onChange={() => setIncludeHired(!includeHired)} />
+                                    <span className="text-[13px] font-bold text-slate-600">Include Hired Profiles</span>
+                                </label>
+                            </div>
+
+                            <button
+                                onClick={fetchTalents}
+                                className="w-full py-4 mt-4 bg-white border-2 border-slate-100 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-primary hover:border-primary transition-all shadow-sm"
                             >
-                                {/* Talent Score Badge */}
-                                <div className="absolute top-8 right-8 text-right">
-                                    <div className="flex items-center justify-end gap-1.5 text-primary mb-1">
-                                        <Star size={16} fill="currentColor" />
-                                        <span className="text-xl font-black tracking-tighter">{talent.talentScore}%</span>
-                                    </div>
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Talent Score</p>
-                                </div>
-
-                                <div className="flex items-center gap-6 mb-8 mt-2">
-                                    <div className="relative">
-                                        <div className="w-20 h-20 rounded-[28px] bg-slate-100 overflow-hidden ring-[6px] ring-white shadow-xl transition-transform group-hover:scale-105">
-                                            <img src={talent.photo} alt={talent.name} className="w-full h-full object-cover" />
-                                        </div>
-                                        {talent.verified && (
-                                            <div className="absolute -top-2 -right-2 bg-emerald-500 text-white w-8 h-8 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
-                                                <ShieldCheck size={14} />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="text-xl font-black text-slate-900 tracking-tighter truncate leading-tight group-hover:text-primary transition-colors">{talent.name}</h3>
-                                        <div className="flex items-center gap-1.5 mt-1">
-                                            <p className="text-[11px] font-bold text-slate-400 truncate">{talent.title}</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4 mb-8">
-                                    <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-100/50">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <Zap size={14} className="text-amber-500" />
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">IQ/DISC</span>
-                                        </div>
-                                        <p className="text-[13px] font-black text-slate-900">{talent.iq} • High D</p>
-                                    </div>
-                                    <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-100/50">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <Clock size={14} className="text-primary" />
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</span>
-                                        </div>
-                                        <p className="text-[13px] font-black text-slate-900">{talent.availability}</p>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <div className="flex flex-wrap gap-2">
-                                        {talent.skills.slice(0, 3).map((skill: string) => (
-                                            <span key={skill} className="px-3 py-1.5 bg-white border border-slate-100 rounded-xl text-[10px] font-bold text-slate-500 shadow-sm">
-                                                {skill}
-                                            </span>
-                                        ))}
-                                        {talent.skills.length > 3 && (
-                                            <span className="px-3 py-1.5 bg-slate-50 text-[10px] font-bold text-slate-400 rounded-xl">
-                                                +{talent.skills.length - 3}
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <div className="flex items-center justify-between pt-6 border-t border-slate-50">
-                                        <div className="flex items-center gap-1 text-emerald-600 font-bold">
-                                            <DollarSign size={16} />
-                                            <span className="text-lg tracking-tight font-black">{talent.rate}</span>
-                                        </div>
-                                        <button
-                                            onClick={() => navigate(`/employer/applicants/review/${talent.id}`)}
-                                            className="px-6 py-3 bg-slate-900 text-white rounded-2x rounded-[18px] text-[11px] font-black uppercase tracking-widest shadow-xl shadow-slate-900/10 hover:bg-primary transition-all active:scale-95 flex items-center gap-2"
-                                        >
-                                            View Profile <ChevronRight size={14} />
-                                        </button>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        ))}
-                    </AnimatePresence>
-                </div>
-            ) : (
-                <div className="text-center py-24 bg-white border-2 border-dashed border-slate-100 rounded-[56px]">
-                    <div className="w-20 h-20 bg-slate-50 rounded-[32px] flex items-center justify-center text-slate-300 mx-auto mb-6">
-                        <Users size={40} />
+                                Refine Search Results
+                            </button>
+                        </div>
                     </div>
-                    <h3 className="text-2xl font-black text-slate-900 tracking-tighter">No candidates found</h3>
-                    <p className="text-slate-500 font-medium max-w-sm mx-auto mt-2">
-                        Try searching for broad skills like "Lead Generation", "React", or "Facebook Ads".
-                    </p>
-                    <button
-                        onClick={() => {
-                            setSearchQuery('');
-                            navigate('/employer/talent');
-                        }}
-                        className="mt-10 px-10 py-4 bg-primary text-white rounded-[24px] text-[11px] font-black uppercase tracking-widest shadow-2xl shadow-primary/20 hover:scale-105 transition-all"
-                    >
-                        View All Sseekers
-                    </button>
                 </div>
-            )}
+
+                {/* Main Results Area */}
+                <div className="lg:col-span-9 space-y-10">
+                    <div className="flex items-center justify-between px-2">
+                        <p className="text-[15px] font-bold text-slate-500">
+                            Found <span className="text-slate-900 font-black">{totalCount}</span> jobseekers.
+                        </p>
+                        <div className="flex items-center gap-2">
+                            {[1, 2, 3, 4, 5].map(p => (
+                                <button key={p} className={`w-10 h-10 rounded-xl text-xs font-black transition-all ${p === 1 ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-white border border-slate-100 text-slate-400 hover:border-primary/30'}`}>
+                                    {p}
+                                </button>
+                            ))}
+                            <button className="w-10 h-10 rounded-xl bg-white border border-slate-100 text-slate-400 flex items-center justify-center">
+                                <ChevronRight size={16} />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="space-y-8">
+                        {loading ? (
+                            <div className="space-y-8">
+                                {[1, 2, 3].map(i => (
+                                    <div key={i} className="bg-white rounded-[48px] p-10 border border-slate-100 shadow-sm animate-pulse h-80" />
+                                ))}
+                            </div>
+                        ) : talents.length > 0 ? (
+                            talents.map((talent) => (
+                                <motion.div
+                                    key={talent.id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="bg-white rounded-[48px] p-10 border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-slate-200/50 transition-all group relative overflow-hidden"
+                                >
+                                    <div className="flex flex-col md:flex-row gap-12 relative z-10">
+                                        {/* Avatar Column */}
+                                        <div className="flex flex-col items-center gap-6 shrink-0">
+                                            <div className="w-36 h-36 rounded-[48px] bg-slate-100 overflow-hidden ring-[10px] ring-white shadow-2xl transition-transform group-hover:scale-105">
+                                                <img src={talent.photo} alt={talent.name} className="w-full h-full object-cover" />
+                                            </div>
+                                            <div className="bg-emerald-50 text-emerald-600 px-5 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest border border-emerald-100">
+                                                <span className="text-sm">{talent.talentScore}</span> ID PROOF
+                                            </div>
+                                        </div>
+
+                                        {/* Content Column */}
+                                        <div className="flex-1 space-y-8 min-w-0">
+                                            <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+                                                <div>
+                                                    <h3 className="text-2xl font-black text-secondary hover:underline cursor-pointer tracking-tighter decoration-primary decoration-4 underline-offset-4">{talent.name}</h3>
+                                                    <h4 className="text-xl font-black text-slate-900 mt-1 tracking-tight">{talent.title}</h4>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <button className="p-4 bg-slate-50 text-slate-400 rounded-2xl border border-slate-100 hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all group/pin">
+                                                        <Pin size={20} className="group-hover/pin:rotate-45 transition-transform" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => navigate(`/employer/applicants/review/${talent.id}`)}
+                                                        className="px-8 py-4 bg-white border-2 border-slate-900 text-slate-900 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all shadow-sm flex items-center gap-2"
+                                                    >
+                                                        <Eye size={18} /> View Profile
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                                                <div>
+                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Looking For</p>
+                                                    <div className="space-y-1">
+                                                        <p className="text-sm font-black text-slate-800">{talent.availability} (8 hours/day)</p>
+                                                        <p className="text-sm font-black text-secondary">at {talent.rate} <span className="text-slate-400 font-bold ml-1">($1,200.00/month)</span></p>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Education</p>
+                                                    <p className="text-sm font-black text-slate-800">{talent.education}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Last Active</p>
+                                                    <p className="text-sm font-black text-slate-800">{talent.lastActive}</p>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Profile Description</p>
+                                                <p className="text-[15px] font-medium text-slate-500 leading-relaxed line-clamp-3 italic">
+                                                    "{talent.bio}"
+                                                </p>
+                                            </div>
+
+                                            <div>
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Top Skills</p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {talent.skills.map((skill: string) => (
+                                                        <span key={skill} className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-[11px] font-bold text-slate-600 shadow-sm">
+                                                            {skill}: <span className="text-slate-400">1 - 2 years</span>
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Fancy background accent */}
+                                    <div className="absolute top-0 right-0 p-20 opacity-[0.02] pointer-events-none group-hover:scale-110 transition-transform duration-1000">
+                                        <Users size={300} />
+                                    </div>
+                                </motion.div>
+                            ))
+                        ) : (
+                            <div className="bg-white rounded-[56px] border-2 border-dashed border-slate-100 p-24 text-center">
+                                <div className="w-20 h-20 bg-slate-50 rounded-[32px] flex items-center justify-center text-slate-300 mx-auto mb-6">
+                                    <Search size={40} />
+                                </div>
+                                <h3 className="text-2xl font-black text-slate-900 tracking-tighter">No experts found matching these filters</h3>
+                                <p className="text-slate-500 font-medium max-w-sm mx-auto mt-2">
+                                    Try expanding your search query or adjusting your sidebar filters for better results.
+                                </p>
+                                <button
+                                    onClick={() => {
+                                        setSearchQuery('');
+                                        setSearchNames(false);
+                                        setSearchDescriptions(false);
+                                        fetchTalents();
+                                    }}
+                                    className="mt-10 px-10 py-4 bg-primary text-white rounded-[24px] text-[11px] font-black uppercase tracking-widest shadow-2xl shadow-primary/20 hover:scale-105 transition-all"
+                                >
+                                    Reset Filters
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };
