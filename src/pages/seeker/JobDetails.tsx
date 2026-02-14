@@ -62,8 +62,9 @@ const JobApplicationModal = ({ isOpen, onClose, jobTitle, jobId, employerId, onA
 
             if (appError) throw appError;
 
-            // 2. Ensure Conversation Exists (Client-side fallback for trigger)
+            // 2. Ensure Conversation AND Message Exist (Client-side fallback for server triggers)
             try {
+                // Find or Create Conversation
                 const { data: existingConv } = await supabase
                     .from('conversations')
                     .select('id')
@@ -81,7 +82,7 @@ const JobApplicationModal = ({ isOpen, onClose, jobTitle, jobId, employerId, onA
                             employer_id: employerId,
                             seeker_id: seekerId,
                             job_id: jobId,
-                            last_message: 'New Application',
+                            last_message: message || `New application for ${jobTitle}`,
                             last_message_at: new Date().toISOString()
                         })
                         .select()
@@ -89,11 +90,37 @@ const JobApplicationModal = ({ isOpen, onClose, jobTitle, jobId, employerId, onA
                     convId = newConv?.id;
                 }
 
-                // If conversation exists/created, ensure a message is there (optional as trigger should do this)
-                // But we don't want to duplicate messages if the trigger is working. 
-                // Given the issue, we'll let the trigger do its job, but this ensures the 'conversation' entry is there.
+                if (convId) {
+                    // Critical Fix: Explicitly check for the application message
+                    // Some environments have triggers disabled or failing silently.
+                    const { data: messages } = await supabase
+                        .from('messages')
+                        .select('id')
+                        .eq('conversation_id', convId)
+                        .eq('type', 'application')
+                        .limit(1);
+
+                    if (!messages || messages.length === 0) {
+                        const applicationMessage = message || `Hello! I have applied for the ${jobTitle} position. Looking forward to hearing from you.`;
+
+                        await supabase.from('messages').insert({
+                            conversation_id: convId,
+                            sender_id: seekerId,
+                            content: applicationMessage,
+                            type: 'application'
+                        });
+
+                        // Ensure conversation preview is updated
+                        await supabase.from('conversations')
+                            .update({
+                                last_message: applicationMessage,
+                                last_message_at: new Date().toISOString()
+                            })
+                            .eq('id', convId);
+                    }
+                }
             } catch (convErr) {
-                console.warn("Conversation sync warning:", convErr);
+                console.warn("Conversation/Message sync warning:", convErr);
             }
 
             onApply();
