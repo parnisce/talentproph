@@ -6,7 +6,6 @@ import {
     MessageSquare,
     ShieldCheck,
     CheckCircle2,
-    User,
     ExternalLink,
     Briefcase,
     Star,
@@ -108,16 +107,7 @@ const HiredCandidates = () => {
                     .from('job_applications')
                     .select(`
                         *,
-                        profiles:seeker_id (
-                            full_name,
-                            avatar_url,
-                            title,
-                            experience_years,
-                            skills_list,
-                            iq,
-                            talent_score
-                        ),
-
+                        profiles:seeker_id (*),
                         job_posts!inner (
                             title,
                             employer_id
@@ -259,86 +249,92 @@ const HiredCandidates = () => {
 
             {/* Hired List */}
             <div className="grid grid-cols-1 gap-6">
-                <AnimatePresence mode="popLayout">
-                    {filteredApplicants.map((applicant, idx) => (
-                        <motion.div
-                            key={applicant.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: idx * 0.05 }}
-                            className="bg-white border-2 border-slate-50 p-8 rounded-[40px] shadow-sm hover:shadow-2xl hover:shadow-emerald-500/10 transition-all group overflow-hidden relative"
-                        >
-                            <div className="flex flex-col lg:flex-row items-center gap-10">
-                                {/* Profile & Basic Info */}
-                                <div className="flex items-center gap-8 flex-1">
-                                    <div className="relative">
-                                        <div className="w-24 h-24 rounded-[32px] bg-slate-100 overflow-hidden ring-[6px] ring-white shadow-xl group-hover:scale-105 transition-transform">
-                                            <img src={applicant.photo} alt={applicant.name} className="w-full h-full object-cover" />
+                {loading ? (
+                    <div className="py-20 flex justify-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+                    </div>
+                ) : filteredApplicants.length > 0 ? (
+                    <AnimatePresence mode="popLayout">
+                        {filteredApplicants.map((applicant, idx) => (
+                            <motion.div
+                                key={applicant.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: idx * 0.05 }}
+                                className="bg-white border-2 border-slate-50 p-8 rounded-[40px] shadow-sm hover:shadow-2xl hover:shadow-emerald-500/10 transition-all group overflow-hidden relative"
+                            >
+                                <div className="flex flex-col lg:flex-row items-center gap-10">
+                                    {/* Profile & Basic Info */}
+                                    <div className="flex items-center gap-8 flex-1">
+                                        <div className="relative">
+                                            <div className="w-24 h-24 rounded-[32px] bg-slate-100 overflow-hidden ring-[6px] ring-white shadow-xl group-hover:scale-105 transition-transform">
+                                                <img src={applicant.photo} alt={applicant.name} className="w-full h-full object-cover" />
+                                            </div>
+                                            <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white w-8 h-8 rounded-full border-4 border-white flex items-center justify-center shadow-lg">
+                                                <ShieldCheck size={14} />
+                                            </div>
                                         </div>
-                                        <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white w-8 h-8 rounded-full border-4 border-white flex items-center justify-center shadow-lg">
-                                            <ShieldCheck size={14} />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <h3 className="text-2xl font-black text-slate-900 tracking-tighter">{applicant.name}</h3>
-                                            <span className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-emerald-100 text-emerald-600">
-                                                HIRED
-                                            </span>
-                                        </div>
-                                        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-slate-400 font-medium text-sm">
-                                            <span className="flex items-center gap-2 font-bold text-slate-900"><Briefcase size={14} /> {applicant.jobTitle}</span>
-                                            <span className="flex items-center gap-2"><Zap size={14} /> Hired {applicant.hiredDate}</span>
-                                        </div>
-                                        <div className="flex flex-wrap grow gap-2 mt-4">
-                                            {applicant.topSkills.map((skill: string) => (
-                                                <span key={skill} className="px-3 py-1 bg-slate-50 text-slate-500 rounded-lg text-[10px] font-black uppercase tracking-widest border border-slate-100">
-                                                    {skill}
+                                        <div>
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <h3 className="text-2xl font-black text-slate-900 tracking-tighter">{applicant.name}</h3>
+                                                <span className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-emerald-100 text-emerald-600">
+                                                    HIRED
                                                 </span>
-                                            ))}
+                                            </div>
+                                            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-slate-400 font-medium text-sm">
+                                                <span className="flex items-center gap-2 font-bold text-slate-900"><Briefcase size={14} /> {applicant.jobTitle}</span>
+                                                <span className="flex items-center gap-2"><Zap size={14} /> Hired {applicant.hiredDate}</span>
+                                            </div>
+                                            <div className="flex flex-wrap grow gap-2 mt-4">
+                                                {applicant.topSkills.map((skill: string) => (
+                                                    <span key={skill} className="px-3 py-1 bg-slate-50 text-slate-500 rounded-lg text-[10px] font-black uppercase tracking-widest border border-slate-100">
+                                                        {skill}
+                                                    </span>
+                                                ))}
+                                            </div>
                                         </div>
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-emerald-50 hover:text-emerald-600 transition-all border border-slate-100 group/btn shadow-sm"
+                                            title="Send Message"
+                                        >
+                                            <MessageSquare size={20} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleOpenReview(applicant)}
+                                            className="px-6 py-4 bg-white border-2 border-slate-100 text-slate-500 hover:border-yellow-400 hover:text-yellow-500 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center gap-2 shadow-sm"
+                                        >
+                                            <Star size={16} /> Write Review
+                                        </button>
+                                        <button
+                                            onClick={() => navigate(`/employer/applicants/review/${applicant.id}`)}
+                                            className="px-8 py-4 bg-slate-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-2xl shadow-slate-900/10 hover:bg-slate-800 transition-all flex items-center gap-2"
+                                        >
+                                            View Profile <ExternalLink size={14} />
+                                        </button>
                                     </div>
                                 </div>
 
-                                {/* Actions */}
-                                <div className="flex items-center gap-3">
-                                    <button
-                                        className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-emerald-50 hover:text-emerald-600 transition-all border border-slate-100 group/btn shadow-sm"
-                                        title="Send Message"
-                                    >
-                                        <MessageSquare size={20} />
-                                    </button>
-                                    <button
-                                        onClick={() => handleOpenReview(applicant)}
-                                        className="px-6 py-4 bg-white border-2 border-slate-100 text-slate-500 hover:border-yellow-400 hover:text-yellow-500 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center gap-2 shadow-sm"
-                                    >
-                                        <Star size={16} /> Write Review
-                                    </button>
-                                    <button
-                                        onClick={() => navigate(`/employer/applicants/review/${applicant.id}`)}
-                                        className="px-8 py-4 bg-slate-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-2xl shadow-slate-900/10 hover:bg-slate-800 transition-all flex items-center gap-2"
-                                    >
-                                        View Profile <ExternalLink size={14} />
-                                    </button>
+                                {/* Decorative Background Elements */}
+                                <div className="absolute top-0 right-0 p-8 opacity-[0.02] grayscale -translate-y-1/4 translate-x-1/4 pointer-events-none">
+                                    <CheckCircle2 size={180} />
                                 </div>
-                            </div>
-
-                            {/* Decorative Background Elements */}
-                            <div className="absolute top-0 right-0 p-8 opacity-[0.02] grayscale -translate-y-1/4 translate-x-1/4 pointer-events-none">
-                                <CheckCircle2 size={180} />
-                            </div>
-                        </motion.div>
-                    ))}
-                    {filteredApplicants.length === 0 && (
-                        <div className="py-20 text-center space-y-4">
-                            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center text-slate-200 mx-auto border-2 border-dashed border-slate-200">
-                                <User size={32} />
-                            </div>
-                            <h3 className="text-xl font-black text-slate-900 tracking-tighter">No hired candidates yet</h3>
-                            <p className="text-slate-500 font-medium">Once you hire applicants, they will appear here.</p>
+                            </motion.div>
+                        ))}
+                    </AnimatePresence>
+                ) : (
+                    <div className="bg-white border-2 border-dashed border-slate-100 p-20 rounded-[40px] text-center">
+                        <div className="w-20 h-20 bg-emerald-50 rounded-3xl flex items-center justify-center text-emerald-200 mx-auto mb-6">
+                            <CheckCircle2 size={40} />
                         </div>
-                    )}
-                </AnimatePresence>
+                        <h3 className="text-xl font-black text-slate-900 tracking-tighter mb-2">No team members yet</h3>
+                        <p className="text-slate-400 font-medium max-w-sm mx-auto">When you hire candidates, they will appear here as part of your dream team.</p>
+                        <button onClick={() => navigate('/employer/applicants/all')} className="mt-8 text-primary font-black text-xs uppercase tracking-widest hover:underline">Browse Applicants</button>
+                    </div>
+                )}
             </div>
         </div>
     );

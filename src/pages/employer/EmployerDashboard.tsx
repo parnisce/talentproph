@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import DashboardLayout from '../../components/DashboardLayout';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     Users,
     Briefcase,
@@ -93,15 +93,7 @@ const EmployerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
                             .from('job_applications')
                             .select(`
                                 *,
-                                profiles:seeker_id (
-                                    full_name,
-                                    avatar_url,
-                                    title,
-                                    expected_salary,
-                                    iq,
-                                    talent_score
-                                )
-
+                                profiles:seeker_id (*)
                             `)
                             .in('job_id', jobIds)
                             .order('created_at', { ascending: false })
@@ -300,6 +292,7 @@ const EmployerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
                 </div>
             </div>
 
+
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                 {stats.map((stat, idx) => (
@@ -354,7 +347,7 @@ const EmployerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
                     </div>
 
                     <div className="space-y-4">
-                        {recentApplicants.map((applicant) => (
+                        {recentApplicants.length > 0 ? recentApplicants.map((applicant) => (
                             <motion.div
                                 key={applicant.id}
                                 whileHover={{ x: 8 }}
@@ -408,7 +401,11 @@ const EmployerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
                                     </div>
                                 </div>
                             </motion.div>
-                        ))}
+                        )) : (
+                            <div className="bg-white border-2 border-dashed border-slate-100 p-12 rounded-[40px] text-center">
+                                <p className="text-slate-400 font-medium">No recent applicants to show.</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 

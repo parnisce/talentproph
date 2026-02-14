@@ -38,6 +38,7 @@ const ViewApplicants = () => {
 
     useEffect(() => {
         const fetchData = async () => {
+            if (!employerId) return;
             setLoading(true);
             try {
                 // Fetch Job Title if specific ID
@@ -57,17 +58,13 @@ const ViewApplicants = () => {
                     .from('job_applications')
                     .select(`
                         *,
-                        profiles:seeker_id (
-                            full_name,
-                            avatar_url,
+                        profiles:seeker_id (*),
+                        job_posts!inner (
                             title,
-                            experience_years,
-                            skills_list,
-                            iq,
-                            disc_scores,
-                            talent_score
+                            employer_id
                         )
-                    `);
+                    `)
+                    .eq('job_posts.employer_id', employerId);
 
                 if (id && id !== 'all') {
                     query = query.eq('job_id', id);
@@ -118,7 +115,8 @@ const ViewApplicants = () => {
         };
 
         fetchData();
-    }, [id]);
+    }, [id, employerId]);
+
 
     const handleMessageAll = async () => {
         if (!bulkMessage.trim() || !employerId) return;

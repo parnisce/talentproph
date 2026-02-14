@@ -198,23 +198,7 @@ const ReviewProfile = () => {
                     .from('job_applications')
                     .select(`
                         *,
-                        profiles:seeker_id (
-                            full_name,
-                            avatar_url,
-                            title,
-                            location,
-                            email,
-                            phone,
-                            experience_years,
-                            iq,
-                            english_proficiency,
-                            disc_scores,
-                            skills_list,
-                            bio,
-                            resume_url,
-                            expected_salary,
-                            talent_score
-                        ),
+                        profiles:seeker_id (*),
                         job_posts!inner (
                             id,
                             title,
