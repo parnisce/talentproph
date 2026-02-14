@@ -96,6 +96,7 @@ const EmployerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
                                 profiles:seeker_id (*)
                             `)
                             .in('job_id', jobIds)
+                            .neq('status', 'Hired')
                             .order('created_at', { ascending: false })
                             .limit(5);
 
