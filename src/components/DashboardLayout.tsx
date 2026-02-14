@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard,
@@ -12,8 +12,12 @@ import {
     User,
     Users,
     HelpCircle,
-    UserCheck
+    UserCheck,
+    ChevronDown,
+    FileText,
+    Heart
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useUser } from '../context/UserContext';
 
 interface SidebarItemProps {
@@ -49,6 +53,8 @@ const DashboardLayout = ({ children, role, userName: propUserName, userPhoto: pr
 
     const userName = propUserName || contextUserName;
     const userPhoto = propUserPhoto || contextUserPhoto;
+
+    const [showAccountMenu, setShowAccountMenu] = useState(false);
 
     const handleLogout = async () => {
         await logout();
@@ -157,16 +163,75 @@ const DashboardLayout = ({ children, role, userName: propUserName, userPhoto: pr
                             </button>
 
                             <div
-                                onClick={() => navigate(role === 'seeker' ? '/seeker/profile' : `/${role}/account`)}
-                                className="flex items-center gap-3 pl-4 border-l border-slate-100 cursor-pointer group"
+                                className="relative py-2"
+                                onMouseEnter={() => setShowAccountMenu(true)}
+                                onMouseLeave={() => setShowAccountMenu(false)}
                             >
-                                <div className="text-right hidden md:block">
-                                    <p className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors">{userName}</p>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{role}</p>
+                                <div
+                                    onClick={() => navigate(role === 'seeker' ? '/seeker/profile' : `/${role}/account`)}
+                                    className="flex items-center gap-3 pl-4 border-l border-slate-100 cursor-pointer group"
+                                >
+                                    <div className="text-right hidden md:block">
+                                        <div className="flex items-center gap-1">
+                                            <p className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors">{userName}</p>
+                                            <ChevronDown size={14} className={`text-slate-400 transition-transform duration-300 ${showAccountMenu ? 'rotate-180 text-primary' : ''}`} />
+                                        </div>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mt-1">{role}</p>
+                                    </div>
+                                    <div className="w-10 h-10 rounded-xl bg-slate-100 overflow-hidden ring-2 ring-white shadow-lg group-hover:scale-105 transition-transform">
+                                        <img src={userPhoto} alt={userName} className="w-full h-full object-cover" />
+                                    </div>
                                 </div>
-                                <div className="w-10 h-10 rounded-xl bg-slate-100 overflow-hidden ring-2 ring-white shadow-lg group-hover:scale-105 transition-transform">
-                                    <img src={userPhoto} alt={userName} className="w-full h-full object-cover" />
-                                </div>
+
+                                {/* Hover Sub-menu */}
+                                <AnimatePresence>
+                                    {showAccountMenu && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="absolute right-0 mt-2 w-64 bg-white rounded-3xl shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden z-50 p-2"
+                                        >
+                                            <div className="p-4 mb-2 border-b border-slate-50">
+                                                <p className="text-[15px] font-black text-slate-900 truncate leading-tight">{userName}</p>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{role === 'seeker' ? 'Job Seeker' : 'Employer'}</p>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                {role === 'seeker' ? (
+                                                    <>
+                                                        <Link to="/seeker/profile" className="flex items-center gap-3 px-4 py-3 rounded-2xl text-[13px] font-bold text-slate-600 hover:bg-primary/5 hover:text-primary transition-all decoration-transparent">
+                                                            <User size={18} className="text-slate-400" /> My Profile
+                                                        </Link>
+                                                        <Link to="/seeker/messages" className="flex items-center gap-3 px-4 py-3 rounded-2xl text-[13px] font-bold text-slate-600 hover:bg-primary/5 hover:text-primary transition-all decoration-transparent">
+                                                            <FileText size={18} className="text-slate-400" /> Job Applications
+                                                        </Link>
+                                                        <Link to="/seeker/saved-jobs" className="flex items-center gap-3 px-4 py-3 rounded-2xl text-[13px] font-bold text-slate-600 hover:bg-primary/5 hover:text-primary transition-all decoration-transparent">
+                                                            <Heart size={18} className="text-slate-400" /> Saved Jobs
+                                                        </Link>
+                                                        <Link to="/seeker/account" className="flex items-center gap-3 px-4 py-3 rounded-2xl text-[13px] font-bold text-slate-600 hover:bg-primary/5 hover:text-primary transition-all decoration-transparent">
+                                                            <Settings size={18} className="text-slate-400" /> Account Settings
+                                                        </Link>
+                                                    </>
+                                                ) : (
+                                                    <Link to="/employer/account" className="flex items-center gap-3 px-4 py-3 rounded-2xl text-[13px] font-bold text-slate-600 hover:bg-primary/5 hover:text-primary transition-all decoration-transparent">
+                                                        <Settings size={18} className="text-slate-400" /> Account Settings
+                                                    </Link>
+                                                )}
+
+                                                <div className="pt-1 mt-1 border-t border-slate-50">
+                                                    <button
+                                                        onClick={handleLogout}
+                                                        className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-[13px] font-bold text-rose-500 hover:bg-rose-50 transition-all"
+                                                    >
+                                                        <LogOut size={18} /> Log out
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
                         </div>
                     </div>

@@ -34,6 +34,7 @@ import JobDetails from './JobDetails';
 import SavedJobs from './SavedJobs';
 import TalentScoreGuide from '../../components/seeker/TalentScoreGuide';
 import SeekerVerification from './SeekerVerification';
+import SeekerAccountSettings from './SeekerAccountSettings';
 
 
 const SeekerOverview = ({ interviews = [], employers = [], savedJobs = [] }: { interviews?: any[], employers?: any[], savedJobs?: any[] }) => {
@@ -617,6 +618,7 @@ const SeekerDashboard = () => {
                 <Route path="/messages" element={<SeekerMessages />} />
                 <Route path="/company/:id" element={<CompanyProfile />} />
                 <Route path="/saved-jobs" element={<SavedJobs />} />
+                <Route path="/account" element={<SeekerAccountSettings />} />
             </Routes>
         </DashboardLayout>
     );
