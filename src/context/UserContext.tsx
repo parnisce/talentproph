@@ -234,31 +234,34 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
         });
 
-        // Auto-calculate and sync Talent Score
-        useEffect(() => {
-            if (!userProfile.id || loading) return;
-
-            const breakdown = calculateTalentScore(userProfile);
-            if (breakdown.total !== userProfile.talent_score) {
-                // Update both local and database
-                const syncScore = async () => {
-                    try {
-                        await supabase
-                            .from('profiles')
-                            .update({ talent_score: breakdown.total })
-                            .eq('id', userProfile.id);
-
-                        setUserProfile(prev => ({ ...prev, talent_score: breakdown.total }));
-                    } catch (err) {
-                        console.error("Failed to sync talent score:", err);
-                    }
-                };
-                syncScore();
-            }
-        }, [userProfile.name, userProfile.photo, userProfile.resume_url, userProfile.education, userProfile.iq, userProfile.verification_proof_url, userProfile.skills, userProfile.linkedin, userProfile.twitter, userProfile.facebook, userProfile.instagram, loading, userProfile.id]);
-
         return () => subscription.unsubscribe();
     }, []);
+
+    // Auto-calculate and sync Talent Score
+    useEffect(() => {
+        if (!userProfile.id || loading) return;
+
+        const breakdown = calculateTalentScore(userProfile);
+        const total = breakdown.total || 0;
+
+        if (total !== userProfile.talent_score) {
+            // Update both local and database
+            const syncScore = async () => {
+                try {
+                    const { error } = await supabase
+                        .from('profiles')
+                        .update({ talent_score: total })
+                        .eq('id', userProfile.id);
+
+                    if (error) throw error;
+                    setUserProfile(prev => ({ ...prev, talent_score: total }));
+                } catch (err) {
+                    console.error("Failed to sync talent score:", err);
+                }
+            };
+            syncScore();
+        }
+    }, [userProfile.name, userProfile.photo, userProfile.resume_url, userProfile.education, userProfile.iq, userProfile.verification_proof_url, userProfile.skills, userProfile.linkedin, userProfile.twitter, userProfile.facebook, userProfile.instagram, loading, userProfile.id]);
 
     const updateUserProfile = async (data: Partial<UserProfile>) => {
         if (!userProfile.id) return;
