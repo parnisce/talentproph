@@ -50,17 +50,23 @@ const FindTalent = () => {
 
             // 1. Core Search Logic
             if (searchQuery) {
-                let searchClauses = [
-                    `title.ilike.%${searchQuery}%`,
-                    `skills.cs.{${searchQuery}}`
-                ];
+                const searchTerms = searchQuery.trim().split(/\s+/);
+                let searchClauses: string[] = [];
 
-                if (searchNames) {
-                    searchClauses.push(`full_name.ilike.%${searchQuery}%`);
-                }
+                // Title/Headline search (always active)
+                searchClauses.push(`title.ilike.%${searchQuery}%`);
 
-                if (searchDescriptions) {
-                    searchClauses.push(`bio.ilike.%${searchQuery}%`);
+                // Name search (default to true/always check if user wants)
+                searchClauses.push(`full_name.ilike.%${searchQuery}%`);
+
+                // Bio search (default to true)
+                searchClauses.push(`bio.ilike.%${searchQuery}%`);
+
+                // Skills search: Support matching any word from the query against an array
+                // Using overlap operator && for skill arrays
+                if (searchTerms.length > 0) {
+                    const skillsArray = `{${searchTerms.join(',')}}`;
+                    searchClauses.push(`skills.ov.${skillsArray}`);
                 }
 
                 query = query.or(searchClauses.join(','));
@@ -112,6 +118,7 @@ const FindTalent = () => {
     };
 
     useEffect(() => {
+        setSearchQuery(initialQuery);
         fetchTalents();
     }, [
         initialQuery,
