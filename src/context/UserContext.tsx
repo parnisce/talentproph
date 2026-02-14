@@ -33,6 +33,8 @@ export interface UserProfile {
     availability: string;
     banner_photo: string;
     resume_url: string;
+    verification_proof_url: string;
+    talent_score: number;
     // Employer specific
     company_logo: string;
     industry: string;
@@ -43,6 +45,7 @@ export interface UserProfile {
     subscription_plan: string;
     created_at: string;
 }
+
 
 interface UserContextType extends UserProfile {
     // Aliases for backward compatibility
@@ -100,6 +103,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             availability: "Full-Time",
             banner_photo: "",
             resume_url: "",
+            verification_proof_url: "",
+            talent_score: 0,
             company_logo: "",
             industry: "",
             company_size: "",
@@ -110,6 +115,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             created_at: ""
         };
     });
+
 
 
     const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
@@ -151,6 +157,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     availability: data.availability || "Full-Time",
                     banner_photo: data.banner_url || data.banner_photo || "",
                     resume_url: data.resume_url || "",
+                    verification_proof_url: data.verification_proof_url || "",
+                    talent_score: data.talent_score || 0,
                     company_logo: data.company_logo || "",
                     industry: data.industry || "",
                     company_size: data.company_size || "",
@@ -159,6 +167,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     perks: data.perks || [],
                     created_at: data.created_at || ""
                 });
+
             }
         } catch (fetchError) {
             console.error("Error fetching profile:", fetchError);
@@ -208,6 +217,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     availability: "Full-Time",
                     banner_photo: "",
                     resume_url: "",
+                    verification_proof_url: "",
+                    talent_score: 0,
                     company_logo: "",
                     industry: "",
                     company_size: "",
@@ -217,6 +228,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     subscription_plan: "Free",
                     created_at: ""
                 });
+
                 setLoading(false);
             }
         });
@@ -254,6 +266,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 dbData.banner_url = data.banner_photo;
             }
             if (data.resume_url !== undefined) dbData.resume_url = data.resume_url;
+            if (data.verification_proof_url !== undefined) dbData.verification_proof_url = data.verification_proof_url;
+            if (data.talent_score !== undefined) dbData.talent_score = data.talent_score;
             if (data.company_logo !== undefined) dbData.company_logo = data.company_logo;
             if (data.industry !== undefined) dbData.industry = data.industry;
             if (data.company_size !== undefined) dbData.company_size = data.company_size;
@@ -261,6 +275,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (data.about_company !== undefined) dbData.about_company = data.about_company;
             if (data.perks !== undefined) dbData.perks = data.perks;
             if (data.subscription_plan !== undefined) dbData.subscription_plan = data.subscription_plan;
+
 
             // Update local state immediately for snappy UI responsiveness
             setUserProfile(prev => ({ ...prev, ...data }));
@@ -346,6 +361,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 availability: "Full-Time",
                 banner_photo: "",
                 resume_url: "",
+                verification_proof_url: "",
+                talent_score: 0,
                 company_logo: "",
                 industry: "",
                 company_size: "",
@@ -355,6 +372,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 subscription_plan: "Free",
                 created_at: ""
             });
+
             setPaymentMethods([]);
         } catch (error) {
             console.error('Error logging out:', error);

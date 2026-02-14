@@ -114,8 +114,10 @@ const HiredCandidates = () => {
                             title,
                             experience_years,
                             skills_list,
-                            iq
+                            iq,
+                            talent_score
                         ),
+
                         job_posts!inner (
                             title,
                             employer_id
@@ -139,8 +141,9 @@ const HiredCandidates = () => {
                         hiredDate: new Date(app.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
                         status: 'Hired',
                         topSkills: app.profiles?.skills_list?.slice(0, 3) || [],
-                        score: app.profiles?.iq ? Math.min(Math.round((app.profiles.iq / 160) * 100), 100) : 85,
+                        score: app.profiles?.talent_score || (app.profiles?.iq ? Math.min(Math.round((app.profiles.iq / 160) * 100), 100) : 85),
                     }));
+
                     setApplicants(mapped);
                 }
             } catch (err) {

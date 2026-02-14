@@ -32,6 +32,8 @@ import SeekerEditProfile from './SeekerEditProfile';
 import SeekerFindJobs from './SeekerFindJobs';
 import JobDetails from './JobDetails';
 import SavedJobs from './SavedJobs';
+import TalentScoreGuide from '../../components/seeker/TalentScoreGuide';
+
 
 const SeekerOverview = ({ interviews = [], employers = [], savedJobs = [] }: { interviews?: any[], employers?: any[], savedJobs?: any[] }) => {
     const { userPhoto, updateUserProfile, userName, title, website, salary, education, skills, resume_url } = useUser();
@@ -92,7 +94,11 @@ const SeekerOverview = ({ interviews = [], employers = [], savedJobs = [] }: { i
                         </Link>
                     </div>
                 )}
+
+                {/* Talent Excellence Score Guide */}
+                <TalentScoreGuide />
             </div>
+
 
             {/* Main Profile Identity Header */}
             <div className="bg-slate-900 rounded-[48px] overflow-hidden shadow-2xl relative">

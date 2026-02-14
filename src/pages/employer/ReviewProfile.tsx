@@ -212,7 +212,8 @@ const ReviewProfile = () => {
                             skills_list,
                             bio,
                             resume_url,
-                            expected_salary
+                            expected_salary,
+                            talent_score
                         ),
                         job_posts!inner (
                             id,
@@ -244,7 +245,8 @@ const ReviewProfile = () => {
                         testScores: {
                             iq: data.profiles?.iq || 0,
                             english: data.profiles?.english_proficiency || 'N/A',
-                            disc: data.profiles?.disc_scores || { D: 0, I: 0, S: 0, C: 0 }
+                            disc: data.profiles?.disc_scores || { D: 0, I: 0, S: 0, C: 0 },
+                            talent_score: data.profiles?.talent_score || (data.profiles?.iq ? Math.min(Math.round((data.profiles.iq / 160) * 100), 100) : 85)
                         },
                         skills: data.profiles?.skills_list || [],
                         resume_url: data.profiles?.resume_url || "#",
@@ -890,20 +892,36 @@ Wishing you the very best in your career journey!`;
                         {/* Background glowing effect */}
                         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 blur-[80px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/2" />
 
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-white mb-8 text-center underline decoration-blue-500 underline-offset-8 relative z-10">Intelligence & Language</h4>
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-white mb-8 text-center underline decoration-primary underline-offset-8 relative z-10">Talent Metrics</h4>
 
-                        <div className="grid grid-cols-2 gap-6 relative z-10">
-                            <div className="p-6 bg-slate-800/50 border border-slate-700/50 rounded-[32px] text-center backdrop-blur-sm">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">IQ Score</p>
-                                <p className="text-4xl font-black text-cyan-400 tracking-tighter drop-shadow-lg">{applicant.testScores.iq}</p>
+                        {/* Main Talent Score Hero */}
+                        <div className="mb-10 text-center relative z-10">
+                            <div className="inline-block p-1 bg-white/10 rounded-[40px] mb-4">
+                                <div className="px-10 py-6 bg-slate-800 rounded-[36px] border border-white/10 shadow-inner">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Talent Excellence Score</p>
+                                    <div className="flex items-center justify-center gap-3">
+                                        <Star size={24} className="text-primary" fill="currentColor" />
+                                        <span className="text-6xl font-black text-white tracking-tighter drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
+                                            {applicant.testScores.talent_score}%
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="p-6 bg-slate-800/50 border border-slate-700/50 rounded-[32px] text-center backdrop-blur-sm">
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 relative z-10">
+                            <div className="p-5 bg-slate-800/50 border border-slate-700/50 rounded-[32px] text-center backdrop-blur-sm">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">IQ Score</p>
+                                <p className="text-3xl font-black text-cyan-400 tracking-tighter drop-shadow-lg">{applicant.testScores.iq}</p>
+                            </div>
+                            <div className="p-5 bg-slate-800/50 border border-slate-700/50 rounded-[32px] text-center backdrop-blur-sm">
                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">English</p>
-                                <p className="text-2xl font-black text-purple-400 tracking-tighter leading-9 drop-shadow-lg">
+                                <p className="text-xl font-black text-purple-400 tracking-tighter drop-shadow-lg">
                                     {applicant.testScores?.english?.split(' ')[0] || 'N/A'}
                                 </p>
                             </div>
                         </div>
+
 
                         <div className="mt-8 space-y-6 relative z-10">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center mt-10 mb-6">DISC Personality Profile</p>

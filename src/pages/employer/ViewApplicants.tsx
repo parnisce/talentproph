@@ -64,7 +64,8 @@ const ViewApplicants = () => {
                             experience_years,
                             skills_list,
                             iq,
-                            disc_scores
+                            disc_scores,
+                            talent_score
                         )
                     `);
 
@@ -104,7 +105,7 @@ const ViewApplicants = () => {
                             status: displayStatus,
                             originalStatus: app.status, // Keep track of DB status
                             topSkills: app.profiles?.skills_list?.slice(0, 3) || [],
-                            score: app.profiles?.iq ? Math.min(Math.round((app.profiles.iq / 160) * 100), 100) : 85,
+                            score: app.profiles?.talent_score || (app.profiles?.iq ? Math.min(Math.round((app.profiles.iq / 160) * 100), 100) : 85),
                         };
                     });
                     setApplicants(mappedApplicants);

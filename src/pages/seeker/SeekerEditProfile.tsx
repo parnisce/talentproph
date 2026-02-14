@@ -22,10 +22,14 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
+import { calculateTalentScore } from '../../utils/talentScore';
+
+
 
 const SeekerEditProfile = () => {
     const navigate = useNavigate();
-    const { userPhoto, userName, title, website, location, bio, salary, education, experience, skills, linkedin, twitter, facebook, instagram, availability, banner_photo, resume_url, updateUserProfile, testScores, updateTestScores } = useUser();
+    const { userPhoto, userName, title, website, location, bio, salary, education, experience, skills, linkedin, twitter, facebook, instagram, availability, banner_photo, resume_url, verification_proof_url, talent_score, updateUserProfile, testScores, updateTestScores } = useUser();
+
     const [activeSection, setActiveSection] = useState('general');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const proofInputRef = useRef<HTMLInputElement>(null);
@@ -65,7 +69,15 @@ const SeekerEditProfile = () => {
         const newScores = { ...localTestScores, ...updates };
         setLocalTestScores(newScores);
         updateTestScores(newScores);
+        updateTalentScore();
     };
+
+    const updateTalentScore = () => {
+        // We call this after state updates to ensure we have the latest data
+        // For simplicity, we calculate using current context data + whatever was just updated
+        // In a real app, you might want to debounce this or do it in the context itself
+    };
+
 
     // Sync local state when context data arrives (only once or when empty)
     useEffect(() => {
@@ -121,7 +133,34 @@ const SeekerEditProfile = () => {
         if (testScores.iq !== 0 && localTestScores.iq === 0) {
             setLocalTestScores(testScores);
         }
-    }, [userName, title, bio, linkedin, twitter, facebook, instagram, location, website, salary, experience, testScores, education, availability, banner_photo, resume_url]);
+
+        // Set initial proof image if it exists in context
+        if (verification_proof_url && !proofImage) {
+            setProofImage(verification_proof_url);
+        }
+    }, [userName, title, bio, linkedin, twitter, facebook, instagram, location, website, salary, experience, testScores, education, availability, banner_photo, resume_url, verification_proof_url]);
+
+    // Update Talent Score whenever key data changes
+    useEffect(() => {
+        const profileData = {
+            name: userName,
+            photo: userPhoto,
+            resume_url,
+            education,
+            iq: testScores.iq,
+            verification_proof_url,
+            skills,
+            linkedin,
+            twitter,
+            facebook,
+            instagram
+        };
+        const breakdown = calculateTalentScore(profileData);
+        if (breakdown.total !== talent_score) {
+            updateUserProfile({ talent_score: breakdown.total });
+        }
+    }, [userName, userPhoto, resume_url, education, testScores.iq, verification_proof_url, skills, linkedin, twitter, facebook, instagram]);
+
 
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -184,14 +223,17 @@ const SeekerEditProfile = () => {
         const file = e.target.files?.[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = (event) => {
+            reader.onload = async (event) => {
                 if (event.target?.result) {
-                    setProofImage(event.target.result as string);
+                    const proofData = event.target.result as string;
+                    setProofImage(proofData);
+                    await updateUserProfile({ verification_proof_url: proofData });
                 }
             };
             reader.readAsDataURL(file);
         }
     };
+
 
     const sections = [
         { id: 'general', label: 'General Identity', icon: User },

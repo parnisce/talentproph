@@ -96,8 +96,10 @@ const EmployerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
                                     avatar_url,
                                     title,
                                     expected_salary,
-                                    iq
+                                    iq,
+                                    talent_score
                                 )
+
                             `)
                             .in('job_id', jobIds)
                             .order('created_at', { ascending: false })
@@ -112,8 +114,9 @@ const EmployerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
                                 status: app.status || 'New',
                                 rate: app.profiles?.expected_salary || 'TBD',
                                 time: new Date(app.created_at).toLocaleDateString(),
-                                score: app.profiles?.iq ? Math.min(Math.round((app.profiles.iq / 160) * 100), 100) : 85,
+                                score: app.profiles?.talent_score || (app.profiles?.iq ? Math.min(Math.round((app.profiles.iq / 160) * 100), 100) : 85),
                             }));
+
                             setRecentApplicants(mappedApps);
 
                             // Set total interviewed count
