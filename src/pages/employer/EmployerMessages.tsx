@@ -117,7 +117,7 @@ const EmployerMessages = () => {
                     is_archived_employer,
                     is_spam_employer,
                     is_deleted_employer,
-                    seeker:seeker_id (
+                    seeker:profiles!seeker_id (
                         full_name,
                         avatar_url,
                         title,
@@ -128,12 +128,12 @@ const EmployerMessages = () => {
                         experience_years,
                         bio
                     ),
-                    job:job_id (
+                    job:job_posts!job_id (
                         id,
                         title
                     ),
                     conversation_labels (
-                        label:label_id (id, name, color)
+                        label:labels!label_id (id, name, color)
                     )
                 `)
                 .eq('employer_id', userId)

@@ -21,7 +21,7 @@ import { supabase } from '../../services/supabase';
 import Navbar from '../../components/Navbar';
 import { useUser } from '../../context/UserContext';
 
-const JobApplicationModal = ({ isOpen, onClose, jobTitle, jobId, onApply }: { isOpen: boolean; onClose: () => void; jobTitle: string; jobId: string; onApply: () => void }) => {
+const JobApplicationModal = ({ isOpen, onClose, jobTitle, jobId, employerId, onApply }: { isOpen: boolean; onClose: () => void; jobTitle: string; jobId: string; employerId: string; onApply: () => void }) => {
     const { id: seekerId } = useUser();
     const [subject, setSubject] = useState('');
     const [message, setMessage] = useState('');
@@ -43,7 +43,8 @@ const JobApplicationModal = ({ isOpen, onClose, jobTitle, jobId, onApply }: { is
 
         setIsSubmitting(true);
         try {
-            const { error } = await supabase
+            // 1. Insert Application
+            const { error: appError } = await supabase
                 .from('job_applications')
                 .insert([
                     {
@@ -55,9 +56,45 @@ const JobApplicationModal = ({ isOpen, onClose, jobTitle, jobId, onApply }: { is
                         points_used: parseInt(points) || 0,
                         status: 'New'
                     }
-                ]);
+                ])
+                .select()
+                .single();
 
-            if (error) throw error;
+            if (appError) throw appError;
+
+            // 2. Ensure Conversation Exists (Client-side fallback for trigger)
+            try {
+                const { data: existingConv } = await supabase
+                    .from('conversations')
+                    .select('id')
+                    .eq('employer_id', employerId)
+                    .eq('seeker_id', seekerId)
+                    .eq('job_id', jobId)
+                    .maybeSingle();
+
+                let convId = existingConv?.id;
+
+                if (!convId) {
+                    const { data: newConv } = await supabase
+                        .from('conversations')
+                        .insert({
+                            employer_id: employerId,
+                            seeker_id: seekerId,
+                            job_id: jobId,
+                            last_message: 'New Application',
+                            last_message_at: new Date().toISOString()
+                        })
+                        .select()
+                        .maybeSingle();
+                    convId = newConv?.id;
+                }
+
+                // If conversation exists/created, ensure a message is there (optional as trigger should do this)
+                // But we don't want to duplicate messages if the trigger is working. 
+                // Given the issue, we'll let the trigger do its job, but this ensures the 'conversation' entry is there.
+            } catch (convErr) {
+                console.warn("Conversation sync warning:", convErr);
+            }
 
             onApply();
             onClose();
@@ -340,6 +377,7 @@ const JobDetails = () => {
                     onClose={() => setIsModalOpen(false)}
                     jobTitle={job.title}
                     jobId={id || ''}
+                    employerId={job.employerId}
                     onApply={() => {
                         setIsApplied(true);
                         setAppliedDate(new Date().toLocaleDateString('en-US', {
@@ -536,8 +574,8 @@ const JobDetails = () => {
                                         <button
                                             onClick={handleToggleSave}
                                             className={`w-full py-5 border-2 rounded-3xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${isSaved
-                                                    ? 'bg-secondary/10 border-secondary text-secondary'
-                                                    : 'border-slate-100 text-slate-400 hover:text-secondary hover:border-secondary/30'
+                                                ? 'bg-secondary/10 border-secondary text-secondary'
+                                                : 'border-slate-100 text-slate-400 hover:text-secondary hover:border-secondary/30'
                                                 }`}
                                         >
                                             <Bookmark size={16} fill={isSaved ? "currentColor" : "none"} /> {isSaved ? 'Saved to Bookmarks' : 'Save for Later'}
