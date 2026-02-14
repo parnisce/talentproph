@@ -15,7 +15,11 @@ import {
     UserCheck,
     ChevronDown,
     FileText,
-    Heart
+    Heart,
+    Wallet,
+    RefreshCw,
+    Clock,
+    CreditCard
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUser } from '../context/UserContext';
@@ -215,9 +219,36 @@ const DashboardLayout = ({ children, role, userName: propUserName, userPhoto: pr
                                                         </Link>
                                                     </>
                                                 ) : (
-                                                    <Link to="/employer/account" className="flex items-center gap-3 px-4 py-3 rounded-2xl text-[13px] font-bold text-slate-600 hover:bg-primary/5 hover:text-primary transition-all decoration-transparent">
-                                                        <Settings size={18} className="text-slate-400" /> Account Settings
-                                                    </Link>
+                                                    <>
+                                                        <div className="p-4 mb-2 border-b border-slate-50 flex items-center justify-between">
+                                                            <p className="text-[14px] font-black text-slate-900">Employer</p>
+                                                            <span className="px-2 py-0.5 bg-primary text-white text-[9px] font-black rounded-lg uppercase tracking-widest">Pro</span>
+                                                        </div>
+                                                        <Link to="/help" className="flex items-center gap-3 px-4 py-2 rounded-xl text-[13px] font-bold text-slate-600 hover:bg-primary/5 hover:text-primary transition-all decoration-transparent">
+                                                            <HelpCircle size={18} className="text-blue-500" /> Need Help Hiring?
+                                                        </Link>
+                                                        <Link to="/employer/posts" className="flex items-center gap-3 px-4 py-2 rounded-xl text-[13px] font-bold text-slate-600 hover:bg-primary/5 hover:text-primary transition-all decoration-transparent">
+                                                            <FileText size={18} className="text-slate-400" /> Job Posts
+                                                        </Link>
+                                                        <Link to="/employer/timeproof" className="flex items-center gap-3 px-4 py-2 rounded-xl text-[13px] font-bold text-slate-600 hover:bg-primary/5 hover:text-primary transition-all decoration-transparent">
+                                                            <Clock size={18} className="text-slate-400" /> Timeproof
+                                                        </Link>
+                                                        <Link to="/employer/upgrade" className="flex items-center gap-3 px-4 py-2 rounded-xl text-[13px] font-bold text-slate-600 hover:bg-primary/5 hover:text-primary transition-all decoration-transparent">
+                                                            <CreditCard size={18} className="text-slate-400" /> EasyPay
+                                                        </Link>
+                                                        <Link to="/employer/referral" className="flex items-center gap-3 px-4 py-2 rounded-xl text-[13px] font-bold text-slate-600 hover:bg-primary/5 hover:text-primary transition-all decoration-transparent">
+                                                            <Heart size={18} className="text-slate-400" /> Referral Program
+                                                        </Link>
+                                                        <Link to="/employer/account?tab=billing" className="flex items-center gap-3 px-4 py-2 rounded-xl text-[13px] font-bold text-slate-600 hover:bg-primary/5 hover:text-primary transition-all decoration-transparent">
+                                                            <Wallet size={18} className="text-slate-400" /> Billing
+                                                        </Link>
+                                                        <Link to="/employer/upgrade" className="flex items-center gap-3 px-4 py-2 rounded-xl text-[13px] font-bold text-slate-600 hover:bg-primary/5 hover:text-primary transition-all decoration-transparent">
+                                                            <RefreshCw size={18} className="text-slate-400" /> Update Plan/Features
+                                                        </Link>
+                                                        <Link to="/employer/account" className="flex items-center gap-3 px-4 py-2 rounded-xl text-[13px] font-bold text-slate-600 hover:bg-primary/5 hover:text-primary transition-all decoration-transparent">
+                                                            <Settings size={18} className="text-slate-400" /> Account Settings
+                                                        </Link>
+                                                    </>
                                                 )}
 
                                                 <div className="pt-1 mt-1 border-t border-slate-50">

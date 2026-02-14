@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import {
     Camera,
@@ -22,8 +22,17 @@ import { useUser } from '../../context/UserContext';
 
 const EmployerAccount = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const userContext = useUser();
     const [activeTab, setActiveTab] = useState('profile');
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const tab = params.get('tab');
+        if (tab && ['profile', 'company', 'security', 'billing', 'notifications'].includes(tab)) {
+            setActiveTab(tab);
+        }
+    }, [location.search]);
 
     const [profile, setProfile] = useState({
         name: userContext.name || '',
