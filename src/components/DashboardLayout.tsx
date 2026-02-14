@@ -17,9 +17,7 @@ import {
     FileText,
     Heart,
     Wallet,
-    RefreshCw,
-    Clock,
-    CreditCard
+    RefreshCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUser } from '../context/UserContext';
@@ -229,12 +227,6 @@ const DashboardLayout = ({ children, role, userName: propUserName, userPhoto: pr
                                                         </Link>
                                                         <Link to="/employer/posts" className="flex items-center gap-3 px-4 py-2 rounded-xl text-[13px] font-bold text-slate-600 hover:bg-primary/5 hover:text-primary transition-all decoration-transparent">
                                                             <FileText size={18} className="text-slate-400" /> Job Posts
-                                                        </Link>
-                                                        <Link to="/employer/timeproof" className="flex items-center gap-3 px-4 py-2 rounded-xl text-[13px] font-bold text-slate-600 hover:bg-primary/5 hover:text-primary transition-all decoration-transparent">
-                                                            <Clock size={18} className="text-slate-400" /> Timeproof
-                                                        </Link>
-                                                        <Link to="/employer/upgrade" className="flex items-center gap-3 px-4 py-2 rounded-xl text-[13px] font-bold text-slate-600 hover:bg-primary/5 hover:text-primary transition-all decoration-transparent">
-                                                            <CreditCard size={18} className="text-slate-400" /> EasyPay
                                                         </Link>
                                                         <Link to="/employer/referral" className="flex items-center gap-3 px-4 py-2 rounded-xl text-[13px] font-bold text-slate-600 hover:bg-primary/5 hover:text-primary transition-all decoration-transparent">
                                                             <Heart size={18} className="text-slate-400" /> Referral Program

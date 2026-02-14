@@ -35,6 +35,7 @@ import ReviewProfile from './ReviewProfile';
 import EmployerAccount from './EmployerAccount';
 import HiredCandidates from './HiredCandidates';
 import JobDetails from '../seeker/JobDetails';
+import ReferralProgram from './ReferralProgram';
 
 const EmployerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
     const navigate = useNavigate();
@@ -785,6 +786,7 @@ const EmployerDashboard = () => {
                 <Route path="/applicants/review/:applicantId" element={<ReviewProfile />} />
                 <Route path="/hired" element={<HiredCandidates />} />
                 <Route path="/account" element={<EmployerAccount />} />
+                <Route path="/referral" element={<ReferralProgram />} />
                 <Route path="/upgrade" element={<UpgradePlan />} />
                 <Route path="/upgrade/payment" element={<UpgradePayment />} />
                 <Route path="/settings" element={<EmployerAccount />} />
