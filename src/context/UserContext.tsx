@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
+import { calculateTalentScore } from '../utils/talentScore';
 
 export interface UserProfile {
     id: string;
@@ -232,6 +233,29 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setLoading(false);
             }
         });
+
+        // Auto-calculate and sync Talent Score
+        useEffect(() => {
+            if (!userProfile.id || loading) return;
+
+            const breakdown = calculateTalentScore(userProfile);
+            if (breakdown.total !== userProfile.talent_score) {
+                // Update both local and database
+                const syncScore = async () => {
+                    try {
+                        await supabase
+                            .from('profiles')
+                            .update({ talent_score: breakdown.total })
+                            .eq('id', userProfile.id);
+
+                        setUserProfile(prev => ({ ...prev, talent_score: breakdown.total }));
+                    } catch (err) {
+                        console.error("Failed to sync talent score:", err);
+                    }
+                };
+                syncScore();
+            }
+        }, [userProfile.name, userProfile.photo, userProfile.resume_url, userProfile.education, userProfile.iq, userProfile.verification_proof_url, userProfile.skills, userProfile.linkedin, userProfile.twitter, userProfile.facebook, userProfile.instagram, loading, userProfile.id]);
 
         return () => subscription.unsubscribe();
     }, []);
