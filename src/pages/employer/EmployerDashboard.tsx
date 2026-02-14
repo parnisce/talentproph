@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import DashboardLayout from '../../components/DashboardLayout';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
     Users,
     Briefcase,
