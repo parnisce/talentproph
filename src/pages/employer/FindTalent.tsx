@@ -12,11 +12,14 @@ import {
     Pin,
     Eye,
     ChevronDown,
-    HelpCircle
+    HelpCircle,
+    MessageSquare
 } from 'lucide-react';
 import { supabase } from '../../services/supabase';
+import { useUser } from '../../context/UserContext';
 
 const FindTalent = () => {
+    const { id: employerId } = useUser();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const initialQuery = searchParams.get('q') || '';
@@ -207,6 +210,45 @@ const FindTalent = () => {
             setActiveSkills(activeSkills.filter(s => s !== trimmed));
         } else {
             setActiveSkills([...activeSkills, trimmed]);
+        }
+    };
+
+    const handleMessageTalent = async (seekerId: string) => {
+        if (!employerId) return;
+
+        try {
+            // Check for existing conversation (without a specific job_id since we're in generic search)
+            const { data: conv } = await supabase
+                .from('conversations')
+                .select('id')
+                .eq('employer_id', employerId)
+                .eq('seeker_id', seekerId)
+                .is('job_id', null)
+                .maybeSingle();
+
+            let conversationId = conv?.id;
+
+            if (!conversationId) {
+                // Create a new generic conversation
+                const { data: newConv, error } = await supabase
+                    .from('conversations')
+                    .insert({
+                        employer_id: employerId,
+                        seeker_id: seekerId,
+                        job_id: null,
+                        last_message: 'Inquiry from Talent Search',
+                        last_message_at: new Date().toISOString()
+                    })
+                    .select()
+                    .single();
+
+                if (error) throw error;
+                conversationId = newConv.id;
+            }
+
+            navigate(`/employer/messages?conversationId=${conversationId}`);
+        } catch (err) {
+            console.error("Error starting conversation from search:", err);
         }
     };
 
@@ -641,6 +683,13 @@ const FindTalent = () => {
                                                         title={savedTalentIds.includes(talent.id) ? "Unpin Talent" : "Pin to Dashboard"}
                                                     >
                                                         <Pin size={20} className={`${savedTalentIds.includes(talent.id) ? 'fill-white' : 'group-hover/pin:rotate-45'} transition-transform`} />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleMessageTalent(talent.id); }}
+                                                        className="p-4 bg-slate-50 text-slate-400 rounded-2xl border border-slate-100 hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all"
+                                                        title="Direct Message"
+                                                    >
+                                                        <MessageSquare size={20} />
                                                     </button>
                                                     <button
                                                         onClick={() => navigate(`/profile/${talent.id}`)}

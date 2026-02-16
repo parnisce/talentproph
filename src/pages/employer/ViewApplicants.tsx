@@ -14,7 +14,8 @@ import {
     Download,
     Target,
     X,
-    Send
+    Send,
+    Pin
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -26,6 +27,7 @@ const ViewApplicants = () => {
     const { id: employerId } = useUser();
     const navigate = useNavigate();
     const [applicants, setApplicants] = useState<any[]>([]);
+    const [savedTalents, setSavedTalents] = useState<any[]>([]);
     const [jobTitle, setJobTitle] = useState('Position');
     const [filter, setFilter] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
@@ -106,6 +108,32 @@ const ViewApplicants = () => {
                         };
                     });
                     setApplicants(mappedApplicants);
+                }
+
+                // Fetch Saved Talents (Bookmarked)
+                const { data: savedData, error: savedError } = await supabase
+                    .from('saved_talents')
+                    .select(`
+                        *,
+                        profiles:seeker_id (*)
+                    `)
+                    .eq('employer_id', employerId);
+
+                if (!savedError && savedData) {
+                    const mappedSaved = savedData.map(s => ({
+                        id: `saved_${s.id}`,
+                        seekerId: s.seeker_id,
+                        name: s.profiles?.full_name || 'Anonymous Seeker',
+                        photo: s.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${s.seeker_id}`,
+                        role: s.profiles?.title || 'Job Seeker',
+                        experience: s.profiles?.experience_years || 'No',
+                        appliedDate: new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit' }),
+                        status: 'Bookmarked',
+                        topSkills: s.profiles?.skills_list?.slice(0, 3) || [],
+                        score: s.profiles?.talent_score || 85,
+                        isBookmarked: true
+                    }));
+                    setSavedTalents(mappedSaved);
                 }
             } catch (err) {
                 console.error("Error fetching applicants:", err);
@@ -214,10 +242,10 @@ const ViewApplicants = () => {
         }
     };
 
-    const filteredApplicants = applicants.filter(app => {
+    const filteredApplicants = (filter === 'Bookmarked' ? savedTalents : applicants).filter(app => {
         const matchesSearch = app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             app.role.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesFilter = filter === 'All' || app.status === filter;
+        const matchesFilter = filter === 'All' || filter === 'Bookmarked' || app.status === filter;
         return matchesSearch && matchesFilter;
     });
 
@@ -264,7 +292,7 @@ const ViewApplicants = () => {
             {/* Filter Hub */}
             <div className="bg-white border-2 border-slate-50 p-6 rounded-[32px] shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
                 <div className="flex flex-wrap items-center gap-3">
-                    {['All', 'New', 'Shortlisted', 'Reviewed', 'Rejected'].map(status => (
+                    {['All', 'Bookmarked', 'New', 'Shortlisted', 'Reviewed', 'Rejected'].map(status => (
                         <button
                             key={status}
                             onClick={() => setFilter(status)}
@@ -310,13 +338,19 @@ const ViewApplicants = () => {
                                         <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white w-8 h-8 rounded-full border-4 border-white flex items-center justify-center shadow-lg">
                                             <CheckCircle2 size={14} />
                                         </div>
+                                        {applicant.isBookmarked && (
+                                            <div className="absolute -top-2 -left-2 bg-primary text-white w-8 h-8 rounded-full border-4 border-white flex items-center justify-center shadow-lg rotate-12">
+                                                <Pin size={12} fill="white" />
+                                            </div>
+                                        )}
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-3 mb-2">
                                             <h3 className="text-2xl font-black text-slate-900 tracking-tighter">{applicant.name}</h3>
                                             <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${applicant.status === 'Shortlisted' ? 'bg-amber-100 text-amber-600' :
                                                 applicant.status === 'New' ? 'bg-primary/10 text-primary' :
-                                                    'bg-slate-100 text-slate-500'
+                                                    applicant.status === 'Bookmarked' ? 'bg-blue-100 text-blue-600' :
+                                                        'bg-slate-100 text-slate-500'
                                                 }`}>
                                                 {applicant.status}
                                             </span>
@@ -324,7 +358,7 @@ const ViewApplicants = () => {
                                         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-slate-400 font-medium text-sm">
                                             <span className="flex items-center gap-2"><Target size={14} className="text-primary" /> {applicant.role}</span>
                                             <span className="flex items-center gap-2 font-bold text-slate-900"><Briefcase size={14} /> {applicant.experience} Exp</span>
-                                            <span className="flex items-center gap-2"><Zap size={14} /> Applied {applicant.appliedDate}</span>
+                                            <span className="flex items-center gap-2"><Zap size={14} /> {applicant.status === 'Bookmarked' ? 'Pinned' : 'Applied'} {applicant.appliedDate}</span>
                                         </div>
                                         <div className="flex flex-wrap grow gap-2 mt-4">
                                             {applicant.topSkills.map((skill: string) => (
@@ -357,10 +391,10 @@ const ViewApplicants = () => {
                                             <XCircle size={20} />
                                         </button>
                                         <button
-                                            onClick={() => navigate(`/employer/applicants/review/${applicant.id}`)}
+                                            onClick={() => navigate(`/profile/${applicant.seekerId}`)}
                                             className="px-8 py-4 bg-slate-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-2xl shadow-slate-900/10 hover:bg-slate-800 transition-all flex items-center gap-2"
                                         >
-                                            Review Profile <ExternalLink size={14} />
+                                            {applicant.status === 'Bookmarked' ? 'View Profile' : 'Review Profile'} <ExternalLink size={14} />
                                         </button>
                                     </div>
                                 </div>
