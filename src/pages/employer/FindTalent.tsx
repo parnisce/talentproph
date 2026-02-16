@@ -242,12 +242,52 @@ const FindTalent = () => {
                 <div className="lg:col-span-3 space-y-8">
                     <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm space-y-8">
                         <div>
-                            <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">Active Skill Filters</p>
+                            <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">Applied Filters</p>
 
                             <div className="flex flex-wrap gap-2 mb-4">
+                                {searchQuery && (
+                                    <span className="flex items-center gap-2 px-3 py-1.5 bg-slate-900/5 text-slate-900 border border-slate-900/10 rounded-xl text-[10px] font-bold">
+                                        Query: {searchQuery}
+                                        <button onClick={() => setSearchQuery('')} className="hover:text-primary transition-colors">
+                                            <X size={12} />
+                                        </button>
+                                    </span>
+                                )}
+                                {employmentType !== 'Any' && (
+                                    <span className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/5 text-blue-500 border border-blue-500/10 rounded-xl text-[10px] font-bold">
+                                        Type: {employmentType}
+                                        <button onClick={() => setEmploymentType('Any')} className="hover:text-blue-700 transition-colors">
+                                            <X size={12} />
+                                        </button>
+                                    </span>
+                                )}
+                                {idProofScore !== 'Any' && (
+                                    <span className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/5 text-emerald-500 border border-emerald-500/10 rounded-xl text-[10px] font-bold">
+                                        ID Proof: {idProofScore}
+                                        <button onClick={() => setIdProofScore('Any')} className="hover:text-emerald-700 transition-colors">
+                                            <X size={12} />
+                                        </button>
+                                    </span>
+                                )}
+                                {iqScore !== 'Any' && (
+                                    <span className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/5 text-purple-500 border border-purple-500/10 rounded-xl text-[10px] font-bold">
+                                        IQ: {iqScore}
+                                        <button onClick={() => setIqScore('Any')} className="hover:text-purple-700 transition-colors">
+                                            <X size={12} />
+                                        </button>
+                                    </span>
+                                )}
+                                {englishScore !== 'Any' && (
+                                    <span className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/5 text-amber-500 border border-amber-500/10 rounded-xl text-[10px] font-bold">
+                                        English: {englishScore}
+                                        <button onClick={() => setEnglishScore('Any')} className="hover:text-amber-700 transition-colors">
+                                            <X size={12} />
+                                        </button>
+                                    </span>
+                                )}
                                 {activeSkills.map(skill => (
                                     <span key={skill} className="flex items-center gap-2 px-3 py-1.5 bg-primary/5 text-primary border border-primary/10 rounded-xl text-[10px] font-bold">
-                                        {skill}
+                                        Skill: {skill}
                                         <button onClick={() => removeSkillFilter(skill)} className="hover:text-primary/70 transition-colors">
                                             <X size={12} />
                                         </button>
@@ -291,9 +331,10 @@ const FindTalent = () => {
                                         onChange={(e) => setEmploymentType(e.target.value)}
                                         className="w-full appearance-none bg-slate-50 border border-slate-100 p-4 rounded-xl text-xs font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/10"
                                     >
-                                        <option>Any</option>
-                                        <option>Full-time</option>
-                                        <option>Part-time</option>
+                                        <option value="Any">Any</option>
+                                        <option value="Full-Time">Full Time</option>
+                                        <option value="Part-Time">Part Time</option>
+                                        <option value="Gig / Project-Based">Gig / Project-Based</option>
                                     </select>
                                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={16} />
                                 </div>
@@ -393,10 +434,11 @@ const FindTalent = () => {
                                         onChange={(e) => setEnglishScore(e.target.value)}
                                         className="w-full appearance-none bg-slate-50 border border-slate-100 p-4 rounded-xl text-xs font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/10"
                                     >
-                                        <option>Any</option>
-                                        <option>Advanced</option>
-                                        <option>Intermediate</option>
-                                        <option>Fluent</option>
+                                        <option value="Any">Any</option>
+                                        <option value="C2 (Proficient / Native)">C2 / Native</option>
+                                        <option value="C1 (Advanced)">C1 / Advanced</option>
+                                        <option value="B2 (Upper Intermediate)">B2 / Upper-Intermediate</option>
+                                        <option value="B1 (Intermediate)">B1 / Intermediate</option>
                                     </select>
                                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" size={16} />
                                 </div>
