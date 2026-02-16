@@ -46,6 +46,9 @@ const FindTalent = () => {
     const [isAddingSkill, setIsAddingSkill] = useState(false);
     const [newSkill, setNewSkill] = useState('');
 
+    // Saved Talents State
+    const [savedTalentIds, setSavedTalentIds] = useState<string[]>([]);
+
     const fetchTalents = async () => {
         setLoading(true);
         try {
@@ -140,6 +143,59 @@ const FindTalent = () => {
             setLoading(false);
         }
     };
+
+    const fetchSavedTalents = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) return;
+
+        const { data, error } = await supabase
+            .from('saved_talents')
+            .select('seeker_id')
+            .eq('employer_id', session.user.id);
+
+        if (data && !error) {
+            setSavedTalentIds(data.map(item => item.seeker_id));
+        }
+    };
+
+    const toggleSaveTalent = async (seekerId: string) => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) return;
+
+        const isSaved = savedTalentIds.includes(seekerId);
+
+        // Optimistic Update
+        if (isSaved) {
+            setSavedTalentIds(prev => prev.filter(id => id !== seekerId));
+            const { error } = await supabase
+                .from('saved_talents')
+                .delete()
+                .eq('employer_id', session.user.id)
+                .eq('seeker_id', seekerId);
+
+            if (error) {
+                // Rollback on error
+                setSavedTalentIds(prev => [...prev, seekerId]);
+                console.error("Error unpinning talent:", error);
+            }
+        } else {
+            setSavedTalentIds(prev => [...prev, seekerId]);
+            const { error } = await supabase
+                .from('saved_talents')
+                .insert({ employer_id: session.user.id, seeker_id: seekerId });
+
+            if (error) {
+                // Rollback on error
+                setSavedTalentIds(prev => prev.filter(id => id !== seekerId));
+                console.error("Error pinning talent:", error);
+            }
+        }
+    };
+
+    // Initial Load
+    useEffect(() => {
+        fetchSavedTalents();
+    }, []);
 
     // Initial sync from URL parameters
     useEffect(() => {
@@ -561,8 +617,12 @@ const FindTalent = () => {
                                                     <h4 className="text-xl font-black text-slate-900 mt-1 tracking-tight">{talent.title}</h4>
                                                 </div>
                                                 <div className="flex items-center gap-3">
-                                                    <button className="p-4 bg-slate-50 text-slate-400 rounded-2xl border border-slate-100 hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all group/pin">
-                                                        <Pin size={20} className="group-hover/pin:rotate-45 transition-transform" />
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); toggleSaveTalent(talent.id); }}
+                                                        className={`p-4 rounded-2xl border transition-all group/pin ${savedTalentIds.includes(talent.id) ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-900 hover:text-white hover:border-slate-900'}`}
+                                                        title={savedTalentIds.includes(talent.id) ? "Unpin Talent" : "Pin to Dashboard"}
+                                                    >
+                                                        <Pin size={20} className={`${savedTalentIds.includes(talent.id) ? 'fill-white' : 'group-hover/pin:rotate-45'} transition-transform`} />
                                                     </button>
                                                     <button
                                                         onClick={() => navigate(`/profile/${talent.id}`)}
