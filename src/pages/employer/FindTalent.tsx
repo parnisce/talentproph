@@ -57,7 +57,7 @@ const FindTalent = () => {
             // 1. Core Search Logic (Search Bar)
             if (searchQuery) {
                 const trimmedQuery = searchQuery.trim();
-                const searchTerms = trimmedQuery.split(/\s+/).filter(t => t.length > 2);
+                const searchTerms = trimmedQuery.split(/\s+/).filter(t => t.length >= 2);
                 let searchClauses: string[] = [];
 
                 // Searching for the full phrase
@@ -68,7 +68,7 @@ const FindTalent = () => {
                 // Skill matching: using overlap for array
                 if (searchTerms.length > 0) {
                     const skillsArray = `{${searchTerms.join(',')}}`;
-                    searchClauses.push(`skills.ov.${skillsArray}`);
+                    searchClauses.push(`skills_list.ov.${skillsArray}`);
 
                     // Also add individual term matches for title/bio to be more inclusive
                     searchTerms.forEach(term => {
@@ -83,7 +83,7 @@ const FindTalent = () => {
             // 2. Active Skill Filters (Sidebar Chips)
             if (activeSkills.length > 0) {
                 // Seeker must have ALL of these skills
-                query = query.contains('skills', activeSkills);
+                query = query.contains('skills_list', activeSkills);
             }
 
             // 3. Sidebar Numeric/Status Filters
@@ -102,7 +102,7 @@ const FindTalent = () => {
             }
 
             if (englishScore !== 'Any') {
-                query = query.eq('english', englishScore);
+                query = query.eq('english_proficiency', englishScore);
             }
 
             // Salary Range Filtering (Simulated if DB schema is text)
@@ -122,13 +122,13 @@ const FindTalent = () => {
                     title: profile.title || 'Specialist',
                     location: profile.location || 'Remote',
                     rate: profile.expected_salary || '$5.00/hour',
-                    skills: profile.skills || [],
+                    skills: profile.skills_list || [],
                     talentScore: profile.talent_score || 85,
                     iq: profile.iq || 120,
                     availability: profile.availability || 'Full-time',
                     verified: profile.is_verified_pro,
-                    bio: profile.bio || 'I am a dedicated professional with expertise in delivering high-quality results. My goal is to exceed client expectations through innovation and technical excellence.',
-                    education: profile.education || 'Bachelors degree',
+                    bio: profile.bio || 'I am a dedicated professional with expertise in delivering high-quality results.',
+                    education: profile.education_level || 'Bachelors degree',
                     lastActive: 'Today'
                 }));
                 setTalents(mappedData);
