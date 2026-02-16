@@ -21,7 +21,8 @@ import {
     Zap,
     CheckCircle2,
     Clock,
-    DollarSign
+    DollarSign,
+    Pin
 } from 'lucide-react';
 import CalendarView from '../../components/CalendarView';
 import { useUser } from '../../context/UserContext';
@@ -46,6 +47,7 @@ const EmployerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
     const [interviewCount, setInterviewCount] = useState(0);
     const [hiredCount, setHiredCount] = useState(0);
     const [recentApplicants, setRecentApplicants] = useState<any[]>([]);
+    const [pinnedTalents, setPinnedTalents] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     const planLimits: Record<string, number> = {
@@ -129,8 +131,26 @@ const EmployerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
 
                             if (hCount !== null) setHiredCount(hCount);
                         }
+
+                        // Fetch Pinned Talents
+                        const { data: saved } = await supabase
+                            .from('saved_talents')
+                            .select('*, profiles:seeker_id (*)')
+                            .eq('employer_id', id)
+                            .order('created_at', { ascending: false })
+                            .limit(4);
+
+                        if (saved) {
+                            setPinnedTalents(saved.map(s => ({
+                                id: s.profiles?.id,
+                                name: s.profiles?.full_name || 'Anonymous',
+                                photo: s.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${s.seeker_id}`,
+                                title: s.profiles?.title || 'Specialist',
+                                score: s.profiles?.talent_score || 85
+                            })));
+                        }
                     } catch (appErr) {
-                        console.error("Applications table error in overview:", appErr);
+                        console.error("Dashboard data fetching error:", appErr);
                     }
                 }
             } catch (err) {
@@ -414,6 +434,47 @@ const EmployerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
 
                 {/* Sidebar Widgets */}
                 <div className="space-y-10">
+                    {/* Pinned Talent Widget */}
+                    {pinnedTalents.length > 0 && (
+                        <div className="bg-white border-2 border-slate-50 p-10 rounded-[56px] shadow-sm space-y-8">
+                            <div className="flex items-center justify-between">
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Pinned Talent</h4>
+                                <Pin size={16} className="text-primary fill-primary/20 rotate-12" />
+                            </div>
+
+                            <div className="space-y-6">
+                                {pinnedTalents.map(talent => (
+                                    <div
+                                        key={talent.id}
+                                        onClick={() => navigate(`/profile/${talent.id}`)}
+                                        className="flex items-center gap-5 group cursor-pointer"
+                                    >
+                                        <div className="w-14 h-14 rounded-2xl bg-slate-50 overflow-hidden ring-4 ring-white shadow-sm group-hover:scale-105 transition-transform">
+                                            <img src={talent.photo} alt={talent.name} className="w-full h-full object-cover" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h5 className="font-black text-slate-900 text-sm tracking-tight truncate group-hover:text-primary transition-colors">{talent.name}</h5>
+                                            <p className="text-[10px] font-bold text-slate-400 truncate uppercase mt-0.5">{talent.title}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="flex items-center gap-1 text-primary">
+                                                <Star size={12} fill="currentColor" />
+                                                <span className="text-xs font-black">{talent.score}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <button
+                                onClick={() => navigate('/employer/talent')}
+                                className="w-full py-4 bg-slate-50 text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all active:scale-95"
+                            >
+                                Browse More Talent
+                            </button>
+                        </div>
+                    )}
+
                     {/* Recruitment Health */}
                     <div className="bg-slate-900 p-10 rounded-[56px] text-white shadow-2xl relative overflow-hidden group">
                         <div className="absolute top-0 right-0 p-8 opacity-[0.05] -rotate-12 translate-x-1/4 -translate-y-1/4 group-hover:scale-110 transition-transform duration-1000">

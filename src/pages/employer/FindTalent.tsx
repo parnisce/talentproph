@@ -70,7 +70,16 @@ const FindTalent = () => {
 
                 // Skill matching: using overlap for array
                 if (searchTerms.length > 0) {
-                    const skillsArray = `{${searchTerms.join(',')}}`;
+                    // Inclusion of common casing variations to handle case-sensitivity of array operators
+                    const variations = searchTerms.flatMap(term => [
+                        term,
+                        term.toLowerCase(),
+                        term.charAt(0).toUpperCase() + term.slice(1).toLowerCase(),
+                        term.toUpperCase()
+                    ]);
+                    const uniqueVariations = Array.from(new Set(variations));
+                    const skillsArray = `{${uniqueVariations.join(',')}}`;
+
                     searchClauses.push(`skills_list.ov.${skillsArray}`);
 
                     // Also add individual term matches for title/bio to be more inclusive
@@ -189,6 +198,15 @@ const FindTalent = () => {
                 setSavedTalentIds(prev => prev.filter(id => id !== seekerId));
                 console.error("Error pinning talent:", error);
             }
+        }
+    };
+
+    const toggleSkillFilter = (skill: string) => {
+        const trimmed = skill.trim();
+        if (activeSkills.includes(trimmed)) {
+            setActiveSkills(activeSkills.filter(s => s !== trimmed));
+        } else {
+            setActiveSkills([...activeSkills, trimmed]);
         }
     };
 
@@ -662,8 +680,12 @@ const FindTalent = () => {
                                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Top Skills</p>
                                                 <div className="flex flex-wrap gap-2">
                                                     {talent.skills.map((skill: string) => (
-                                                        <span key={skill} className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-[11px] font-bold text-slate-600 shadow-sm">
-                                                            {skill}: <span className="text-slate-400">1 - 2 years</span>
+                                                        <span
+                                                            key={skill}
+                                                            onClick={(e) => { e.stopPropagation(); toggleSkillFilter(skill); }}
+                                                            className={`px-4 py-2 rounded-xl text-[11px] font-bold shadow-sm cursor-pointer transition-all hover:scale-105 active:scale-95 ${activeSkills.includes(skill) ? 'bg-primary text-white border-primary' : 'bg-slate-50 border border-slate-100 text-slate-600 hover:border-primary/30'}`}
+                                                        >
+                                                            {skill}: <span className={activeSkills.includes(skill) ? 'text-white/70' : 'text-slate-400'}>1 - 2 years</span>
                                                         </span>
                                                     ))}
                                                 </div>
