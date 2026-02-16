@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import { Link, Routes, Route } from 'react-router-dom';
+import { Link, Routes, Route, useLocation } from 'react-router-dom';
 import DashboardLayout from '../../components/DashboardLayout';
 import {
     Zap,
@@ -265,9 +265,9 @@ const SeekerOverview = ({ interviews = [], employers = [], savedJobs = [] }: { i
                         </div>
                         <Link to="/seeker/saved-jobs" className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline decoration-transparent">View All</Link>
                     </div>
-                    <div className="space-y-4 max-h-[280px] overflow-y-auto pr-2 custom-scrollbar">
+                    <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                         {savedJobs.length > 0 ? (
-                            savedJobs.slice(0, 3).map((job) => (
+                            savedJobs.slice(0, 5).map((job) => (
                                 <Link to={`/seeker/jobs/${job.id}`} key={job.savedId} className="block p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:border-primary/20 hover:bg-white transition-all group/item decoration-transparent">
                                     <div className="flex justify-between items-start mb-2">
                                         <h4 className="text-sm font-black text-slate-900 truncate pr-4 group-hover/item:text-primary transition-colors">{job.title}</h4>
@@ -493,6 +493,7 @@ const SeekerDashboard = () => {
     const [interviews, setInterviews] = useState<any[]>([]);
     const [employers, setEmployers] = useState<any[]>([]);
     const [savedJobs, setSavedJobs] = useState<any[]>([]);
+    const location = useLocation();
 
     useEffect(() => {
         const fetchInterviews = async () => {
@@ -583,14 +584,16 @@ const SeekerDashboard = () => {
                 if (error) throw error;
 
                 if (data) {
-                    const formatted = data.map((item: any) => ({
-                        savedId: item.id,
-                        id: item.job_posts.id,
-                        title: item.job_posts.title,
-                        company: item.job_posts.company_name,
-                        location: item.job_posts.location,
-                        type: item.job_posts.engagement?.split(' ')[0] || 'Full-Time'
-                    }));
+                    const formatted = data
+                        .filter((item: any) => item.job_posts) // Safety: ensure job post exists
+                        .map((item: any) => ({
+                            savedId: item.id,
+                            id: item.job_posts.id,
+                            title: item.job_posts.title,
+                            company: item.job_posts.company_name,
+                            location: item.job_posts.location,
+                            type: item.job_posts.engagement?.split(' ')[0] || 'Full-Time'
+                        }));
                     setSavedJobs(formatted);
                 }
             } catch (err) {
@@ -601,7 +604,7 @@ const SeekerDashboard = () => {
         fetchInterviews();
         fetchEmployers();
         fetchSavedJobs();
-    }, [seekerId]);
+    }, [seekerId, location.pathname]);
 
     return (
         <DashboardLayout role="seeker">
