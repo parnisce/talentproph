@@ -60,8 +60,12 @@ const DashboardLayout = ({ children, role, userName: propUserName, userPhoto: pr
     const [searchQuery, setSearchQuery] = useState('');
 
     const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter' && searchQuery.trim() && role === 'employer') {
-            navigate(`/employer/talent?q=${encodeURIComponent(searchQuery.trim())}`);
+        if (e.key === 'Enter' && searchQuery.trim()) {
+            if (role === 'employer') {
+                navigate(`/employer/talent?q=${encodeURIComponent(searchQuery.trim())}`);
+            } else if (role === 'seeker') {
+                navigate(`/seeker/jobs?q=${encodeURIComponent(searchQuery.trim())}`);
+            }
             setSearchQuery('');
         }
     };

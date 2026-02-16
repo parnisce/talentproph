@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Filter, ChevronRight, X, Clock, Building2, ShieldCheck, Globe, Sparkles, Check, Loader2 } from 'lucide-react';
 import Navbar from '../../components/Navbar';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import { useEffect } from 'react';
 
@@ -24,12 +24,17 @@ interface Job {
 
 const FindJobs = () => {
     const navigate = useNavigate();
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchParams] = useSearchParams();
+    const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
     const [selectedSkills] = useState<string[]>([]);
     const [employmentTypes, setEmploymentTypes] = useState<string[]>(['Full-Time', 'Part-Time', 'Gig']);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [jobs, setJobs] = useState<Job[]>([]);
     const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        setSearchQuery(searchParams.get('q') || '');
+    }, [searchParams]);
 
     useEffect(() => {
         const fetchJobs = async () => {
@@ -302,6 +307,24 @@ const FindJobs = () => {
                                     </div>
                                 </motion.div>
                             ))}
+
+                            {filteredJobs.length === 0 && (
+                                <div className="py-32 text-center space-y-8 bg-white rounded-[48px] border-2 border-dashed border-slate-100">
+                                    <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-slate-200">
+                                        <Search size={40} />
+                                    </div>
+                                    <div className="space-y-4">
+                                        <h3 className="text-2xl font-black text-slate-900 tracking-tight">No premium positions found</h3>
+                                        <p className="text-slate-400 font-bold text-sm max-w-xs mx-auto">Try adjusting your filters or searching for different keywords to find your next global career.</p>
+                                    </div>
+                                    <button
+                                        onClick={() => { setSearchQuery(''); }}
+                                        className="px-10 py-4 bg-slate-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-primary transition-all shadow-xl shadow-slate-900/10"
+                                    >
+                                        Clear all filters
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </main>
                 </div>

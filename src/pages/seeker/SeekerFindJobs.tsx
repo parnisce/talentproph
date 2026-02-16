@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     Search,
     Filter,
@@ -33,8 +33,9 @@ interface Job {
 
 const SeekerFindJobs = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { id: seekerId } = useUser();
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
     const [employmentTypes, setEmploymentTypes] = useState<string[]>(['Full-Time', 'Part-Time', 'Gig']);
     const [activeCategory, setActiveCategory] = useState('All Jobs');
     const [jobs, setJobs] = useState<Job[]>([]);
@@ -42,6 +43,10 @@ const SeekerFindJobs = () => {
     const [loading, setLoading] = useState(true);
 
     const categories = ['All Jobs', 'Design', 'Development', 'Marketing', 'Admin', 'Writing'];
+
+    useEffect(() => {
+        setSearchQuery(searchParams.get('q') || '');
+    }, [searchParams]);
 
     useEffect(() => {
         const fetchJobsAndSavedWrapper = async () => {
@@ -301,8 +306,8 @@ const SeekerFindJobs = () => {
                                 <button
                                     onClick={(e) => handleToggleSave(e, job.id)}
                                     className={`flex-1 md:flex-none p-2.5 rounded-full border-2 transition-all flex items-center justify-center ${savedJobIds.has(job.id)
-                                            ? 'bg-secondary/10 border-secondary text-secondary hover:bg-secondary/20'
-                                            : 'border-slate-100 text-slate-300 hover:text-secondary hover:border-secondary/30'
+                                        ? 'bg-secondary/10 border-secondary text-secondary hover:bg-secondary/20'
+                                        : 'border-slate-100 text-slate-300 hover:text-secondary hover:border-secondary/30'
                                         }`}
                                     title={savedJobIds.has(job.id) ? "Remove Bookmark" : "Bookmark Job"}
                                 >
