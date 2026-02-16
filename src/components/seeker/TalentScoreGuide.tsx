@@ -22,7 +22,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 const TalentScoreGuide: React.FC = () => {
     const navigate = useNavigate();
     const user = useUser();
-    const [isMaximized, setIsMaximized] = useState(true);
+    const [isMaximized, setIsMaximized] = useState(false);
 
     // Safety check for user data
     if (!user) return null;
