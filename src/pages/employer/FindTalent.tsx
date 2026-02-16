@@ -141,13 +141,20 @@ const FindTalent = () => {
         }
     };
 
+    // Initial sync from URL parameters
     useEffect(() => {
-        setSearchQuery(initialQuery);
-        setCurrentPage(1);
+        if (initialQuery !== searchQuery) {
+            setSearchQuery(initialQuery);
+        }
     }, [initialQuery]);
 
+    // Main fetch effect with debounce for search
     useEffect(() => {
-        fetchTalents();
+        const handler = setTimeout(() => {
+            fetchTalents();
+        }, 300); // 300ms debounce
+
+        return () => clearTimeout(handler);
     }, [
         searchQuery,
         employmentType,
@@ -178,9 +185,12 @@ const FindTalent = () => {
     };
 
     const handleSearchSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
         setCurrentPage(1);
-        navigate(`/employer/talent?q=${encodeURIComponent(searchQuery.trim())}`);
+        const trimmed = searchQuery.trim();
+        // Force navigate even if query is the same to ensure search is 'triggered'
+        navigate(`/employer/talent?q=${encodeURIComponent(trimmed)}`, { replace: true });
+        // Fetch will be triggered by dependency array
     };
 
     const resetFilters = () => {
