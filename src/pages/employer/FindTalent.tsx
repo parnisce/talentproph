@@ -24,6 +24,8 @@ const FindTalent = () => {
     const [talents, setTalents] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [totalCount, setTotalCount] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 20;
 
     // Sidebar Filter States
     const [employmentType, setEmploymentType] = useState('Any');
@@ -54,27 +56,25 @@ const FindTalent = () => {
 
             // 1. Core Search Logic (Search Bar)
             if (searchQuery) {
-                const searchTerms = searchQuery.trim().split(/\s+/);
+                const trimmedQuery = searchQuery.trim();
+                const searchTerms = trimmedQuery.split(/\s+/).filter(t => t.length > 2);
                 let searchClauses: string[] = [];
 
-                // Searching for the full phrase first
-                searchClauses.push(`title.ilike.%${searchQuery}%`);
-                searchClauses.push(`full_name.ilike.%${searchQuery}%`);
-                searchClauses.push(`bio.ilike.%${searchQuery}%`);
+                // Searching for the full phrase
+                searchClauses.push(`title.ilike.%${trimmedQuery}%`);
+                searchClauses.push(`full_name.ilike.%${trimmedQuery}%`);
+                searchClauses.push(`bio.ilike.%${trimmedQuery}%`);
 
-                // Tokenized search for keywords in title/bio
-                searchTerms.forEach(term => {
-                    if (term.length > 2) {
-                        searchClauses.push(`title.ilike.%${term}%`);
-                        searchClauses.push(`bio.ilike.%${term}%`);
-                    }
-                });
-
-                // Skill matching: using overlap && for array
-                // We'll also try to match terms individually against the array
+                // Skill matching: using overlap for array
                 if (searchTerms.length > 0) {
                     const skillsArray = `{${searchTerms.join(',')}}`;
                     searchClauses.push(`skills.ov.${skillsArray}`);
+
+                    // Also add individual term matches for title/bio to be more inclusive
+                    searchTerms.forEach(term => {
+                        searchClauses.push(`title.ilike.%${term}%`);
+                        searchClauses.push(`bio.ilike.%${term}%`);
+                    });
                 }
 
                 query = query.or(searchClauses.join(','));
@@ -107,6 +107,8 @@ const FindTalent = () => {
 
             // Salary Range Filtering (Simulated if DB schema is text)
             // Ideally should be numeric columns.
+
+            query = query.range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
 
             const { data, error, count } = await query;
 
@@ -141,9 +143,13 @@ const FindTalent = () => {
 
     useEffect(() => {
         setSearchQuery(initialQuery);
+        setCurrentPage(1);
+    }, [initialQuery]);
+
+    useEffect(() => {
         fetchTalents();
     }, [
-        initialQuery,
+        searchQuery,
         employmentType,
         availabilityRange,
         salaryRange,
@@ -154,7 +160,8 @@ const FindTalent = () => {
         searchDescriptions,
         searchNames,
         includeHired,
-        activeSkills
+        activeSkills,
+        currentPage
     ]);
 
     const addSkillFilter = (e?: React.FormEvent) => {
@@ -172,31 +179,49 @@ const FindTalent = () => {
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        setCurrentPage(1);
         navigate(`/employer/talent?q=${encodeURIComponent(searchQuery.trim())}`);
+    };
+
+    const resetFilters = () => {
+        setSearchQuery('');
+        setEmploymentType('Any');
+        setAvailabilityRange({ min: 2, max: 12 });
+        setSalaryRange({ min: 2, max: 40 });
+        setIdProofScore('Any');
+        setLastActive('Any');
+        setIqScore('Any');
+        setEnglishScore('Any');
+        setSearchDescriptions(false);
+        setSearchNames(false);
+        setIncludeHired(false);
+        setActiveSkills([]);
+        navigate('/employer/talent');
     };
 
     return (
         <div className="max-w-[1400px] mx-auto space-y-8 pb-20">
             {/* Top Search Area */}
-            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40">
-                <form onSubmit={handleSearchSubmit} className="flex flex-col md:flex-row items-center gap-6">
-                    <div className="relative flex-1 group">
-                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={24} />
+            <div className="bg-white p-10 rounded-[40px] border border-slate-100 shadow-2xl shadow-slate-200/40 relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent pointer-events-none" />
+                <form onSubmit={handleSearchSubmit} className="flex flex-col md:flex-row items-center gap-6 relative z-10">
+                    <div className="relative flex-1 group/input w-full">
+                        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within/input:text-primary transition-all duration-300" size={24} />
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Try: graphics designer, facebook ads, lead generation..."
-                            className="w-full pl-16 pr-8 py-5 bg-slate-50 border-2 border-slate-100 rounded-2xl text-lg font-bold focus:outline-none focus:border-primary/20 focus:bg-white transition-all"
+                            placeholder="Try: 'Senior React Developer', 'Expert UI/UX Designer', 'Laravel Specialist'..."
+                            className="w-full pl-16 pr-8 py-6 bg-slate-50 border-2 border-slate-100 rounded-[28px] text-lg font-bold text-slate-900 focus:outline-none focus:border-primary/20 focus:bg-white transition-all shadow-sm focus:shadow-xl focus:shadow-primary/5"
                         />
                     </div>
                     <button
                         type="submit"
-                        className="px-12 py-5 bg-slate-900 text-white rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-primary transition-all shadow-xl shadow-slate-900/10"
+                        className="w-full md:w-auto px-16 py-6 bg-slate-900 text-white rounded-[28px] text-xs font-black uppercase tracking-[0.2em] hover:bg-primary transition-all shadow-2xl shadow-slate-900/10 active:scale-95"
                     >
-                        Search
+                        Search Talent
                     </button>
-                    <a href="#" className="text-secondary text-sm font-bold hover:underline hidden lg:block whitespace-nowrap">
+                    <a href="#" className="text-secondary text-xs font-black hover:underline hidden lg:block whitespace-nowrap uppercase tracking-widest">
                         Better Search Results?
                     </a>
                 </form>
@@ -421,16 +446,27 @@ const FindTalent = () => {
                 {/* Main Results Area */}
                 <div className="lg:col-span-9 space-y-10">
                     <div className="flex items-center justify-between px-2">
-                        <p className="text-[15px] font-bold text-slate-500">
-                            Found <span className="text-slate-900 font-black">{totalCount}</span> jobseekers.
+                        <p className="text-[11px] font-black text-slate-400 tracking-[0.3em] uppercase">
+                            Found <span className="text-slate-900 text-lg mx-1">{totalCount}</span> Elite Jobseekers
                         </p>
                         <div className="flex items-center gap-2">
-                            {[1, 2, 3, 4, 5].map(p => (
-                                <button key={p} className={`w-10 h-10 rounded-xl text-xs font-black transition-all ${p === 1 ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-white border border-slate-100 text-slate-400 hover:border-primary/30'}`}>
-                                    {p}
+                            {Array.from({ length: Math.min(5, Math.ceil(totalCount / ITEMS_PER_PAGE)) }).map((_, i) => (
+                                <button
+                                    key={i + 1}
+                                    onClick={() => { setCurrentPage(i + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                    className={`w-10 h-10 rounded-xl text-xs font-black transition-all ${currentPage === i + 1 ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-white border border-slate-100 text-slate-400 hover:border-primary/30'}`}
+                                >
+                                    {i + 1}
                                 </button>
                             ))}
-                            <button className="w-10 h-10 rounded-xl bg-white border border-slate-100 text-slate-400 flex items-center justify-center">
+                            {Math.ceil(totalCount / ITEMS_PER_PAGE) > 5 && (
+                                <span className="text-slate-300 mx-2">...</span>
+                            )}
+                            <button
+                                disabled={currentPage >= Math.ceil(totalCount / ITEMS_PER_PAGE)}
+                                onClick={() => { setCurrentPage(prev => prev + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                className="w-10 h-10 rounded-xl bg-white border border-slate-100 text-slate-400 flex items-center justify-center disabled:opacity-30"
+                            >
                                 <ChevronRight size={16} />
                             </button>
                         </div>
@@ -527,25 +563,23 @@ const FindTalent = () => {
                                 </motion.div>
                             ))
                         ) : (
-                            <div className="bg-white rounded-[56px] border-2 border-dashed border-slate-100 p-24 text-center">
-                                <div className="w-20 h-20 bg-slate-50 rounded-[32px] flex items-center justify-center text-slate-300 mx-auto mb-6">
-                                    <Search size={40} />
+                            <div className="bg-white rounded-[56px] border border-slate-100 p-32 text-center space-y-8 relative overflow-hidden group">
+                                <div className="absolute inset-0 bg-slate-50 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none" />
+                                <div className="relative z-10">
+                                    <div className="w-24 h-24 bg-slate-50 rounded-[32px] flex items-center justify-center text-slate-200 mx-auto mb-8 border-2 border-dashed border-slate-200">
+                                        <Search size={48} />
+                                    </div>
+                                    <h3 className="text-3xl font-black text-slate-900 tracking-tighter">No experts found matching these filters</h3>
+                                    <p className="text-slate-400 font-bold text-sm max-w-sm mx-auto mt-4 leading-relaxed">
+                                        Try expanding your search query or adjusting your sidebar filters. Our elite talent pool is constantly growing.
+                                    </p>
+                                    <button
+                                        onClick={resetFilters}
+                                        className="mt-12 px-12 py-5 bg-primary text-white rounded-[24px] text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                                    >
+                                        Clear All Filters
+                                    </button>
                                 </div>
-                                <h3 className="text-2xl font-black text-slate-900 tracking-tighter">No experts found matching these filters</h3>
-                                <p className="text-slate-500 font-medium max-w-sm mx-auto mt-2">
-                                    Try expanding your search query or adjusting your sidebar filters for better results.
-                                </p>
-                                <button
-                                    onClick={() => {
-                                        setSearchQuery('');
-                                        setSearchNames(false);
-                                        setSearchDescriptions(false);
-                                        fetchTalents();
-                                    }}
-                                    className="mt-10 px-10 py-4 bg-primary text-white rounded-[24px] text-[11px] font-black uppercase tracking-widest shadow-2xl shadow-primary/20 hover:scale-105 transition-all"
-                                >
-                                    Reset Filters
-                                </button>
                             </div>
                         )}
                     </div>
