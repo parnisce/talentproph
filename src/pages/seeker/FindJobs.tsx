@@ -31,11 +31,17 @@ const FindJobs = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [jobs, setJobs] = useState<Job[]>([]);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 20;
 
     useEffect(() => {
         setSearchQuery(searchParams.get('q') || '');
+        setCurrentPage(1); // Reset to first page on search
     }, [searchParams]);
 
+    useEffect(() => {
+        setCurrentPage(1); // Reset to first page on filters
+    }, [employmentTypes, selectedSkills]);
     useEffect(() => {
         const fetchJobs = async () => {
             const { data, error } = await supabase
@@ -76,6 +82,12 @@ const FindJobs = () => {
             selectedSkills.every(skill => job.skills.includes(skill));
         return matchesSearch && matchesType && matchesSkills;
     });
+
+    const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE);
+    const paginatedJobs = filteredJobs.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
 
     const handleJobClick = (jobId: string) => {
         navigate('/login', { state: { redirectTo: `/jobs/${jobId}`, message: 'Please log in to view full job details and apply.' } });
@@ -232,7 +244,7 @@ const FindJobs = () => {
                         </div>
 
                         <div className="space-y-6">
-                            {filteredJobs.map((job, idx) => (
+                            {paginatedJobs.map((job, idx) => (
                                 <motion.div
                                     key={job.id}
                                     initial={{ opacity: 0, y: 20 }}
@@ -322,6 +334,37 @@ const FindJobs = () => {
                                         className="px-10 py-4 bg-slate-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-primary transition-all shadow-xl shadow-slate-900/10"
                                     >
                                         Clear all filters
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Pagination Controls */}
+                            {totalPages > 1 && (
+                                <div className="flex justify-center pt-12 items-center gap-3">
+                                    <button
+                                        disabled={currentPage === 1}
+                                        onClick={() => { setCurrentPage(prev => prev - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                        className="w-12 h-12 rounded-2xl border border-slate-100 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary disabled:opacity-30 disabled:hover:border-slate-100 disabled:hover:text-slate-400 transition-all bg-white"
+                                    >
+                                        <ChevronRight size={18} className="rotate-180" />
+                                    </button>
+                                    <div className="flex gap-2">
+                                        {[...Array(totalPages)].map((_, i) => (
+                                            <button
+                                                key={i + 1}
+                                                onClick={() => { setCurrentPage(i + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                                className={`w-12 h-12 rounded-2xl text-[11px] font-black transition-all ${currentPage === i + 1 ? 'bg-primary text-white shadow-xl shadow-primary/20 scale-110' : 'bg-white border border-slate-100 text-slate-400 hover:bg-slate-50'}`}
+                                            >
+                                                {i + 1}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <button
+                                        disabled={currentPage === totalPages}
+                                        onClick={() => { setCurrentPage(prev => prev + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                        className="w-12 h-12 rounded-2xl border border-slate-100 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary disabled:opacity-30 disabled:hover:border-slate-100 disabled:hover:text-slate-400 transition-all bg-white"
+                                    >
+                                        <ChevronRight size={18} />
                                     </button>
                                 </div>
                             )}

@@ -41,12 +41,19 @@ const SeekerFindJobs = () => {
     const [jobs, setJobs] = useState<Job[]>([]);
     const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 20;
 
     const categories = ['All Jobs', 'Design', 'Development', 'Marketing', 'Admin', 'Writing'];
 
     useEffect(() => {
         setSearchQuery(searchParams.get('q') || '');
+        setCurrentPage(1);
     }, [searchParams]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [employmentTypes, activeCategory]);
 
     useEffect(() => {
         const fetchJobsAndSavedWrapper = async () => {
@@ -150,6 +157,12 @@ const SeekerFindJobs = () => {
         return matchesSearch && matchesType && matchesCategory;
     });
 
+    const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE);
+    const paginatedJobs = filteredJobs.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
+
     if (loading) {
         return (
             <div className="flex items-center justify-center py-20 min-h-[60vh]">
@@ -246,7 +259,7 @@ const SeekerFindJobs = () => {
                 </div>
 
                 <div className="space-y-6">
-                    {filteredJobs.map((job, idx) => (
+                    {paginatedJobs.map((job, idx) => (
                         <motion.div
                             key={job.id}
                             initial={{ opacity: 0, y: 10 }}
@@ -340,16 +353,36 @@ const SeekerFindJobs = () => {
                     )}
                 </div>
 
-                {/* Pagination Placeholder */}
-                <div className="flex justify-center pt-10">
-                    <div className="flex gap-2">
-                        {[1, 2, 3, '...', 12].map((p, i) => (
-                            <button key={i} className={`w-10 h-10 rounded-xl flex items-center justify-center text-[10px] font-black transition-all ${p === 1 ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-white border border-slate-100 text-slate-400 hover:bg-slate-50'}`}>
-                                {p}
-                            </button>
-                        ))}
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                    <div className="flex justify-center pt-10 items-center gap-3">
+                        <button
+                            disabled={currentPage === 1}
+                            onClick={() => { setCurrentPage(prev => prev - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                            className="w-10 h-10 rounded-xl border border-slate-100 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary disabled:opacity-30 disabled:hover:border-slate-100 disabled:hover:text-slate-400 transition-all bg-white"
+                        >
+                            <ChevronRight size={16} className="rotate-180" />
+                        </button>
+                        <div className="flex gap-2">
+                            {[...Array(totalPages)].map((_, i) => (
+                                <button
+                                    key={i + 1}
+                                    onClick={() => { setCurrentPage(i + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                    className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${currentPage === i + 1 ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-110' : 'bg-white border border-slate-100 text-slate-400 hover:bg-slate-50'}`}
+                                >
+                                    {i + 1}
+                                </button>
+                            ))}
+                        </div>
+                        <button
+                            disabled={currentPage === totalPages}
+                            onClick={() => { setCurrentPage(prev => prev + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                            className="w-10 h-10 rounded-xl border border-slate-100 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary disabled:opacity-30 disabled:hover:border-slate-100 disabled:hover:text-slate-400 transition-all bg-white"
+                        >
+                            <ChevronRight size={16} />
+                        </button>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );
