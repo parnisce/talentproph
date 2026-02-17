@@ -87,6 +87,7 @@ interface UserContextType extends UserProfile {
     addPaymentMethod: (method: any) => void;
     removePaymentMethod: (id: string) => void;
     addBillingRecord: (record: Omit<BillingItem, 'id' | 'created_at'>) => Promise<void>;
+    cancelSubscription: () => Promise<void>;
     logout: () => Promise<void>;
     loading: boolean;
 }
@@ -484,6 +485,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
+    const cancelSubscription = async () => {
+        try {
+            await updateUserProfile({ subscription_plan: 'Free' });
+            alert("Your subscription has been cancelled successfully. Your plan is now set to Starter.");
+        } catch (error) {
+            console.error("Error cancelling subscription:", error);
+            alert("Failed to cancel subscription. Please contact support.");
+        }
+    };
+
     const logout = async () => {
         try {
             await supabase.auth.signOut();
@@ -555,6 +566,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             addPaymentMethod,
             removePaymentMethod,
             addBillingRecord,
+            cancelSubscription,
             logout,
             loading
         }}>

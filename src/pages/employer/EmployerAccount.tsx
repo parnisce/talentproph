@@ -703,9 +703,18 @@ const EmployerAccount = () => {
                                                 >
                                                     Change Plan
                                                 </button>
-                                                <button className="px-6 py-3 bg-transparent border border-white/20 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/5 transition-all">
-                                                    Cancel
-                                                </button>
+                                                {userContext.subscription_plan !== 'Free' && (
+                                                    <button
+                                                        onClick={() => {
+                                                            if (window.confirm("Are you sure you want to cancel your subscription? Your plan will be reverted to the Starter Tier.")) {
+                                                                userContext.cancelSubscription();
+                                                            }
+                                                        }}
+                                                        className="px-6 py-3 bg-transparent border border-white/20 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/5 transition-all"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
