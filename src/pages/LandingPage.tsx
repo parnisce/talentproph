@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
-import { Zap, Users, Search, ArrowRight, Star, Globe, Shield, Rocket, Quote, LayoutGrid, Briefcase } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Zap, Users, Search, ArrowRight, Star, Globe, Shield, Rocket, Quote, LayoutGrid } from 'lucide-react';
 import Navbar from '../components/Navbar';
 
 const LandingPage = () => {
@@ -37,24 +36,6 @@ const LandingPage = () => {
         }
     ];
 
-    const handleTalentSearch = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        const query = formData.get('talent') as string;
-        if (query) {
-            window.location.href = `/employer/talent?q=${encodeURIComponent(query)}`;
-        }
-    };
-
-    const handleWorkSearch = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        const query = formData.get('work') as string;
-        if (query) {
-            window.location.href = `/jobs?q=${encodeURIComponent(query)}`;
-        }
-    };
-
     return (
         <div className="min-h-screen bg-white font-inter">
             <Navbar />
@@ -89,42 +70,6 @@ const LandingPage = () => {
                         <p className="text-xl md:text-2xl text-blue-100/50 mb-14 max-w-2xl mx-auto font-medium leading-relaxed">
                             Discover the top remote professionals, get AI-powered recommendations, and build your dream team effortlessly.
                         </p>
-
-                        <div className="max-w-4xl mx-auto mb-24 p-2 md:p-4 bg-white/5 backdrop-blur-2xl rounded-[32px] md:rounded-full border border-white/10 shadow-2xl overflow-hidden">
-                            <div className="flex flex-col md:flex-row gap-4 items-center">
-                                {/* Search for Talent */}
-                                <form onSubmit={handleTalentSearch} className="flex-1 relative group w-full">
-                                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-primary group-focus-within:scale-110 transition-transform" size={24} />
-                                    <input
-                                        name="talent"
-                                        type="text"
-                                        placeholder="Look for talent..."
-                                        className="w-full pl-16 pr-6 py-6 bg-transparent border-none text-white placeholder:text-white/40 focus:outline-none transition-all font-bold text-lg"
-                                    />
-                                </form>
-
-                                <div className="hidden md:block w-px h-10 bg-white/10" />
-
-                                {/* Search for Work */}
-                                <form onSubmit={handleWorkSearch} className="flex-1 relative group w-full">
-                                    <Briefcase className="absolute left-6 top-1/2 -translate-y-1/2 text-secondary group-focus-within:scale-110 transition-transform" size={24} />
-                                    <input
-                                        name="work"
-                                        type="text"
-                                        placeholder="Look for work..."
-                                        className="w-full pl-16 pr-6 py-6 bg-transparent border-none text-white placeholder:text-white/40 focus:outline-none transition-all font-bold text-lg"
-                                    />
-                                </form>
-
-                                <button type="submit" className="md:hidden bg-gradient-primary text-white py-4 w-full rounded-2xl font-bold">Search</button>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row gap-8 justify-center mb-24">
-                            <Link to="/register?role=employer" className="bg-white/10 backdrop-blur-md text-white px-10 py-5 rounded-full text-lg font-bold font-outfit border border-white/10 hover:bg-white/20 transition-all flex items-center gap-6 group">
-                                hiring? Register here <div className="bg-primary p-2 rounded-full group-hover:translate-x-1 transition-transform"><ArrowRight size={20} /></div>
-                            </Link>
-                        </div>
                     </motion.div>
 
                     {/* Floating Glass Cards */}
