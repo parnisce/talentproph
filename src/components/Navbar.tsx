@@ -25,7 +25,7 @@ const Navbar = ({ forceSolid = false }: { forceSolid?: boolean }) => {
         const formData = new FormData(e.currentTarget);
         const query = formData.get('search') as string;
         if (query) {
-            navigate(`/employer/talent?q=${encodeURIComponent(query)}`);
+            navigate(`/skillsearch?q=${encodeURIComponent(query)}`);
             setIsMobileSearchOpen(false);
         }
     };

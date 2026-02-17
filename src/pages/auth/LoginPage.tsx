@@ -35,7 +35,12 @@ const LoginPage = () => {
                 if (profileError) throw profileError;
 
                 // Redirect based on role
-                if (profileData.role === 'admin') {
+                const searchParams = new URLSearchParams(window.location.search);
+                const redirectTo = searchParams.get('redirectTo');
+
+                if (redirectTo) {
+                    navigate(redirectTo);
+                } else if (profileData.role === 'admin') {
                     navigate('/admin');
                 } else if (profileData.role === 'employer') {
                     navigate('/employer');

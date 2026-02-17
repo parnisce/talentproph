@@ -62,7 +62,7 @@ const DashboardLayout = ({ children, role, userName: propUserName, userPhoto: pr
 
     const handleTalentSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter' && talentQuery.trim()) {
-            navigate(`/employer/talent?q=${encodeURIComponent(talentQuery.trim())}`);
+            navigate(`/skillsearch?q=${encodeURIComponent(talentQuery.trim())}`);
             setTalentQuery('');
         }
     };
