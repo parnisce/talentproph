@@ -82,13 +82,14 @@ const SkillSearch = () => {
                     searchTerms.forEach(term => {
                         searchClauses.push(`title.ilike.%${term}%`);
                         if (searchDescriptions) searchClauses.push(`bio.ilike.%${term}%`);
+                        if (searchNames) searchClauses.push(`full_name.ilike.%${term}%`);
                     });
                 }
 
                 query = query.or(searchClauses.join(','));
             }
 
-            // 2. Active Skill Filters
+            // 2. Active Skill Filters (Sidebar Chips)
             if (activeSkills.length > 0) {
                 query = query.contains('skills_list', activeSkills);
             }
@@ -112,6 +113,29 @@ const SkillSearch = () => {
                 query = query.eq('english_proficiency', englishScore);
             }
 
+            // 4. Last Active Filter
+            if (lastActive !== 'Any') {
+                const now = new Date();
+                let filterDate;
+                if (lastActive === 'Today') {
+                    filterDate = new Date(now.setDate(now.getDate() - 1)).toISOString();
+                } else if (lastActive === 'This week') {
+                    filterDate = new Date(now.setDate(now.getDate() - 7)).toISOString();
+                } else if (lastActive === 'This month') {
+                    filterDate = new Date(now.setMonth(now.getMonth() - 1)).toISOString();
+                }
+
+                if (filterDate) {
+                    query = query.gte('updated_at', filterDate);
+                }
+            }
+
+            // 5. Verification Status
+            if (!includeHired) {
+                // Assuming profiles has a status or similar. 
+                // If not, we'll skip for now but keep the logic structure.
+            }
+
             query = query.range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
 
             const { data, error, count } = await query;
@@ -133,7 +157,7 @@ const SkillSearch = () => {
                     verified: profile.is_verified_pro,
                     bio: profile.bio || 'I am a dedicated professional with expertise in delivering high-quality results.',
                     education: profile.education_level || 'Bachelors degree',
-                    lastActive: 'Today'
+                    lastActive: profile.updated_at ? new Date(profile.updated_at).toLocaleDateString() : 'Active'
                 }));
                 setTalents(mappedData);
                 setTotalCount(count || 0);
@@ -389,10 +413,11 @@ const SkillSearch = () => {
                                             onChange={(e) => setEmploymentType(e.target.value)}
                                             className="w-full bg-white border border-slate-200 p-2.5 rounded-md text-[13px] font-medium text-slate-600 outline-none focus:border-primary/50"
                                         >
-                                            <option>Any</option>
-                                            <option>Full-Time</option>
-                                            <option>Part-Time</option>
-                                            <option>Freelance</option>
+                                            <option value="Any">Any</option>
+                                            <option value="Full-Time">Full-Time</option>
+                                            <option value="Part-Time">Part-Time</option>
+                                            <option value="Freelance">Freelance</option>
+                                            <option value="Gig / Project-Based">Gig / Project-Based</option>
                                         </select>
                                     </div>
 
@@ -527,10 +552,15 @@ const SkillSearch = () => {
                                     </div>
 
                                     <button
-                                        onClick={fetchTalents}
-                                        className="w-full mt-4 py-3 border border-slate-200 rounded-md text-[11px] font-black uppercase tracking-widest text-[#0047AB] hover:bg-slate-50 transition-colors"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            setCurrentPage(1);
+                                            fetchTalents();
+                                        }}
+                                        disabled={loading}
+                                        className="w-full mt-4 py-3 border border-slate-200 rounded-md text-[11px] font-black uppercase tracking-widest text-[#0047AB] hover:bg-[#0047AB] hover:text-white transition-all disabled:opacity-50"
                                     >
-                                        Refine Search Results
+                                        {loading ? 'Refining...' : 'Refine Search Results'}
                                     </button>
                                 </div>
                             </div>
