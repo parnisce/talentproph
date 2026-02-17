@@ -728,7 +728,7 @@ const EmployerAccount = () => {
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            {method.isDefault && (
+                                                            {method.is_default && (
                                                                 <span className="bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded text-[9px] font-black uppercase">Default</span>
                                                             )}
                                                             <button
@@ -811,21 +811,30 @@ const EmployerAccount = () => {
                                         <div className="space-y-4">
                                             <h4 className="text-sm font-black text-slate-900 uppercase tracking-wide border-b border-slate-100 pb-2">Billing History</h4>
                                             <div className="space-y-2">
-                                                {[
-                                                    { date: 'Feb 15, 2026', amount: '$69.00', status: 'Paid', invoice: '#INV-2026-003' },
-                                                    { date: 'Jan 15, 2026', amount: '$69.00', status: 'Paid', invoice: '#INV-2026-002' },
-                                                ].map((item, idx) => (
-                                                    <div key={idx} className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer group">
-                                                        <div>
-                                                            <p className="text-xs font-bold text-slate-900">{item.date}</p>
-                                                            <p className="text-[10px] text-slate-400 font-bold uppercase">{item.invoice}</p>
+                                                {userContext.billingHistory && userContext.billingHistory.length > 0 ? (
+                                                    userContext.billingHistory.map((item: any) => (
+                                                        <div key={item.id} className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer group">
+                                                            <div>
+                                                                <p className="text-xs font-bold text-slate-900">
+                                                                    {new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                                </p>
+                                                                <p className="text-[10px] text-slate-400 font-bold uppercase">{item.invoice_number}</p>
+                                                            </div>
+                                                            <div className="flex items-center gap-4">
+                                                                <span className="text-xs font-bold text-slate-600">${item.amount.toFixed(2)}</span>
+                                                                {item.receipt_url && (
+                                                                    <a href={item.receipt_url} target="_blank" rel="noopener noreferrer">
+                                                                        <Download size={16} className="text-slate-300 group-hover:text-primary transition-colors" />
+                                                                    </a>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                        <div className="flex items-center gap-4">
-                                                            <span className="text-xs font-bold text-slate-600">{item.amount}</span>
-                                                            <Download size={16} className="text-slate-300 group-hover:text-primary transition-colors" />
-                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <div className="py-6 text-center">
+                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">No billing history found</p>
                                                     </div>
-                                                ))}
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -883,7 +892,7 @@ const EmployerAccount = () => {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 

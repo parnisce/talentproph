@@ -52,6 +52,17 @@ export interface UserProfile {
     created_at: string;
 }
 
+export interface BillingItem {
+    id: string;
+    created_at: string;
+    amount: number;
+    currency: string;
+    status: string;
+    invoice_number: string;
+    description: string;
+    receipt_url?: string;
+}
+
 
 interface UserContextType extends UserProfile {
     // Aliases for backward compatibility
@@ -72,8 +83,10 @@ interface UserContextType extends UserProfile {
     updateUserProfile: (data: Partial<UserProfile>) => Promise<void>;
     updateTestScores: (scores: UserContextType['testScores']) => void;
     paymentMethods: any[];
+    billingHistory: BillingItem[];
     addPaymentMethod: (method: any) => void;
     removePaymentMethod: (id: string) => void;
+    addBillingRecord: (record: Omit<BillingItem, 'id' | 'created_at'>) => Promise<void>;
     logout: () => Promise<void>;
     loading: boolean;
 }
@@ -129,7 +142,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 
 
+
     const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+    const [billingHistory, setBillingHistory] = useState<BillingItem[]>([]);
 
     const fetchProfile = async (userId: string) => {
         try {
@@ -183,6 +198,21 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     perks: data.perks || [],
                     created_at: data.created_at || ""
                 });
+
+                // Fetch Payment Methods
+                const { data: methods } = await supabase
+                    .from('payment_methods')
+                    .select('*')
+                    .eq('user_id', userId);
+                if (methods) setPaymentMethods(methods);
+
+                // Fetch Billing History
+                const { data: history } = await supabase
+                    .from('billing_history')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false });
+                if (history) setBillingHistory(history);
 
             }
         } catch (fetchError) {
@@ -414,8 +444,44 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
-    const removePaymentMethod = (id: string) => {
-        setPaymentMethods(prev => prev.filter(p => p.id !== id));
+    const removePaymentMethod = async (id: string) => {
+        try {
+            const { error } = await supabase
+                .from('payment_methods')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
+            setPaymentMethods(prev => prev.filter(p => p.id !== id));
+        } catch (error) {
+            console.error("Error removing payment method:", error);
+            // Fallback: still remove locally to keep UI responsive
+            setPaymentMethods(prev => prev.filter(p => p.id !== id));
+        }
+    };
+    const addBillingRecord = async (record: Omit<BillingItem, 'id' | 'created_at'>) => {
+        if (!userProfile.id) return;
+        try {
+            const { data, error } = await supabase
+                .from('billing_history')
+                .insert([{
+                    user_id: userProfile.id,
+                    amount: record.amount,
+                    currency: record.currency || 'USD',
+                    status: record.status || 'Paid',
+                    invoice_number: record.invoice_number,
+                    description: record.description,
+                    receipt_url: record.receipt_url
+                }])
+                .select();
+
+            if (error) throw error;
+            if (data) {
+                setBillingHistory(prev => [data[0], ...prev]);
+            }
+        } catch (error) {
+            console.error("Error adding billing record:", error);
+        }
     };
 
     const logout = async () => {
@@ -485,8 +551,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             },
             updateTestScores,
             paymentMethods,
+            billingHistory,
             addPaymentMethod,
             removePaymentMethod,
+            addBillingRecord,
             logout,
             loading
         }}>

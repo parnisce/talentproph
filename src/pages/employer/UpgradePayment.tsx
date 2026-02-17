@@ -46,6 +46,16 @@ const UpgradePayment = () => {
                 subscription_plan: plan
             });
 
+            // Record in billing history
+            await userContext.addBillingRecord({
+                amount: parseFloat(price),
+                currency: 'USD',
+                status: 'Paid',
+                invoice_number: `INV-${Date.now().toString().slice(-6)}`,
+                description: `${plan} Plan Monthly Subscription`,
+                receipt_url: '#' // Placeholder link
+            });
+
             if (selectedCardId === 'new' && saveCard) {
                 // Save the new card
                 await userContext.addPaymentMethod({
