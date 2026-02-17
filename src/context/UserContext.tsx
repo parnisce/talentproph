@@ -213,7 +213,29 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     .select('*')
                     .eq('user_id', userId)
                     .order('created_at', { ascending: false });
-                if (history) setBillingHistory(history);
+
+                if (history && history.length > 0) {
+                    setBillingHistory(history);
+                } else if (history && history.length === 0 && (data.subscription_plan === 'Pro' || data.subscription_plan === 'Premium')) {
+                    // Self-healing: If user is on a paid plan but has no history (e.g. legacy user), 
+                    // create an initial record so their billing history isn't empty.
+                    const initialAmount = data.subscription_plan === 'Pro' ? 69 : 99;
+                    const { data: newRecord } = await supabase
+                        .from('billing_history')
+                        .insert([{
+                            user_id: userId,
+                            amount: initialAmount,
+                            currency: 'USD',
+                            status: 'Paid',
+                            invoice_number: `INV-INIT-${userId.slice(0, 5).toUpperCase()}`,
+                            description: `${data.subscription_plan} Plan Initial Subscription`
+                        }])
+                        .select();
+
+                    if (newRecord) setBillingHistory(newRecord);
+                } else if (history) {
+                    setBillingHistory(history);
+                }
 
             }
         } catch (fetchError) {

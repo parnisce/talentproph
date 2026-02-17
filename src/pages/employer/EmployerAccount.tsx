@@ -830,7 +830,7 @@ const EmployerAccount = () => {
                                                                 <p className="text-[10px] text-slate-400 font-bold uppercase">{item.invoice_number}</p>
                                                             </div>
                                                             <div className="flex items-center gap-4">
-                                                                <span className="text-xs font-bold text-slate-600">${item.amount.toFixed(2)}</span>
+                                                                <span className="text-xs font-bold text-slate-600">${Number(item.amount).toFixed(2)}</span>
                                                                 {item.receipt_url && (
                                                                     <a href={item.receipt_url} target="_blank" rel="noopener noreferrer">
                                                                         <Download size={16} className="text-slate-300 group-hover:text-primary transition-colors" />
