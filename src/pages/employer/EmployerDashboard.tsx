@@ -384,19 +384,21 @@ const EmployerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
                                         <div className="w-20 h-20 rounded-[28px] bg-slate-100 overflow-hidden ring-[6px] ring-white shadow-xl transition-transform group-hover:scale-110">
                                             <img src={applicant.photo} alt={applicant.name} className="w-full h-full object-cover" />
                                         </div>
-                                        {applicant.verified && (
-                                            <div className="absolute -top-2 -right-2 bg-emerald-500 text-white w-8 h-8 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
-                                                <ShieldCheck size={14} />
-                                            </div>
-                                        )}
+                                        <div className={`absolute -top-2 -right-2 w-8 h-8 rounded-full flex items-center justify-center border-4 border-white shadow-lg text-white ${applicant.verified ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                                            <ShieldCheck size={14} />
+                                        </div>
                                     </div>
 
                                     <div className="flex-1">
                                         <div className="flex flex-wrap items-center gap-3 mb-2 justify-center md:justify-start">
                                             <h4 className="text-xl font-black text-slate-900 tracking-tighter">{applicant.name}</h4>
-                                            {applicant.verified && (
+                                            {applicant.verified ? (
                                                 <div className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-emerald-100 flex items-center gap-1.5 transition-all">
                                                     <ShieldCheck size={12} className="text-emerald-500" /> PRO
+                                                </div>
+                                            ) : (
+                                                <div className="bg-slate-50 text-slate-400 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-slate-100 flex items-center gap-1.5 transition-all">
+                                                    <ShieldCheck size={12} className="text-slate-300" /> BASIC
                                                 </div>
                                             )}
                                             <span className={`px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${applicant.status === 'Shortlisted' ? 'bg-amber-100 text-amber-600' :
@@ -462,11 +464,9 @@ const EmployerOverview = ({ interviews = [] }: { interviews?: any[] }) => {
                                             <div className="w-14 h-14 rounded-2xl bg-slate-50 overflow-hidden ring-4 ring-white shadow-sm group-hover:scale-105 transition-transform">
                                                 <img src={talent.photo} alt={talent.name} className="w-full h-full object-cover" />
                                             </div>
-                                            {talent.verified && (
-                                                <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-white w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
-                                                    <ShieldCheck size={10} />
-                                                </div>
-                                            )}
+                                            <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm text-white ${talent.verified ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                                                <ShieldCheck size={10} />
+                                            </div>
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <h5 className="font-black text-slate-900 text-sm tracking-tight truncate group-hover:text-primary transition-colors">{talent.name}</h5>

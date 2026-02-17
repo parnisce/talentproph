@@ -661,9 +661,14 @@ const FindTalent = () => {
                                         <div className="flex flex-col items-center gap-6 shrink-0">
                                             <div
                                                 onClick={() => navigate(`/profile/${talent.id}`)}
-                                                className="w-36 h-36 rounded-[48px] bg-slate-100 overflow-hidden ring-[10px] ring-white shadow-2xl transition-transform group-hover:scale-105 cursor-pointer"
+                                                className="w-36 h-36 rounded-[48px] bg-slate-100 overflow-hidden ring-[10px] ring-white shadow-2xl transition-transform group-hover:scale-105 cursor-pointer relative"
                                             >
                                                 <img src={talent.photo} alt={talent.name} className="w-full h-full object-cover" />
+
+                                                {/* Absolute Avatar Badge */}
+                                                <div className={`absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl border-4 border-white flex items-center justify-center text-white shadow-lg ${talent.verified ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                                                    <ShieldCheck size={20} />
+                                                </div>
                                             </div>
                                             {talent.verified ? (
                                                 <div className="bg-emerald-50 text-emerald-600 px-5 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest border border-emerald-100 flex items-center gap-2">
@@ -671,7 +676,7 @@ const FindTalent = () => {
                                                 </div>
                                             ) : (
                                                 <div className="bg-slate-50 text-slate-400 px-5 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest border border-slate-100 flex items-center gap-2">
-                                                    <span className="text-sm">{talent.talentScore}</span> Not Verified
+                                                    <span className="text-sm">{talent.talentScore}</span> Unverified
                                                 </div>
                                             )}
                                         </div>
@@ -682,9 +687,13 @@ const FindTalent = () => {
                                                 <div onClick={() => navigate(`/profile/${talent.id}`)} className="cursor-pointer group/name">
                                                     <div className="flex items-center gap-3">
                                                         <h3 className="text-2xl font-black text-secondary group-hover/name:underline tracking-tighter decoration-primary decoration-4 underline-offset-4">{talent.name}</h3>
-                                                        {talent.verified && (
+                                                        {talent.verified ? (
                                                             <div className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-emerald-100 flex items-center gap-1.5 self-center">
                                                                 <ShieldCheck size={12} className="text-emerald-500" /> PRO
+                                                            </div>
+                                                        ) : (
+                                                            <div className="bg-slate-50 text-slate-400 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-slate-100 flex items-center gap-1.5 self-center">
+                                                                <ShieldCheck size={12} className="text-slate-300" /> BASIC
                                                             </div>
                                                         )}
                                                     </div>

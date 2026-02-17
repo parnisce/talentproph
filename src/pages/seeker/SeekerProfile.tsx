@@ -150,7 +150,7 @@ const SeekerProfile = () => {
                                     ) : (
                                         <div className="flex items-center gap-2 px-5 py-2 bg-slate-500/10 border border-slate-500/20 rounded-full shadow-sm">
                                             <ShieldCheck size={14} className="text-slate-400" />
-                                            <span className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Unverified</span>
+                                            <span className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Basic Seeker</span>
                                         </div>
                                     )}
                                 </div>

@@ -831,21 +831,25 @@ Wishing you the very best in your career journey!`;
 
                         <div className="relative z-10">
                             <div className="relative inline-block mb-8">
-                                <div className="w-40 h-40 rounded-[48px] bg-slate-100 overflow-hidden ring-[12px] ring-white shadow-2xl mx-auto transition-transform group-hover:rotate-3">
-                                    <img src={applicant.photo} alt={applicant.name} className="w-full h-full object-cover" />
-                                </div>
-                                {applicant.testScores?.verified && (
-                                    <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white w-10 h-10 rounded-full border-[6px] border-white flex items-center justify-center shadow-lg">
-                                        <ShieldCheck size={18} />
+                                {applicant.photo && (
+                                    <div className="w-40 h-40 rounded-[48px] bg-slate-100 overflow-hidden ring-[12px] ring-white shadow-2xl mx-auto transition-transform group-hover:rotate-3">
+                                        <img src={applicant.photo} alt={applicant.name} className="w-full h-full object-cover" />
                                     </div>
                                 )}
+                                <div className={`absolute -bottom-2 -right-2 w-10 h-10 rounded-full border-[6px] border-white flex items-center justify-center text-white shadow-lg ${applicant.testScores?.verified ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                                    <ShieldCheck size={18} />
+                                </div>
                             </div>
 
                             <div className="flex flex-col items-center gap-3 mb-8">
                                 <h2 className="text-3xl font-black text-slate-900 tracking-tighter mb-0">{applicant.name}</h2>
-                                {applicant.testScores?.verified && (
+                                {applicant.testScores?.verified ? (
                                     <div className="bg-emerald-50 text-emerald-600 px-5 py-2 rounded-full text-[11px] font-black uppercase tracking-widest border border-emerald-100 flex items-center gap-2">
                                         <CheckCircle2 size={14} className="text-emerald-500" /> Verified Pro
+                                    </div>
+                                ) : (
+                                    <div className="bg-slate-50 text-slate-400 px-5 py-2 rounded-full text-[11px] font-black uppercase tracking-widest border border-slate-100 flex items-center gap-2">
+                                        <ShieldCheck size={14} className="text-slate-300" /> Basic Seeker
                                     </div>
                                 )}
                             </div>

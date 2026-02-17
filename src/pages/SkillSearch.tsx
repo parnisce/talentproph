@@ -627,9 +627,13 @@ const SkillSearch = () => {
                                                     <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-slate-50 shadow-inner">
                                                         <img src={talent.photo} alt={talent.name} className="w-full h-full object-cover" />
                                                     </div>
-                                                    {talent.verified && (
+                                                    {talent.verified ? (
                                                         <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-3 py-1 rounded-md text-[10px] font-black uppercase flex items-center gap-1.5 shadow-lg whitespace-nowrap ring-2 ring-white">
                                                             <ShieldCheck size={12} className="text-white" /> Verified Pro
+                                                        </div>
+                                                    ) : (
+                                                        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-slate-200 text-slate-500 px-3 py-1 rounded-md text-[10px] font-black uppercase flex items-center gap-1.5 shadow-sm whitespace-nowrap ring-2 ring-white">
+                                                            <ShieldCheck size={12} className="text-slate-400" /> Unverified
                                                         </div>
                                                     )}
                                                 </div>

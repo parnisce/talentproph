@@ -126,10 +126,15 @@ const SeekerOverview = ({ interviews = [], employers = [], savedJobs = [] }: { i
                                 accept="image/*"
                             />
                             <button
-                                onClick={() => fileInputRef.current?.click()}
-                                className="absolute -bottom-2 -right-2 p-3 bg-primary text-white rounded-2xl shadow-xl hover:scale-110 transition-transform"
+                                className={`absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl border-4 border-slate-900 flex items-center justify-center text-white shadow-xl ${is_verified_pro ? 'bg-emerald-500' : 'bg-slate-700'}`}
                             >
-                                <Camera size={18} />
+                                <ShieldCheck size={18} />
+                            </button>
+                            <button
+                                onClick={() => fileInputRef.current?.click()}
+                                className="absolute -top-2 -right-2 p-2.5 bg-white/10 text-white/50 hover:text-white rounded-xl shadow-xl hover:scale-110 transition-transform backdrop-blur-md border border-white/5"
+                            >
+                                <Camera size={14} />
                             </button>
                         </div>
                         <div className="flex flex-col gap-2 w-full">
