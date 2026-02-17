@@ -219,8 +219,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 } else if (history && history.length === 0 && (data.subscription_plan === 'Pro' || data.subscription_plan === 'Premium')) {
                     // Self-healing: If user is on a paid plan but has no history (e.g. legacy user), 
                     // create an initial record so their billing history isn't empty.
+                    console.log("Self-healing: Creating initial billing record for", data.subscription_plan);
                     const initialAmount = data.subscription_plan === 'Pro' ? 69 : 99;
-                    const { data: newRecord } = await supabase
+                    const { data: newRecord, error: insertError } = await supabase
                         .from('billing_history')
                         .insert([{
                             user_id: userId,
@@ -228,11 +229,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
                             currency: 'USD',
                             status: 'Paid',
                             invoice_number: `INV-INIT-${userId.slice(0, 5).toUpperCase()}`,
-                            description: `${data.subscription_plan} Plan Initial Subscription`
+                            description: `${data.subscription_plan} Plan Monthly Subscription`
                         }])
                         .select();
 
-                    if (newRecord) setBillingHistory(newRecord);
+                    if (insertError) {
+                        console.error("Self-healing failed to insert record:", insertError);
+                        setBillingHistory([]); // Ensure it's at least an empty array
+                    } else if (newRecord) {
+                        setBillingHistory(newRecord);
+                    }
                 } else if (history) {
                     setBillingHistory(history);
                 }

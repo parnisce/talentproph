@@ -43,10 +43,11 @@ WITH CHECK (auth.uid() = user_id);
 
 -- Billing History
 DROP POLICY IF EXISTS "Users can view their own billing history" ON public.billing_history;
-CREATE POLICY "Users can view their own billing history"
+CREATE POLICY "Users can manage their own billing history"
 ON public.billing_history
-FOR SELECT
-USING (auth.uid() = user_id);
+FOR ALL
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
 
 -- 5. Insert some sample billing history for testing (optional, but helpful)
 -- Note: Replace 'USER_ID_HERE' with an actual user ID if running manually for a specific user

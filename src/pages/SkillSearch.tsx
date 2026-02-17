@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
     Search,
     ChevronRight,
@@ -8,7 +9,9 @@ import {
     Eye,
     HelpCircle,
     Plus,
-    ShieldCheck
+    ShieldCheck,
+    Users,
+    Star
 } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { useUser } from '../context/UserContext';
@@ -320,29 +323,78 @@ const SkillSearch = () => {
         <div className="min-h-screen bg-slate-50 font-inter">
             <Navbar forceSolid={true} />
 
-            <div className="pt-32 pb-20">
-                <div className="container mx-auto px-6 max-w-[1240px]">
+            <div className="pt-24 pb-20">
+                {/* Dynamic Hero Section */}
+                <div className={`relative overflow-hidden mb-12 transition-all duration-700 ${searchQuery ? 'h-[400px]' : 'h-0 opacity-0 mb-0'}`}>
+                    <div className="absolute inset-0 bg-slate-900">
+                        <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-secondary/20 mix-blend-overlay" />
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(0,71,255,0.3),transparent_70%)]" />
+                    </div>
+
+                    <div className="container mx-auto px-6 h-full flex flex-col justify-center relative z-10">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: searchQuery ? 1 : 0, y: searchQuery ? 0 : 20 }}
+                            className="max-w-4xl"
+                        >
+                            <span className="px-4 py-1.5 rounded-full bg-primary/20 text-primary-light text-[10px] font-black uppercase tracking-[0.3em] border border-primary/30 mb-6 inline-block">
+                                Premium Talent Discovery
+                            </span>
+                            <h1 className="text-5xl md:text-7xl font-black text-white mb-6 tracking-tighter leading-none">
+                                {searchQuery ? `Hire Top-Tier ${searchQuery} Experts` : 'Browse Our Global Talent Pool'}
+                            </h1>
+                            <p className="text-xl text-slate-300 font-medium max-w-2xl leading-relaxed">
+                                Connect with the top 1% of remote professionals from the Philippines. Hand-vetted, high-performing experts ready to scale your business.
+                            </p>
+
+                            <div className="flex items-center gap-8 mt-10">
+                                <div className="flex -space-x-4">
+                                    {[1, 2, 3, 4].map(i => (
+                                        <div key={i} className="w-12 h-12 rounded-full border-4 border-slate-900 overflow-hidden bg-slate-800">
+                                            <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i + 10}`} alt="avatar" />
+                                        </div>
+                                    ))}
+                                    <div className="w-12 h-12 rounded-full border-4 border-slate-900 bg-primary flex items-center justify-center text-white text-xs font-black">
+                                        +2k
+                                    </div>
+                                </div>
+                                <div className="h-10 w-px bg-white/10" />
+                                <div>
+                                    <p className="text-white font-black text-lg tracking-tight">Verified Professionals</p>
+                                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Available for immediate hire</p>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+
+                    {/* Background Decorative Element */}
+                    <div className="absolute bottom-0 right-0 p-20 opacity-10 pointer-events-none">
+                        <Search size={400} className="text-white rotate-12" />
+                    </div>
+                </div>
+
+                <div className="container mx-auto px-6 max-w-[1400px]">
                     {/* Search Bar Section - onlinejobs.ph style */}
-                    <div className="bg-white p-6 md:p-8 rounded-lg shadow-sm border border-slate-200 mb-8">
-                        <form onSubmit={handleSearchSubmit} className="flex flex-col md:flex-row items-center gap-4">
+                    <div className={`bg-white p-6 md:p-8 rounded-[32px] shadow-2xl shadow-slate-200/50 border border-slate-100 mb-12 relative z-20 transition-all duration-500 ${searchQuery ? '-mt-16' : ''}`}>
+                        <form onSubmit={handleSearchSubmit} className="flex flex-col md:flex-row items-center gap-6">
                             <div className="relative flex-1 w-full group">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
+                                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-all duration-300" size={24} />
                                 <input
                                     type="text"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     placeholder="Search by skill, job title, or keyword..."
-                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:border-primary/50 focus:bg-white transition-all font-medium"
+                                    className="w-full pl-16 pr-6 py-6 bg-slate-50 border-2 border-slate-50 rounded-2xl text-slate-900 focus:outline-none focus:border-primary/20 focus:bg-white transition-all font-bold text-lg"
                                 />
                             </div>
                             <button
                                 type="submit"
-                                className="w-full md:w-auto px-10 py-4 bg-[#0047AB] text-white rounded-lg font-bold uppercase tracking-widest hover:bg-[#003580] transition-colors shadow-lg shadow-blue-900/10"
+                                className="w-full md:w-auto px-16 py-6 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-xs hover:bg-primary transition-all shadow-xl shadow-slate-900/10 active:scale-95"
                             >
-                                Search
+                                Find Talent
                             </button>
-                            <a href="#" className="hidden lg:block text-[#0047AB] text-[13px] font-bold hover:underline whitespace-nowrap">
-                                Better Search Results?
+                            <a href="#" className="hidden lg:block text-secondary text-[11px] font-black uppercase tracking-widest hover:underline whitespace-nowrap">
+                                Need Help?
                             </a>
                         </form>
                     </div>
@@ -615,89 +667,96 @@ const SkillSearch = () => {
                                 {loading ? (
                                     <div className="space-y-6">
                                         {[1, 2, 3].map(i => (
-                                            <div key={i} className="bg-white h-64 rounded-lg border border-slate-200 animate-pulse" />
+                                            <div key={i} className="bg-white rounded-[40px] p-10 border border-slate-100 shadow-sm animate-pulse h-80" />
                                         ))}
                                     </div>
-                                ) : talents.map((talent) => (
-                                    <div key={talent.id} className="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition-shadow">
-                                        <div className="p-6 md:p-8 flex flex-col md:flex-row gap-8">
-                                            {/* Avatar Column */}
-                                            <div className="flex flex-col items-center gap-4 shrink-0">
-                                                <div className="relative">
-                                                    <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-slate-50 shadow-inner">
+                                ) : talents.length > 0 ? (
+                                    talents.map((talent) => (
+                                        <motion.div
+                                            key={talent.id}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="bg-white rounded-[40px] border border-slate-100 p-8 shadow-sm hover:shadow-2xl hover:shadow-slate-200/50 transition-all group relative overflow-hidden"
+                                        >
+                                            <div className="flex flex-col md:flex-row gap-10 relative z-10">
+                                                {/* Left Column: Avatar & Quick Stats */}
+                                                <div className="flex flex-col items-center gap-6 shrink-0">
+                                                    <div
+                                                        onClick={() => handleViewProfile(talent.id)}
+                                                        className="w-32 h-32 rounded-[32px] bg-slate-100 overflow-hidden ring-[8px] ring-white shadow-xl transition-transform group-hover:scale-105 cursor-pointer relative"
+                                                    >
                                                         <img src={talent.photo} alt={talent.name} className="w-full h-full object-cover" />
+                                                        <div className={`absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl border-4 border-white flex items-center justify-center text-white shadow-lg ${talent.verified ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                                                            <ShieldCheck size={20} />
+                                                        </div>
                                                     </div>
-                                                    {talent.verified ? (
-                                                        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-3 py-1 rounded-md text-[10px] font-black uppercase flex items-center gap-1.5 shadow-lg whitespace-nowrap ring-2 ring-white">
-                                                            <ShieldCheck size={12} className="text-white" /> Verified Pro
-                                                        </div>
-                                                    ) : (
-                                                        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-slate-200 text-slate-500 px-3 py-1 rounded-md text-[10px] font-black uppercase flex items-center gap-1.5 shadow-sm whitespace-nowrap ring-2 ring-white">
-                                                            <ShieldCheck size={12} className="text-slate-400" /> Unverified
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
 
-                                            {/* Content Area */}
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
-                                                    <div>
-                                                        <h3 className="text-[#0047AB] text-xl font-bold hover:underline cursor-pointer" onClick={() => handleViewProfile(talent.id)}>
-                                                            {employerId ? talent.name : talent.name.split(' ')[0]}
-                                                        </h3>
-                                                        <p className="text-slate-900 font-bold text-[15px] mt-1">{talent.title}</p>
-                                                    </div>
-                                                    <div className="flex gap-2 shrink-0">
-                                                        <button
-                                                            onClick={() => toggleSaveTalent(talent.id)}
-                                                            className={`flex items-center gap-1.5 px-4 py-2 border rounded-full text-[12px] font-bold transition-all ${savedTalentIds.includes(talent.id) ? 'bg-primary border-primary text-white' : 'border-slate-300 text-slate-500 hover:bg-slate-50'}`}
-                                                        >
-                                                            <Pin size={14} className={savedTalentIds.includes(talent.id) ? 'fill-white' : ''} />
-                                                            Pin
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleViewProfile(talent.id)}
-                                                            className="flex items-center gap-1.5 px-4 py-2 bg-white border border-[#0047AB] text-[#0047AB] rounded-full text-[12px] font-bold hover:bg-[#0047AB] hover:text-white transition-all shadow-sm"
-                                                        >
-                                                            <Eye size={14} /> View Profile
-                                                        </button>
+                                                    <div className="text-center">
+                                                        <div className="flex items-center justify-center gap-1.5 text-primary mb-1">
+                                                            <Star size={16} fill="currentColor" />
+                                                            <span className="text-xl font-black tracking-tighter">{talent.talentScore}%</span>
+                                                        </div>
+                                                        <p className="text-[10px] font-black text-slate-400 tracking-widest uppercase">Talent Score</p>
                                                     </div>
                                                 </div>
 
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                                                {/* Right Column: Info */}
+                                                <div className="flex-1 space-y-8 min-w-0">
+                                                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+                                                        <div onClick={() => handleViewProfile(talent.id)} className="cursor-pointer group/name">
+                                                            <h3 className="text-2xl font-black text-secondary group-hover/name:underline tracking-tighter decoration-primary decoration-4 underline-offset-4 mb-1">
+                                                                {employerId ? talent.name : talent.name.split(' ')[0]}
+                                                            </h3>
+                                                            <h4 className="text-lg font-black text-slate-900 tracking-tight">{talent.title}</h4>
+                                                        </div>
+
+                                                        <div className="flex items-center gap-3">
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); toggleSaveTalent(talent.id); }}
+                                                                className={`p-4 rounded-2xl border transition-all group/pin ${savedTalentIds.includes(talent.id) ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-900 hover:text-white hover:border-slate-900'}`}
+                                                            >
+                                                                <Pin size={20} className={savedTalentIds.includes(talent.id) ? 'fill-white' : ''} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleViewProfile(talent.id)}
+                                                                className="px-8 py-4 bg-white border-2 border-slate-900 text-slate-900 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all shadow-sm flex items-center gap-2"
+                                                            >
+                                                                <Eye size={18} /> View Profile
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                                        <div>
+                                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Availability</p>
+                                                            <div className="space-y-1">
+                                                                <p className="text-sm font-black text-slate-800 leading-none">{talent.availability} (8h/day)</p>
+                                                                <p className="text-sm font-black text-primary leading-none mt-1">at {talent.rate} <span className="text-slate-300 font-bold ml-1">/ hr</span></p>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Education</p>
+                                                            <p className="text-sm font-black text-slate-800 line-clamp-2">{talent.education}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Last Active</p>
+                                                            <p className="text-sm font-black text-slate-800">{talent.lastActive}</p>
+                                                        </div>
+                                                    </div>
+
                                                     <div>
-                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Looking For</p>
-                                                        <p className="text-[13px] font-bold text-slate-800 leading-snug">
-                                                            {talent.availability} work (8 hours/day)<br />
-                                                            <span className="text-[#0047AB]">at {talent.rate} ($1,280.00/month)</span>
+                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Profile Summary</p>
+                                                        <p className="text-[14px] font-medium text-slate-500 leading-relaxed line-clamp-2 italic">
+                                                            "{talent.bio}"
                                                         </p>
                                                     </div>
-                                                    <div>
-                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Education</p>
-                                                        <p className="text-[13px] font-medium text-slate-600 line-clamp-2">{talent.education}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Last Active</p>
-                                                        <p className="text-[13px] font-medium text-slate-600">{talent.lastActive}</p>
-                                                    </div>
-                                                </div>
 
-                                                <div className="mb-8">
-                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Profile Description</p>
-                                                    <p className="text-[13px] text-slate-500 leading-relaxed line-clamp-2">
-                                                        {talent.bio}
-                                                    </p>
-                                                </div>
-
-                                                <div>
-                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Top Skills</p>
-                                                    <div className="flex flex-wrap gap-1.5">
+                                                    <div className="flex flex-wrap gap-2">
                                                         {talent.skills.map((skill: string) => (
                                                             <span
                                                                 key={skill}
                                                                 onClick={() => toggleSkillFilter(skill)}
-                                                                className={`px-2.5 py-1 rounded text-[10px] font-bold cursor-pointer transition-all ${activeSkills.includes(skill) ? 'bg-[#0047AB] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                                                                className={`px-4 py-2 rounded-xl text-[10px] font-bold shadow-sm cursor-pointer transition-all hover:scale-105 active:scale-95 ${activeSkills.includes(skill) ? 'bg-primary text-white border-primary' : 'bg-slate-50 border border-slate-100 text-slate-600 hover:border-primary/30'}`}
                                                             >
                                                                 {skill}
                                                             </span>
@@ -705,9 +764,18 @@ const SkillSearch = () => {
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
+
+                                            {/* Accent Background */}
+                                            <div className="absolute top-0 right-0 p-16 opacity-[0.02] pointer-events-none group-hover:scale-110 transition-transform duration-1000">
+                                                <Users size={200} />
+                                            </div>
+                                        </motion.div>
+                                    ))
+                                ) : (
+                                    <div className="bg-white rounded-[40px] border border-slate-100 p-20 text-center">
+                                        <p className="text-slate-400 font-medium">No talent found matching your criteria.</p>
                                     </div>
-                                ))}
+                                )}
                             </div>
                         </div>
                     </div>

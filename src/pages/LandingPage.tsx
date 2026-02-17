@@ -3,17 +3,6 @@ import { Zap, Users, Search, ArrowRight, Star, Globe, Shield, Rocket, Quote, Lay
 import Navbar from '../components/Navbar';
 
 const LandingPage = () => {
-    const talentSearches = [
-        ["Virtual Assistant", "Amazon expert", "Facebook Ads Manager", "Copywriter"],
-        ["Wordpress Developer", "Sales Representative", "Lead Generation", "QuickBooks"],
-        ["SEO", "Marketing Specialist", "Email Marketer", "PPC"],
-        ["Graphic Designer", "Shopify Developer", "eBay Virtual Assistant", "Ecommerce"],
-        ["Social Media Marketer", "Video Editor", "Customer Service", "Researcher"],
-        ["PHP Developer", "Data Entry", "Google Ads Manager", "Accountant"],
-        ["Real Estate Virtual Assistant", "Web Developer", "Magento Developer", "iOS Developer"],
-        ["Content Writer", "Project Manager", "Web Designer", "Photoshop"],
-        ["GoHighLevel"]
-    ].flat();
 
     const testimonials = [
         {
@@ -239,23 +228,59 @@ const LandingPage = () => {
             </section>
 
             {/* Common Talent Searches Section */}
-            <section id="searches" className="py-20 bg-white border-t border-slate-100">
-                <div className="container mx-auto px-6 text-center">
-                    <h2 className="text-5xl md:text-6xl font-black text-slate-900 mb-6 tracking-tighter">Common Talent Searches</h2>
-                    <div className="w-24 h-2 bg-primary mx-auto mb-16 rounded-full shadow-[0_10px_20px_rgba(0,71,255,0.2)]" />
+            <section id="searches" className="py-24 bg-white relative overflow-hidden">
+                <div className="container mx-auto px-6">
+                    <div className="text-center max-w-3xl mx-auto mb-20">
+                        <span className="px-5 py-2 rounded-full bg-primary/5 text-primary text-[10px] font-black uppercase tracking-[0.3em] border border-primary/10 mb-6 inline-block">
+                            Talent Discovery
+                        </span>
+                        <h2 className="text-5xl md:text-7xl font-black text-slate-900 mb-8 tracking-tighter leading-none">
+                            Common Talent Searches
+                        </h2>
+                        <p className="text-lg text-slate-500 font-medium">
+                            Browse our most in-demand remote expertise categories from the Philippines.
+                        </p>
+                    </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-12 text-left max-w-6xl mx-auto">
-                        {talentSearches.map((talent, idx) => (
-                            <a key={idx} href="#" className="flex items-center gap-3 text-primary hover:text-primary-deep transition-all font-bold text-lg group">
-                                <div className="w-1.5 h-1.5 rounded-full bg-slate-200 group-hover:bg-primary transition-colors" />
-                                <span className="group-hover:translate-x-1 transition-transform">{talent}</span>
-                            </a>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+                        {[
+                            { name: "Virtual Assistant", count: "15,000+", icon: <Users size={24} />, color: "bg-blue-50 text-blue-600" },
+                            { name: "Amazon Expert", count: "4,200+", icon: <Zap size={24} />, color: "bg-amber-50 text-amber-600" },
+                            { name: "Content Writer", count: "8,400+", icon: <Star size={24} />, color: "bg-emerald-50 text-emerald-600" },
+                            { name: "Video Editor", count: "5,100+", icon: <Rocket size={24} />, color: "bg-rose-50 text-rose-600" },
+                            { name: "Graphic Designer", count: "12,000+", icon: <Globe size={24} />, color: "bg-indigo-50 text-indigo-600" },
+                            { name: "Web Developer", count: "9,800+", icon: <Users size={24} />, color: "bg-violet-50 text-violet-600" },
+                            { name: "SEO Specialist", count: "3,500+", icon: <Search size={24} />, color: "bg-cyan-50 text-cyan-600" },
+                            { name: "Customer Service", count: "18,000+", icon: <Shield size={24} />, color: "bg-teal-50 text-teal-600" }
+                        ].map((category, idx) => (
+                            <motion.a
+                                key={idx}
+                                whileHover={{ y: -8, scale: 1.02 }}
+                                href={`/skillsearch?q=${encodeURIComponent(category.name)}`}
+                                className="group bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-slate-200/50 transition-all flex flex-col items-start gap-6 border-b-4 border-b-transparent hover:border-b-primary"
+                            >
+                                <div className={`w-16 h-16 rounded-2xl ${category.color} flex items-center justify-center transition-transform group-hover:rotate-6`}>
+                                    {category.icon}
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black text-slate-900 tracking-tight group-hover:text-primary transition-colors">{category.name}</h3>
+                                    <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">{category.count} Experts Hiring</p>
+                                </div>
+                                <div className="mt-auto pt-4 flex items-center gap-2 text-[10px] font-black text-primary uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0">
+                                    Browse Talent <ArrowRight size={14} />
+                                </div>
+                            </motion.a>
                         ))}
                     </div>
 
-                    <button className="mt-16 btn-primary py-4 px-12 text-lg inline-flex items-center gap-2">
-                        Browse All Categories <LayoutGrid size={20} />
-                    </button>
+                    <div className="flex justify-center mt-20">
+                        <button
+                            onClick={() => window.location.href = '/skillsearch'}
+                            className="px-12 py-5 bg-slate-900 text-white rounded-[24px] text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-slate-900/10 hover:bg-primary transition-all active:scale-95 flex items-center gap-4"
+                        >
+                            Browse All 200+ Categories <LayoutGrid size={20} />
+                        </button>
+                    </div>
                 </div>
             </section>
 
