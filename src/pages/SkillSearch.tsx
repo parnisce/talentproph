@@ -125,7 +125,17 @@ const SkillSearch = () => {
                 query = query.eq('english_proficiency', englishScore);
             }
 
-            // 4. Last Active Filter
+            // 4. Numeric Range Filters (Salary & Hours)
+            // Note: These assume 'expected_salary' and 'hours_per_day' are numeric columns
+            if (salaryRange.min > 0) {
+                // If expected_salary is text, this might need casting in Supabase RPC
+                query = query.gte('expected_salary', salaryRange.min);
+            }
+            if (salaryRange.max > 0 && salaryRange.max < 100) { // arbitrary max check
+                query = query.lte('expected_salary', salaryRange.max);
+            }
+
+            // 5. Last Active Filter
             if (lastActive !== 'Any') {
                 const now = new Date();
                 let filterDate;
@@ -142,10 +152,9 @@ const SkillSearch = () => {
                 }
             }
 
-            // 5. Verification Status
+            // 5. Verification & Search Logic
             if (!includeHired) {
-                // Assuming profiles has a status or similar. 
-                // If not, we'll skip for now but keep the logic structure.
+                // Future: Exclude profiles with hired status if a 'status' column is added
             }
 
             query = query.range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
@@ -428,7 +437,6 @@ const SkillSearch = () => {
                                             <option value="Any">Any</option>
                                             <option value="Full-Time">Full-Time</option>
                                             <option value="Part-Time">Part-Time</option>
-                                            <option value="Freelance">Freelance</option>
                                             <option value="Gig / Project-Based">Gig / Project-Based</option>
                                         </select>
                                     </div>
@@ -527,9 +535,11 @@ const SkillSearch = () => {
                                             onChange={(e) => setEnglishScore(e.target.value)}
                                             className="w-full bg-white border border-slate-200 p-2.5 rounded-md text-[13px]"
                                         >
-                                            <option>Any</option>
-                                            <option>Advanced</option>
-                                            <option>Fluent</option>
+                                            <option value="Any">Any</option>
+                                            <option value="C2 (Proficient / Native)">C2 / Native</option>
+                                            <option value="C1 (Advanced)">C1 / Advanced</option>
+                                            <option value="B2 (Upper Intermediate)">B2 / Upper-Intermediate</option>
+                                            <option value="B1 (Intermediate)">B1 / Intermediate</option>
                                         </select>
                                     </div>
 
