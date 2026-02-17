@@ -13,6 +13,8 @@ import {
     Eye,
     ChevronDown,
     HelpCircle,
+    Download,
+    ShieldCheck,
     MessageSquare
 } from 'lucide-react';
 import { supabase } from '../../services/supabase';
@@ -679,7 +681,14 @@ const FindTalent = () => {
                                         <div className="flex-1 space-y-8 min-w-0">
                                             <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
                                                 <div onClick={() => navigate(`/profile/${talent.id}`)} className="cursor-pointer group/name">
-                                                    <h3 className="text-2xl font-black text-secondary group-hover/name:underline tracking-tighter decoration-primary decoration-4 underline-offset-4">{talent.name}</h3>
+                                                    <div className="flex items-center gap-3">
+                                                        <h3 className="text-2xl font-black text-secondary group-hover/name:underline tracking-tighter decoration-primary decoration-4 underline-offset-4">{talent.name}</h3>
+                                                        {talent.verified && (
+                                                            <div className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-emerald-100 flex items-center gap-1.5 self-center">
+                                                                <ShieldCheck size={12} className="text-emerald-500" /> PRO
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                     <h4 className="text-xl font-black text-slate-900 mt-1 tracking-tight">{talent.title}</h4>
                                                 </div>
                                                 <div className="flex items-center gap-3">

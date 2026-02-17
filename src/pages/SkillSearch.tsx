@@ -7,7 +7,8 @@ import {
     Pin,
     Eye,
     HelpCircle,
-    Plus
+    Plus,
+    ShieldCheck
 } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { useUser } from '../context/UserContext';
@@ -627,9 +628,8 @@ const SkillSearch = () => {
                                                         <img src={talent.photo} alt={talent.name} className="w-full h-full object-cover" />
                                                     </div>
                                                     {talent.verified && (
-                                                        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-[#5ABC49] text-white px-3 py-1 rounded-md text-[10px] font-black uppercase flex items-center gap-1 shadow-sm whitespace-nowrap">
-                                                            <div className="w-4 h-4 bg-white/20 rounded-full flex items-center justify-center text-[8px] font-black">{talent.talentScore}</div>
-                                                            ID Proof
+                                                        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-3 py-1 rounded-md text-[10px] font-black uppercase flex items-center gap-1.5 shadow-lg whitespace-nowrap ring-2 ring-white">
+                                                            <ShieldCheck size={12} className="text-white" /> Verified Pro
                                                         </div>
                                                     )}
                                                 </div>

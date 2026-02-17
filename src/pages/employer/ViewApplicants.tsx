@@ -15,7 +15,8 @@ import {
     Target,
     X,
     Send,
-    Pin
+    Pin,
+    ShieldCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -105,6 +106,7 @@ const ViewApplicants = () => {
                             originalStatus: app.status, // Keep track of DB status
                             topSkills: app.profiles?.skills_list?.slice(0, 3) || [],
                             score: app.profiles?.talent_score || (app.profiles?.iq ? Math.min(Math.round((app.profiles.iq / 160) * 100), 100) : 85),
+                            verified: app.profiles?.is_verified_pro,
                         };
                     });
                     setApplicants(mappedApplicants);
@@ -131,6 +133,7 @@ const ViewApplicants = () => {
                         status: 'Bookmarked',
                         topSkills: s.profiles?.skills_list?.slice(0, 3) || [],
                         score: s.profiles?.talent_score || 85,
+                        verified: s.profiles?.is_verified_pro,
                         isBookmarked: true
                     }));
                     setSavedTalents(mappedSaved);
@@ -335,9 +338,11 @@ const ViewApplicants = () => {
                                         <div className="w-24 h-24 rounded-[32px] bg-slate-100 overflow-hidden ring-[6px] ring-white shadow-xl group-hover:scale-105 transition-transform">
                                             <img src={applicant.photo} alt={applicant.name} className="w-full h-full object-cover" />
                                         </div>
-                                        <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white w-8 h-8 rounded-full border-4 border-white flex items-center justify-center shadow-lg">
-                                            <CheckCircle2 size={14} />
-                                        </div>
+                                        {applicant.verified && (
+                                            <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white w-8 h-8 rounded-full border-4 border-white flex items-center justify-center shadow-lg">
+                                                <CheckCircle2 size={14} />
+                                            </div>
+                                        )}
                                         {applicant.isBookmarked && (
                                             <div className="absolute -top-2 -left-2 bg-primary text-white w-8 h-8 rounded-full border-4 border-white flex items-center justify-center shadow-lg rotate-12">
                                                 <Pin size={12} fill="white" />
@@ -347,6 +352,11 @@ const ViewApplicants = () => {
                                     <div>
                                         <div className="flex items-center gap-3 mb-2">
                                             <h3 className="text-2xl font-black text-slate-900 tracking-tighter">{applicant.name}</h3>
+                                            {applicant.verified && (
+                                                <div className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-emerald-100 flex items-center gap-1.5 self-center">
+                                                    <ShieldCheck size={12} className="text-emerald-500" /> PRO
+                                                </div>
+                                            )}
                                             <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${applicant.status === 'Shortlisted' ? 'bg-amber-100 text-amber-600' :
                                                 applicant.status === 'New' ? 'bg-primary/10 text-primary' :
                                                     applicant.status === 'Bookmarked' ? 'bg-blue-100 text-blue-600' :
