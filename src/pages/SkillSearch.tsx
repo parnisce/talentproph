@@ -60,7 +60,7 @@ const SkillSearch = () => {
             // 1. Core Search Logic (Search Bar)
             if (searchQuery) {
                 const trimmedQuery = searchQuery.trim();
-                const searchTerms = trimmedQuery.split(/\s+/).filter(t => t.length >= 2);
+                const searchTerms = trimmedQuery.split(/[\s,]+/).filter(t => t.length >= 2);
                 let searchClauses: string[] = [];
 
                 searchClauses.push(`title.ilike.%${trimmedQuery}%`);
@@ -91,7 +91,19 @@ const SkillSearch = () => {
 
             // 2. Active Skill Filters (Sidebar Chips)
             if (activeSkills.length > 0) {
-                query = query.contains('skills_list', activeSkills);
+                // Use overlaps for OR logic (must have ANY of the selected skills)
+                // We also include variations to handle case sensitivity in array matching
+                const variations = activeSkills.flatMap(skill => {
+                    const s = skill.trim();
+                    return [
+                        s,
+                        s.toLowerCase(),
+                        s.charAt(0).toUpperCase() + s.slice(1).toLowerCase(),
+                        s.toUpperCase()
+                    ];
+                });
+                const uniqueVariations = Array.from(new Set(variations));
+                query = query.overlaps('skills_list', uniqueVariations);
             }
 
             // 3. Sidebar Numeric/Status Filters
