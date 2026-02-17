@@ -71,18 +71,10 @@ const SkillSearch = () => {
                 if (searchNames) searchClauses.push(`full_name.ilike.%${trimmedQuery}%`);
                 if (searchDescriptions) searchClauses.push(`bio.ilike.%${trimmedQuery}%`);
 
+                // To avoid comma issues in .or() with array overlaps, 
+                // we search for terms in title/bio more aggressively 
+                // and keep array overlaps for the sidebar skill filters.
                 if (searchTerms.length > 0) {
-                    const variations = searchTerms.flatMap(term => [
-                        term,
-                        term.toLowerCase(),
-                        term.charAt(0).toUpperCase() + term.slice(1).toLowerCase(),
-                        term.toUpperCase()
-                    ]);
-                    const uniqueVariations = Array.from(new Set(variations));
-                    const skillsArray = `{${uniqueVariations.join(',')}}`;
-
-                    searchClauses.push(`skills_list.ov.${skillsArray}`);
-
                     searchTerms.forEach(term => {
                         searchClauses.push(`title.ilike.%${term}%`);
                         if (searchDescriptions) searchClauses.push(`bio.ilike.%${term}%`);
@@ -95,8 +87,6 @@ const SkillSearch = () => {
 
             // 2. Active Skill Filters (Sidebar Chips)
             if (activeSkills.length > 0) {
-                // Use overlaps for OR logic (must have ANY of the selected skills)
-                // We also include variations to handle case sensitivity in array matching
                 const variations = activeSkills.flatMap(skill => {
                     const s = skill.trim();
                     return [
@@ -111,36 +101,36 @@ const SkillSearch = () => {
             }
 
             // 3. Sidebar Numeric/Status Filters
-            if (employmentType !== 'Any') {
+            if (employmentType && employmentType !== 'Any') {
                 query = query.eq('availability', employmentType);
             }
 
-            if (idProofScore !== 'Any') {
+            if (idProofScore && idProofScore !== 'Any') {
                 const score = parseInt(idProofScore);
                 if (!isNaN(score)) query = query.gte('talent_score', score);
             }
 
-            if (iqScore !== 'Any') {
+            if (iqScore && iqScore !== 'Any') {
                 const score = parseInt(iqScore);
                 if (!isNaN(score)) query = query.gte('iq', score);
             }
 
-            if (englishScore !== 'Any') {
+            if (englishScore && englishScore !== 'Any') {
                 query = query.eq('english_proficiency', englishScore);
             }
 
             // 4. Numeric Range Filters (Salary & Hours)
-            // Note: These assume 'expected_salary' and 'hours_per_day' are numeric columns
-            if (salaryRange.min > 0) {
-                // If expected_salary is text, this might need casting in Supabase RPC
+            // Only apply if they are not at their default "Any" settings
+            // and checking if they might be strings in some cases.
+            if (salaryRange.min > 2) { // Only if user increased it
                 query = query.gte('expected_salary', salaryRange.min);
             }
-            if (salaryRange.max > 0 && salaryRange.max < 100) { // arbitrary max check
+            if (salaryRange.max < 40) { // Only if user decreased it
                 query = query.lte('expected_salary', salaryRange.max);
             }
 
             // 5. Last Active Filter
-            if (lastActive !== 'Any') {
+            if (lastActive && lastActive !== 'Any') {
                 const now = new Date();
                 let filterDate;
                 if (lastActive === 'Today') {
@@ -156,16 +146,14 @@ const SkillSearch = () => {
                 }
             }
 
-            // 5. Verification & Search Logic
-            if (!includeHired) {
-                // Future: Exclude profiles with hired status if a 'status' column is added
-            }
-
             query = query.range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
 
             const { data, error, count } = await query;
 
-            if (error) throw error;
+            if (error) {
+                console.error("Supabase Query Error:", error);
+                throw error;
+            }
 
             if (data) {
                 const mappedData = data.map(profile => ({
@@ -180,7 +168,7 @@ const SkillSearch = () => {
                     iq: profile.iq || 120,
                     availability: profile.availability || 'Full-time',
                     verified: profile.is_verified_pro,
-                    bio: profile.bio || 'I am a dedicated professional with expertise in delivering high-quality results.',
+                    bio: profile.bio || 'Professional remote talent from the Philippines ready to help your business grow.',
                     education: profile.education_level || 'Bachelors degree',
                     lastActive: profile.updated_at ? new Date(profile.updated_at).toLocaleDateString() : 'Active'
                 }));
