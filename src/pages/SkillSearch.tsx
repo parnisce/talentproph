@@ -40,7 +40,9 @@ const SkillSearch = () => {
     const [includeHired, setIncludeHired] = useState(false);
 
     // Skill Filters
-    const [activeSkills, setActiveSkills] = useState<string[]>([]);
+    const skillsParam = searchParams.get('skills');
+    const initialActiveSkills = skillsParam ? skillsParam.split(',').filter(s => s) : [];
+    const [activeSkills, setActiveSkills] = useState<string[]>(initialActiveSkills);
     const [isAddingSkill, setIsAddingSkill] = useState(false);
     const [newSkill, setNewSkill] = useState('');
 
@@ -214,7 +216,27 @@ const SkillSearch = () => {
         if (initialQuery !== searchQuery) {
             setSearchQuery(initialQuery);
         }
-    }, [initialQuery]);
+
+        const currentSkills = searchParams.get('skills');
+        const parsedSkills = currentSkills ? currentSkills.split(',').filter(s => s) : [];
+        if (JSON.stringify(parsedSkills) !== JSON.stringify(activeSkills)) {
+            setActiveSkills(parsedSkills);
+        }
+    }, [initialQuery, searchParams]);
+
+    // Sync activeSkills to URL
+    useEffect(() => {
+        const params = new URLSearchParams(searchParams);
+        if (activeSkills.length > 0) {
+            params.set('skills', activeSkills.join(','));
+        } else {
+            params.delete('skills');
+        }
+        if (searchQuery) {
+            params.set('q', searchQuery);
+        }
+        navigate(`${window.location.pathname}?${params.toString()}`, { replace: true });
+    }, [activeSkills]);
 
     // Main fetch effect
     useEffect(() => {
@@ -284,7 +306,17 @@ const SkillSearch = () => {
                         <div className="lg:col-span-3 space-y-6">
                             <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 space-y-6">
                                 <div>
-                                    <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">Active Skill Filters</h5>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Active Skill Filters</h5>
+                                        {activeSkills.length > 0 && (
+                                            <button
+                                                onClick={() => setActiveSkills([])}
+                                                className="text-[10px] font-black text-rose-500 uppercase tracking-widest hover:underline"
+                                            >
+                                                Clear All
+                                            </button>
+                                        )}
+                                    </div>
                                     <div className="flex flex-wrap gap-2">
                                         {activeSkills.map(skill => (
                                             <span key={skill} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-[#0047AB] border border-blue-100 rounded text-[11px] font-bold">
@@ -323,12 +355,29 @@ const SkillSearch = () => {
                                             </button>
                                         </form>
                                     ) : (
-                                        <button
-                                            onClick={() => setIsAddingSkill(true)}
-                                            className="mt-3 text-[#0047AB] text-[12px] font-bold hover:underline flex items-center gap-1"
-                                        >
-                                            +/- Add skill filters
-                                        </button>
+                                        <div className="mt-4 space-y-3">
+                                            <button
+                                                onClick={() => setIsAddingSkill(true)}
+                                                className="text-[#0047AB] text-[12px] font-bold hover:underline flex items-center gap-1"
+                                            >
+                                                +/- Add skill filters
+                                            </button>
+
+                                            <div className="pt-2">
+                                                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-2">Popular Skills</p>
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {['React', 'Node.js', 'UI/UX', 'Python', 'Virtual Assistant', 'SEO', 'Laravel', 'Shopify'].map(skill => (
+                                                        <button
+                                                            key={skill}
+                                                            onClick={() => toggleSkillFilter(skill)}
+                                                            className={`px-2 py-0.5 rounded border text-[10px] font-bold transition-all ${activeSkills.includes(skill) ? 'bg-[#0047AB] border-[#0047AB] text-white' : 'bg-white border-slate-200 text-slate-400 hover:border-slate-300'}`}
+                                                        >
+                                                            {skill}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
                                     )}
                                 </div>
 
@@ -594,7 +643,7 @@ const SkillSearch = () => {
                                                                 onClick={() => toggleSkillFilter(skill)}
                                                                 className={`px-2.5 py-1 rounded text-[10px] font-bold cursor-pointer transition-all ${activeSkills.includes(skill) ? 'bg-[#0047AB] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                                                             >
-                                                                {skill}: 1-2 years
+                                                                {skill}
                                                             </span>
                                                         ))}
                                                     </div>
