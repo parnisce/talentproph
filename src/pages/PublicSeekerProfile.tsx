@@ -153,7 +153,7 @@ const PublicSeekerProfile = () => {
                                         className="w-full h-full object-cover rounded-[48px] bg-slate-50"
                                     />
                                 </div>
-                                <div className="absolute -bottom-2 -right-2 w-12 h-12 bg-green-500 rounded-3xl border-4 border-white flex items-center justify-center text-white shadow-xl">
+                                <div className={`absolute -bottom-2 -right-2 w-12 h-12 rounded-3xl border-4 border-white flex items-center justify-center text-white shadow-xl ${profile.is_verified_pro ? 'bg-green-500' : 'bg-slate-300'}`}>
                                     <ShieldCheck size={24} strokeWidth={3} />
                                 </div>
                             </div>
@@ -162,10 +162,17 @@ const PublicSeekerProfile = () => {
                                 <div className="flex flex-wrap items-center justify-between gap-6 mb-4">
                                     <div className="flex flex-wrap items-center gap-6">
                                         <h1 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter leading-none">{profile.name}</h1>
-                                        <div className="flex items-center gap-2 px-5 py-2 bg-green-500/10 border border-green-500/20 rounded-full shadow-sm">
-                                            <ShieldCheck size={14} className="text-green-500" />
-                                            <span className="text-[11px] font-black text-green-600 uppercase tracking-[0.2em]">Verified Pro</span>
-                                        </div>
+                                        {profile.is_verified_pro ? (
+                                            <div className="flex items-center gap-2 px-5 py-2 bg-green-500/10 border border-green-500/20 rounded-full shadow-sm">
+                                                <ShieldCheck size={14} className="text-green-500" />
+                                                <span className="text-[11px] font-black text-green-600 uppercase tracking-[0.2em]">Verified Pro</span>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center gap-2 px-5 py-2 bg-slate-500/10 border border-slate-500/20 rounded-full shadow-sm">
+                                                <ShieldCheck size={14} className="text-slate-400" />
+                                                <span className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Unverified</span>
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="flex items-center gap-2 px-6 py-2.5 bg-slate-50 border border-slate-100 rounded-2xl shadow-sm">
                                         <Calendar size={14} className="text-slate-300" />

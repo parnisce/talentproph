@@ -57,16 +57,21 @@ const DashboardLayout = ({ children, role, userName: propUserName, userPhoto: pr
     const userPhoto = propUserPhoto || contextUserPhoto;
 
     const [showAccountMenu, setShowAccountMenu] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
+    const [talentQuery, setTalentQuery] = useState('');
+    const [workQuery, setWorkQuery] = useState('');
 
-    const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter' && searchQuery.trim()) {
-            if (role === 'employer') {
-                navigate(`/employer/talent?q=${encodeURIComponent(searchQuery.trim())}`);
-            } else if (role === 'seeker') {
-                navigate(`/seeker/jobs?q=${encodeURIComponent(searchQuery.trim())}`);
-            }
-            setSearchQuery('');
+    const handleTalentSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && talentQuery.trim()) {
+            navigate(`/employer/talent?q=${encodeURIComponent(talentQuery.trim())}`);
+            setTalentQuery('');
+        }
+    };
+
+    const handleWorkSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && workQuery.trim()) {
+            const path = role === 'seeker' ? '/seeker/jobs' : '/jobs';
+            navigate(`${path}?q=${encodeURIComponent(workQuery.trim())}`);
+            setWorkQuery('');
         }
     };
 
@@ -152,17 +157,35 @@ const DashboardLayout = ({ children, role, userName: propUserName, userPhoto: pr
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-8">
-                        <div className="relative hidden lg:block">
-                            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                onKeyDown={handleSearch}
-                                placeholder={role === 'employer' ? "Try: Facebook Ads, React, Lead Generation..." : "Search resources..."}
-                                className="pl-14 pr-8 py-4 bg-white border border-slate-100 rounded-[20px] focus:ring-[6px] focus:ring-primary/5 focus:border-primary outline-none w-96 text-[13px] font-bold transition-all shadow-inner"
-                            />
+                    <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-3 bg-white border border-slate-100 rounded-[22px] px-2 py-1 shadow-sm hidden lg:flex">
+                            {/* Talent Search */}
+                            <div className="relative group flex items-center">
+                                <Search className="absolute left-4 text-slate-300 group-focus-within:text-primary transition-colors" size={14} />
+                                <input
+                                    type="text"
+                                    value={talentQuery}
+                                    onChange={(e) => setTalentQuery(e.target.value)}
+                                    onKeyDown={handleTalentSearch}
+                                    placeholder="Find Talent"
+                                    className="pl-10 pr-4 py-2 bg-transparent outline-none w-40 text-[12px] font-bold text-slate-900 placeholder:text-slate-300"
+                                />
+                            </div>
+
+                            <div className="w-px h-4 bg-slate-100" />
+
+                            {/* Work Search */}
+                            <div className="relative group flex items-center">
+                                <Briefcase className="absolute left-4 text-slate-300 group-focus-within:text-secondary transition-colors" size={14} />
+                                <input
+                                    type="text"
+                                    value={workQuery}
+                                    onChange={(e) => setWorkQuery(e.target.value)}
+                                    onKeyDown={handleWorkSearch}
+                                    placeholder="Find Work"
+                                    className="pl-10 pr-4 py-2 bg-transparent outline-none w-40 text-[12px] font-bold text-slate-900 placeholder:text-slate-300"
+                                />
+                            </div>
                         </div>
 
                         <div className="flex items-center gap-4">

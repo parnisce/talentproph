@@ -283,6 +283,41 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     }, [userProfile.name, userProfile.photo, userProfile.resume_url, userProfile.education, userProfile.iq, userProfile.verification_proof_url, userProfile.verification_status, userProfile.is_verified_pro, userProfile.skills, userProfile.linkedin, userProfile.twitter, userProfile.facebook, userProfile.instagram, loading, userProfile.id]);
 
+    // Auto-verify based on requirements
+    useEffect(() => {
+        if (!userProfile.id || loading || userProfile.role !== 'seeker') return;
+
+        const hasGovId = !!userProfile.government_id_url;
+        const hasAddress = !!userProfile.billing_address;
+        const hasMobile = !!userProfile.mobile_number;
+
+        const shouldBeVerified = hasGovId && hasAddress && hasMobile;
+
+        if (shouldBeVerified !== userProfile.is_verified_pro) {
+            const syncVerification = async () => {
+                try {
+                    const { error } = await supabase
+                        .from('profiles')
+                        .update({
+                            is_verified_pro: shouldBeVerified,
+                            verification_status: shouldBeVerified ? 'verified' : 'unverified'
+                        })
+                        .eq('id', userProfile.id);
+
+                    if (error) throw error;
+                    setUserProfile(prev => ({
+                        ...prev,
+                        is_verified_pro: shouldBeVerified,
+                        verification_status: shouldBeVerified ? 'verified' : 'unverified'
+                    }));
+                } catch (err) {
+                    console.error("Failed to sync verification status:", err);
+                }
+            };
+            syncVerification();
+        }
+    }, [userProfile.government_id_url, userProfile.billing_address, userProfile.mobile_number, userProfile.is_verified_pro, userProfile.role, loading, userProfile.id]);
+
     const updateUserProfile = async (data: Partial<UserProfile>) => {
         if (!userProfile.id) return;
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Zap, ChevronDown, Search, X } from 'lucide-react';
+import { Zap, ChevronDown, Search, X, Briefcase } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 
 const Navbar = ({ forceSolid = false }: { forceSolid?: boolean }) => {
@@ -20,7 +20,17 @@ const Navbar = ({ forceSolid = false }: { forceSolid?: boolean }) => {
 
     const isSolid = forceSolid || scrolled;
 
-    const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleTalentSearch = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget);
+        const query = formData.get('search') as string;
+        if (query) {
+            navigate(`/employer/talent?q=${encodeURIComponent(query)}`);
+            setIsMobileSearchOpen(false);
+        }
+    };
+
+    const handleWorkSearch = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         const query = formData.get('search') as string;
@@ -44,15 +54,30 @@ const Navbar = ({ forceSolid = false }: { forceSolid?: boolean }) => {
                         </span>
                     </Link>
 
-                    {/* Desktop Search Bar */}
-                    <div className="flex-grow max-w-xl mx-12 hidden xl:block">
-                        <form onSubmit={handleSearch} className="relative group">
-                            <Search className={`absolute left-5 top-1/2 -translate-y-1/2 transition-colors ${isSolid ? 'text-slate-400 group-focus-within:text-primary' : 'text-white/40 group-focus-within:text-white'}`} size={18} />
+                    {/* Desktop Search Bars */}
+                    <div className="flex-grow max-w-2xl mx-12 hidden xl:flex gap-4">
+                        {/* Talent Search */}
+                        <form onSubmit={handleTalentSearch} className="relative group flex-1">
+                            <Search className={`absolute left-5 top-1/2 -translate-y-1/2 transition-colors ${isSolid ? 'text-slate-400 group-focus-within:text-primary' : 'text-white/40 group-focus-within:text-white'}`} size={16} />
                             <input
                                 name="search"
                                 type="text"
-                                placeholder="Find your next global career..."
-                                className={`w-full py-3.5 pl-14 pr-6 rounded-2xl text-[13px] font-bold transition-all focus:outline-none focus:ring-4 ${isSolid
+                                placeholder="Look for talent..."
+                                className={`w-full py-3 pl-12 pr-4 rounded-xl text-[12px] font-bold transition-all focus:outline-none focus:ring-4 ${isSolid
+                                    ? 'bg-slate-50 border border-slate-100 text-slate-900 focus:bg-white focus:border-primary/20 focus:ring-primary/5'
+                                    : 'bg-white/10 border border-white/10 text-white placeholder:text-white/40 focus:bg-white/20 focus:border-white/20 focus:ring-white/5'
+                                    }`}
+                            />
+                        </form>
+
+                        {/* Work Search */}
+                        <form onSubmit={handleWorkSearch} className="relative group flex-1">
+                            <Briefcase className={`absolute left-5 top-1/2 -translate-y-1/2 transition-colors ${isSolid ? 'text-slate-400 group-focus-within:text-primary' : 'text-white/40 group-focus-within:text-white'}`} size={16} />
+                            <input
+                                name="search"
+                                type="text"
+                                placeholder="Look for work..."
+                                className={`w-full py-3 pl-12 pr-4 rounded-xl text-[12px] font-bold transition-all focus:outline-none focus:ring-4 ${isSolid
                                     ? 'bg-slate-50 border border-slate-100 text-slate-900 focus:bg-white focus:border-primary/20 focus:ring-primary/5'
                                     : 'bg-white/10 border border-white/10 text-white placeholder:text-white/40 focus:bg-white/20 focus:border-white/20 focus:ring-white/5'
                                     }`}
@@ -116,15 +141,24 @@ const Navbar = ({ forceSolid = false }: { forceSolid?: boolean }) => {
                 </div>
 
                 {/* Mobile Search Overlay */}
-                <div className={`absolute top-full left-0 right-0 p-6 bg-white border-b border-slate-100 transition-all duration-300 lg:hidden ${isMobileSearchOpen ? 'translate-y-0 opacity-100 visible' : '-translate-y-4 opacity-0 invisible'}`}>
-                    <form onSubmit={handleSearch} className="relative">
+                <div className={`absolute top-full left-0 right-0 p-6 bg-white border-b border-slate-100 transition-all duration-300 lg:hidden space-y-4 ${isMobileSearchOpen ? 'translate-y-0 opacity-100 visible' : '-translate-y-4 opacity-0 invisible'}`}>
+                    <form onSubmit={handleTalentSearch} className="relative">
                         <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                         <input
                             name="search"
                             type="text"
-                            placeholder="Find your next global career..."
+                            placeholder="Look for talent..."
                             className="w-full py-4 pl-14 pr-6 rounded-2xl bg-slate-50 border border-slate-100 text-slate-900 text-sm font-bold focus:outline-none focus:bg-white focus:border-primary/20"
                             autoFocus={isMobileSearchOpen}
+                        />
+                    </form>
+                    <form onSubmit={handleWorkSearch} className="relative">
+                        <Briefcase className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                        <input
+                            name="search"
+                            type="text"
+                            placeholder="Look for work..."
+                            className="w-full py-4 pl-14 pr-6 rounded-2xl bg-slate-50 border border-slate-100 text-slate-900 text-sm font-bold focus:outline-none focus:bg-white focus:border-primary/20"
                         />
                     </form>
                 </div>

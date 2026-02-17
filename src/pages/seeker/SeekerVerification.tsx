@@ -142,7 +142,7 @@ const SeekerVerification = () => {
                         </div>
                         <div className="space-y-4">
                             <h3 className="text-xl font-black text-slate-900 tracking-tighter">Address Verification</h3>
-                            <p className="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em]">(Optional)</p>
+                            <p className="text-[11px] font-black text-primary uppercase tracking-[0.2em]">(Required)</p>
                             <p className="text-sm font-medium text-slate-500 leading-relaxed">
                                 Upload a photo of the document showing your billing address
                             </p>
@@ -176,7 +176,7 @@ const SeekerVerification = () => {
                         </div>
                         <div className="space-y-4">
                             <h3 className="text-xl font-black text-slate-900 tracking-tighter">Mobile Number Verification</h3>
-                            <p className="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em]">(Optional)</p>
+                            <p className="text-[11px] font-black text-primary uppercase tracking-[0.2em]">(Required)</p>
                             <p className="text-sm font-medium text-slate-500 leading-relaxed">
                                 Enter your mobile number and we'll send you a verification code
                             </p>
@@ -213,7 +213,7 @@ const SeekerVerification = () => {
                     </div>
                     <button
                         onClick={handleSubmit}
-                        disabled={submitting || !idFile}
+                        disabled={submitting || !idFile || !address || !phone}
                         className="px-12 py-5 bg-slate-900 text-white rounded-[24px] font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-primary transition-all active:scale-95 disabled:opacity-50 flex items-center gap-3"
                     >
                         {submitting ? (

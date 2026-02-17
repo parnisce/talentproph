@@ -664,9 +664,15 @@ const FindTalent = () => {
                                             >
                                                 <img src={talent.photo} alt={talent.name} className="w-full h-full object-cover" />
                                             </div>
-                                            <div className="bg-emerald-50 text-emerald-600 px-5 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest border border-emerald-100">
-                                                <span className="text-sm">{talent.talentScore}</span> ID PROOF
-                                            </div>
+                                            {talent.verified ? (
+                                                <div className="bg-emerald-50 text-emerald-600 px-5 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest border border-emerald-100 flex items-center gap-2">
+                                                    <span className="text-sm">{talent.talentScore}</span> Verified Pro
+                                                </div>
+                                            ) : (
+                                                <div className="bg-slate-50 text-slate-400 px-5 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest border border-slate-100 flex items-center gap-2">
+                                                    <span className="text-sm">{talent.talentScore}</span> Not Verified
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* Content Column */}

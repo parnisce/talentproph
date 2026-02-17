@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Zap, Users, Search, ArrowRight, Star, Globe, Shield, Rocket, Quote, LayoutGrid } from 'lucide-react';
+import { Zap, Users, Search, ArrowRight, Star, Globe, Shield, Rocket, Quote, LayoutGrid, Briefcase } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 
@@ -37,6 +37,24 @@ const LandingPage = () => {
         }
     ];
 
+    const handleTalentSearch = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget);
+        const query = formData.get('talent') as string;
+        if (query) {
+            window.location.href = `/employer/talent?q=${encodeURIComponent(query)}`;
+        }
+    };
+
+    const handleWorkSearch = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget);
+        const query = formData.get('work') as string;
+        if (query) {
+            window.location.href = `/jobs?q=${encodeURIComponent(query)}`;
+        }
+    };
+
     return (
         <div className="min-h-screen bg-white font-inter">
             <Navbar />
@@ -72,9 +90,39 @@ const LandingPage = () => {
                             Discover the top remote professionals, get AI-powered recommendations, and build your dream team effortlessly.
                         </p>
 
+                        <div className="max-w-4xl mx-auto mb-24 p-2 md:p-4 bg-white/5 backdrop-blur-2xl rounded-[32px] md:rounded-full border border-white/10 shadow-2xl overflow-hidden">
+                            <div className="flex flex-col md:flex-row gap-4 items-center">
+                                {/* Search for Talent */}
+                                <form onSubmit={handleTalentSearch} className="flex-1 relative group w-full">
+                                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-primary group-focus-within:scale-110 transition-transform" size={24} />
+                                    <input
+                                        name="talent"
+                                        type="text"
+                                        placeholder="Look for talent..."
+                                        className="w-full pl-16 pr-6 py-6 bg-transparent border-none text-white placeholder:text-white/40 focus:outline-none transition-all font-bold text-lg"
+                                    />
+                                </form>
+
+                                <div className="hidden md:block w-px h-10 bg-white/10" />
+
+                                {/* Search for Work */}
+                                <form onSubmit={handleWorkSearch} className="flex-1 relative group w-full">
+                                    <Briefcase className="absolute left-6 top-1/2 -translate-y-1/2 text-secondary group-focus-within:scale-110 transition-transform" size={24} />
+                                    <input
+                                        name="work"
+                                        type="text"
+                                        placeholder="Look for work..."
+                                        className="w-full pl-16 pr-6 py-6 bg-transparent border-none text-white placeholder:text-white/40 focus:outline-none transition-all font-bold text-lg"
+                                    />
+                                </form>
+
+                                <button type="submit" className="md:hidden bg-gradient-primary text-white py-4 w-full rounded-2xl font-bold">Search</button>
+                            </div>
+                        </div>
+
                         <div className="flex flex-col sm:flex-row gap-8 justify-center mb-24">
-                            <Link to="/register?role=employer" className="bg-gradient-primary text-white pl-10 pr-6 py-5 rounded-full text-lg font-bold font-outfit shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:shadow-primary/50 hover:-translate-y-1 transition-all flex items-center gap-6 group">
-                                Hiring Now <div className="bg-white/20 p-2 rounded-full group-hover:translate-x-1 transition-transform"><ArrowRight size={20} /></div>
+                            <Link to="/register?role=employer" className="bg-white/10 backdrop-blur-md text-white px-10 py-5 rounded-full text-lg font-bold font-outfit border border-white/10 hover:bg-white/20 transition-all flex items-center gap-6 group">
+                                hiring? Register here <div className="bg-primary p-2 rounded-full group-hover:translate-x-1 transition-transform"><ArrowRight size={20} /></div>
                             </Link>
                         </div>
                     </motion.div>
@@ -246,7 +294,7 @@ const LandingPage = () => {
             </section>
 
             {/* Common Talent Searches Section */}
-            <section id="searches" className="py-20 bg-white border-t border-slate-50">
+            <section id="searches" className="py-20 bg-white border-t border-slate-100">
                 <div className="container mx-auto px-6 text-center">
                     <h2 className="text-5xl md:text-6xl font-black text-slate-900 mb-6 tracking-tighter">Common Talent Searches</h2>
                     <div className="w-24 h-2 bg-primary mx-auto mb-16 rounded-full shadow-[0_10px_20px_rgba(0,71,255,0.2)]" />
@@ -267,7 +315,7 @@ const LandingPage = () => {
             </section>
 
             {/* What our Employers say Section */}
-            <section id="results" className="py-20 bg-bg-main relative">
+            <section id="results" className="py-20 bg-slate-50 relative">
                 <div className="container mx-auto px-6 text-center">
                     <div className="inline-block px-5 py-2.5 rounded-full bg-white border border-slate-100 text-primary text-[11px] font-black uppercase tracking-[0.3em] mb-12 shadow-sm">
                         Client Testimonials
@@ -281,7 +329,7 @@ const LandingPage = () => {
                             <motion.div
                                 key={idx}
                                 whileHover={{ y: -10 }}
-                                className="white-card p-12 text-left relative overflow-hidden group"
+                                className="bg-white p-12 text-left relative overflow-hidden group rounded-[48px] shadow-sm border border-slate-100"
                             >
                                 <Quote className="absolute -top-4 -right-4 text-primary/5 group-hover:text-primary/10 transition-colors" size={120} />
                                 <div className="flex items-center gap-5 mb-10 relative z-10">
@@ -332,9 +380,8 @@ const LandingPage = () => {
 };
 
 const FeatureItem = ({ icon, title, desc }: any) => (
-    <div className="white-card group hover:shadow-primary/20 flex flex-col items-center text-center p-12 hover:ring-2 hover:ring-primary/5">
+    <div className="bg-white group hover:shadow-primary/20 flex flex-col items-center text-center p-12 hover:ring-2 hover:ring-primary/5 rounded-[48px] border border-slate-100 transition-all">
         <div className="w-24 h-24 rounded-[32px] bg-slate-50 flex items-center justify-center text-slate-400 mb-10 border border-slate-100 group-hover:bg-primary group-hover:text-white group-hover:shadow-[0_20px_40px_rgba(84,96,244,0.4)] transition-all duration-700 hover:rotate-6 scale-110 relative overflow-hidden">
-            {/* Inner Decor */}
             <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
             {icon}
         </div>
