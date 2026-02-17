@@ -10,9 +10,7 @@ import {
     CheckCircle2,
     XCircle,
     Zap,
-    Briefcase,
     Download,
-    ExternalLink,
     ShieldCheck,
     FileText,
     User,
@@ -983,53 +981,19 @@ Wishing you the very best in your career journey!`;
                         </section>
                     </div>
 
-                    {/* Work Experience */}
-                    <div className="bg-white border-2 border-slate-50 p-12 rounded-[56px] shadow-sm">
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-12">Relevant Experience</h4>
-                        <div className="space-y-12">
-                            {applicant.history.map((job: any, idx: number) => (
-                                <div key={idx} className="relative pl-12 border-l-2 border-slate-100 group">
-                                    <div className="absolute left-0 top-0 -translate-x-1/2 w-4 h-4 rounded-full bg-slate-100 border-4 border-white group-hover:bg-primary group-hover:scale-125 transition-all" />
-                                    <div className="space-y-3">
-                                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-                                            <h5 className="text-xl font-black text-slate-900 tracking-tighter">{job.role}</h5>
-                                            <span className="px-4 py-1.5 bg-slate-50 text-slate-500 rounded-xl text-[10px] font-black uppercase tracking-widest">{job.period}</span>
-                                        </div>
-                                        <p className="font-bold text-primary flex items-center gap-2">
-                                            <Briefcase size={16} /> {job.company}
-                                        </p>
-                                        <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-2xl">{job.description}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
 
-                    {/* Portfolio & Documents */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="bg-white border-2 border-slate-50 p-10 rounded-[56px] shadow-sm">
-                            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-8">Portfolio Highlights</h4>
-                            <div className="space-y-4">
-                                {applicant.portfolio.map((item: any, idx: number) => (
-                                    <a key={idx} href={item.link} className="flex items-center justify-between p-5 bg-slate-50 rounded-3xl border border-slate-100 hover:border-primary group transition-all">
-                                        <span className="font-bold text-sm text-slate-900">{item.title}</span>
-                                        <ExternalLink size={18} className="text-slate-300 group-hover:text-primary transition-colors" />
-                                    </a>
-                                ))}
+                    {/* Documents */}
+                    <div className="bg-primary/5 border-2 border-primary/10 p-10 rounded-[56px] shadow-sm group cursor-pointer hover:bg-primary transition-all">
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary group-hover:text-white/40 mb-8">Documents</h4>
+                        <div className="flex items-center gap-6">
+                            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-primary shadow-xl">
+                                <FileText size={32} />
                             </div>
-                        </div>
-                        <div className="bg-primary/5 border-2 border-primary/10 p-10 rounded-[56px] shadow-sm group cursor-pointer hover:bg-primary transition-all">
-                            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary group-hover:text-white/40 mb-8">Documents</h4>
-                            <div className="flex items-center gap-6">
-                                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-primary shadow-xl">
-                                    <FileText size={32} />
-                                </div>
-                                <div className="flex-1">
-                                    <p className="font-black text-slate-900 group-hover:text-white tracking-tighter leading-none mb-1">resume_cyryl_2024.pdf</p>
-                                    <p className="text-[10px] font-black text-primary/60 group-hover:text-white/50 uppercase tracking-widest">PDF • 2.4 MB</p>
-                                </div>
-                                <Download size={22} className="text-primary group-hover:text-white" />
+                            <div className="flex-1">
+                                <p className="font-black text-slate-900 group-hover:text-white tracking-tighter leading-none mb-1">resume_{applicant.name?.toLowerCase().replace(/\s+/g, '_')}_2024.pdf</p>
+                                <p className="text-[10px] font-black text-primary/60 group-hover:text-white/50 uppercase tracking-widest">PDF • 2.4 MB</p>
                             </div>
+                            <Download size={22} className="text-primary group-hover:text-white" />
                         </div>
                     </div>
 
