@@ -13,7 +13,6 @@ import {
     Eye,
     ChevronDown,
     HelpCircle,
-    Download,
     ShieldCheck,
     MessageSquare
 } from 'lucide-react';
