@@ -319,7 +319,7 @@ const SkillSearch = () => {
                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(0,71,255,0.3),transparent_70%)]" />
                     </div>
 
-                    <div className="container mx-auto px-6 h-full flex flex-col justify-center relative z-10">
+                    <div className="container mx-auto px-6 py-10 h-full flex flex-col justify-center relative z-10">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: searchQuery ? 1 : 0, y: searchQuery ? 0 : 20 }}
