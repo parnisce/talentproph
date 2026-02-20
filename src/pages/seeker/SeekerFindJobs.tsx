@@ -42,7 +42,7 @@ const SeekerFindJobs = () => {
     const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
-    const ITEMS_PER_PAGE = 20;
+    const ITEMS_PER_PAGE = 25;
 
     const categories = ['All Jobs', 'Design', 'Development', 'Marketing', 'Admin', 'Writing'];
 
@@ -364,7 +364,7 @@ const SeekerFindJobs = () => {
                             <ChevronRight size={16} className="rotate-180" />
                         </button>
                         <div className="flex gap-2">
-                            {[...Array(totalPages)].map((_, i) => (
+                            {Array.from({ length: totalPages }).map((_, i) => (
                                 <button
                                     key={i + 1}
                                     onClick={() => { setCurrentPage(i + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}

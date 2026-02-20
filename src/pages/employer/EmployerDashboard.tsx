@@ -13,6 +13,7 @@ import {
     PauseCircle,
     PlayCircle,
     UserCheck,
+    ChevronLeft,
     ChevronRight,
     MessageSquare,
     ShieldCheck,
@@ -562,6 +563,8 @@ const EmployerJobPosts = () => {
     const { id } = useUser();
     const [jobs, setJobs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 25;
 
     useEffect(() => {
         if (!id) return;
@@ -630,6 +633,12 @@ const EmployerJobPosts = () => {
         fetchJobsAndApps();
     }, [id]);
 
+    const totalPages = Math.ceil(jobs.length / ITEMS_PER_PAGE);
+    const paginatedJobs = jobs.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
+
     if (loading) {
         return (
             <div className="flex items-center justify-center py-20">
@@ -653,7 +662,7 @@ const EmployerJobPosts = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-6">
-                {jobs.length > 0 ? jobs.map((job) => (
+                {jobs.length > 0 ? paginatedJobs.map((job) => (
                     <div key={job.id} className="bg-white border-2 border-slate-50 rounded-[40px] p-8 hover:shadow-2xl hover:shadow-slate-200/50 transition-all group overflow-hidden relative">
                         {/* Status Accents */}
                         <div className={`absolute top-0 right-0 w-32 h-32 opacity-[0.03] -translate-y-1/2 translate-x-1/2 rounded-full ${job.status === 'Live' ? 'bg-emerald-500' :
@@ -773,6 +782,37 @@ const EmployerJobPosts = () => {
                     </div>
                 )}
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+                <div className="flex justify-center pt-10 items-center gap-3">
+                    <button
+                        disabled={currentPage === 1}
+                        onClick={() => { setCurrentPage(prev => prev - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        className="w-10 h-10 rounded-xl border border-slate-100 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary disabled:opacity-30 transition-all bg-white"
+                    >
+                        <ChevronLeft size={16} />
+                    </button>
+                    <div className="flex gap-2">
+                        {Array.from({ length: totalPages }).map((_, i) => (
+                            <button
+                                key={i + 1}
+                                onClick={() => { setCurrentPage(i + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${currentPage === i + 1 ? 'bg-primary text-white shadow-lg' : 'bg-white border border-slate-100 text-slate-400 hover:bg-slate-50'}`}
+                            >
+                                {i + 1}
+                            </button>
+                        ))}
+                    </div>
+                    <button
+                        disabled={currentPage === totalPages}
+                        onClick={() => { setCurrentPage(prev => prev + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        className="w-10 h-10 rounded-xl border border-slate-100 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary disabled:opacity-30 transition-all bg-white"
+                    >
+                        <ChevronRight size={16} />
+                    </button>
+                </div>
+            )}
 
             {/* Vacancy Strategy Tip */}
             <div className="bg-slate-900 p-10 rounded-[48px] text-white flex flex-col md:flex-row items-center justify-between gap-8 mt-12 overflow-hidden relative">

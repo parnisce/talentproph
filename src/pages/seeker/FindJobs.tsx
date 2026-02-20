@@ -32,7 +32,7 @@ const FindJobs = () => {
     const [jobs, setJobs] = useState<Job[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
-    const ITEMS_PER_PAGE = 20;
+    const ITEMS_PER_PAGE = 25;
 
     useEffect(() => {
         setSearchQuery(searchParams.get('q') || '');
@@ -349,7 +349,7 @@ const FindJobs = () => {
                                         <ChevronRight size={18} className="rotate-180" />
                                     </button>
                                     <div className="flex gap-2">
-                                        {[...Array(totalPages)].map((_, i) => (
+                                        {Array.from({ length: totalPages }).map((_, i) => (
                                             <button
                                                 key={i + 1}
                                                 onClick={() => { setCurrentPage(i + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}

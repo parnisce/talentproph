@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     ChevronLeft,
+    ChevronRight,
     Search,
     MessageSquare,
     ShieldCheck,
@@ -91,11 +92,17 @@ const HiredCandidates = () => {
     const [applicants, setApplicants] = useState<any[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 25;
 
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedApplicant, setSelectedApplicant] = useState<any>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery]);
 
     useEffect(() => {
         const fetchHired = async () => {
@@ -190,6 +197,12 @@ const HiredCandidates = () => {
             app.jobTitle.toLowerCase().includes(searchQuery.toLowerCase());
     });
 
+    const totalPages = Math.ceil(filteredApplicants.length / ITEMS_PER_PAGE);
+    const paginatedApplicants = filteredApplicants.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
+
     if (loading) {
         return (
             <div className="flex items-center justify-center py-20 min-h-[40vh]">
@@ -256,7 +269,7 @@ const HiredCandidates = () => {
                     </div>
                 ) : filteredApplicants.length > 0 ? (
                     <AnimatePresence mode="popLayout">
-                        {filteredApplicants.map((applicant, idx) => (
+                        {paginatedApplicants.map((applicant, idx) => (
                             <motion.div
                                 key={applicant.id}
                                 initial={{ opacity: 0, y: 20 }}
@@ -346,6 +359,37 @@ const HiredCandidates = () => {
                     </div>
                 )}
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+                <div className="flex justify-center pt-10 items-center gap-3">
+                    <button
+                        disabled={currentPage === 1}
+                        onClick={() => { setCurrentPage(prev => prev - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        className="w-10 h-10 rounded-xl border border-slate-100 flex items-center justify-center text-slate-400 hover:text-emerald-500 hover:border-emerald-500 disabled:opacity-30 transition-all bg-white"
+                    >
+                        <ChevronLeft size={16} />
+                    </button>
+                    <div className="flex gap-2">
+                        {Array.from({ length: totalPages }).map((_, i) => (
+                            <button
+                                key={i + 1}
+                                onClick={() => { setCurrentPage(i + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${currentPage === i + 1 ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-white border border-slate-100 text-slate-400 hover:bg-emerald-50'}`}
+                            >
+                                {i + 1}
+                            </button>
+                        ))}
+                    </div>
+                    <button
+                        disabled={currentPage === totalPages}
+                        onClick={() => { setCurrentPage(prev => prev + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        className="w-10 h-10 rounded-xl border border-slate-100 flex items-center justify-center text-slate-400 hover:text-emerald-500 hover:border-emerald-500 disabled:opacity-30 transition-all bg-white"
+                    >
+                        <ChevronRight size={16} />
+                    </button>
+                </div>
+            )}
         </div>
     );
 };

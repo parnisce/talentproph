@@ -27,7 +27,7 @@ const SkillSearch = () => {
     const [loading, setLoading] = useState(true);
     const [totalCount, setTotalCount] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
-    const ITEMS_PER_PAGE = 20;
+    const ITEMS_PER_PAGE = 25;
 
     // Sidebar Filter States
     const [employmentType, setEmploymentType] = useState('Any');
@@ -636,16 +636,28 @@ const SkillSearch = () => {
                                     Found <span className="text-slate-900 font-bold">{totalCount}</span> jobseekers.
                                 </p>
                                 <div className="flex gap-1">
-                                    {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                                    {Array.from({ length: Math.ceil(totalCount / ITEMS_PER_PAGE) }).map((_, i) => (
                                         <button
-                                            key={i}
-                                            onClick={() => setCurrentPage(i)}
-                                            className={`w-8 h-8 flex items-center justify-center text-[12px] font-bold rounded ${currentPage === i ? 'bg-[#0047AB] text-white' : 'bg-white border border-slate-200 text-[#0047AB] hover:bg-slate-50'}`}
+                                            key={i + 1}
+                                            onClick={() => {
+                                                setCurrentPage(i + 1);
+                                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                            }}
+                                            className={`w-8 h-8 flex items-center justify-center text-[12px] font-bold rounded ${currentPage === i + 1 ? 'bg-[#0047AB] text-white' : 'bg-white border border-slate-200 text-[#0047AB] hover:bg-slate-50'}`}
                                         >
-                                            {i}
+                                            {i + 1}
                                         </button>
                                     ))}
-                                    <button className="w-8 h-8 flex items-center justify-center text-[12px] font-bold rounded bg-white border border-slate-200 text-[#0047AB] hover:bg-slate-50">
+                                    <button
+                                        onClick={() => {
+                                            if (currentPage < Math.ceil(totalCount / ITEMS_PER_PAGE)) {
+                                                setCurrentPage(prev => prev + 1);
+                                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                            }
+                                        }}
+                                        disabled={currentPage >= Math.ceil(totalCount / ITEMS_PER_PAGE)}
+                                        className="w-8 h-8 flex items-center justify-center text-[12px] font-bold rounded bg-white border border-slate-200 text-[#0047AB] hover:bg-slate-50 disabled:opacity-30"
+                                    >
                                         <ChevronRight size={14} />
                                     </button>
                                 </div>

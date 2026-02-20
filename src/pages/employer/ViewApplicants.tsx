@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
     ChevronLeft,
+    ChevronRight,
     Search,
     MessageSquare,
     Star,
@@ -32,11 +33,17 @@ const ViewApplicants = () => {
     const [filter, setFilter] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 25;
 
     // Bulk Message State
     const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
     const [bulkMessage, setBulkMessage] = useState('');
     const [sendingBulk, setSendingBulk] = useState(false);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, filter]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -251,6 +258,12 @@ const ViewApplicants = () => {
         return matchesSearch && matchesFilter;
     });
 
+    const totalPages = Math.ceil(filteredApplicants.length / ITEMS_PER_PAGE);
+    const paginatedApplicants = filteredApplicants.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
+
     if (loading) {
         return (
             <div className="flex items-center justify-center py-20 min-h-[40vh]">
@@ -322,7 +335,7 @@ const ViewApplicants = () => {
             {/* Applicants List */}
             <div className="grid grid-cols-1 gap-6">
                 <AnimatePresence mode="popLayout">
-                    {filteredApplicants.map((applicant, idx) => (
+                    {paginatedApplicants.map((applicant, idx) => (
                         <motion.div
                             key={applicant.id}
                             initial={{ opacity: 0, y: 20 }}
@@ -427,6 +440,37 @@ const ViewApplicants = () => {
                         </div>
                     )}
                 </AnimatePresence>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                    <div className="flex justify-center pt-10 items-center gap-3">
+                        <button
+                            disabled={currentPage === 1}
+                            onClick={() => { setCurrentPage(prev => prev - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                            className="w-10 h-10 rounded-xl border border-slate-100 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary disabled:opacity-30 transition-all bg-white"
+                        >
+                            <ChevronLeft size={16} />
+                        </button>
+                        <div className="flex gap-2">
+                            {Array.from({ length: totalPages }).map((_, i) => (
+                                <button
+                                    key={i + 1}
+                                    onClick={() => { setCurrentPage(i + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                    className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${currentPage === i + 1 ? 'bg-primary text-white shadow-lg' : 'bg-white border border-slate-100 text-slate-400 hover:bg-slate-50'}`}
+                                >
+                                    {i + 1}
+                                </button>
+                            ))}
+                        </div>
+                        <button
+                            disabled={currentPage === totalPages}
+                            onClick={() => { setCurrentPage(prev => prev + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                            className="w-10 h-10 rounded-xl border border-slate-100 flex items-center justify-center text-slate-400 hover:text-primary hover:border-primary disabled:opacity-30 transition-all bg-white"
+                        >
+                            <ChevronRight size={16} />
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Bulk Message Modal */}

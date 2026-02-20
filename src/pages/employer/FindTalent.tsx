@@ -29,7 +29,7 @@ const FindTalent = () => {
     const [loading, setLoading] = useState(true);
     const [totalCount, setTotalCount] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
-    const ITEMS_PER_PAGE = 20;
+    const ITEMS_PER_PAGE = 25;
 
     // Sidebar Filter States
     const [employmentType, setEmploymentType] = useState('Any');
@@ -619,7 +619,7 @@ const FindTalent = () => {
                             Found <span className="text-slate-900 text-lg mx-1">{totalCount}</span> Elite Jobseekers
                         </p>
                         <div className="flex items-center gap-2">
-                            {Array.from({ length: Math.min(5, Math.ceil(totalCount / ITEMS_PER_PAGE)) }).map((_, i) => (
+                            {Array.from({ length: Math.ceil(totalCount / ITEMS_PER_PAGE) }).map((_, i) => (
                                 <button
                                     key={i + 1}
                                     onClick={() => { setCurrentPage(i + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
@@ -628,9 +628,6 @@ const FindTalent = () => {
                                     {i + 1}
                                 </button>
                             ))}
-                            {Math.ceil(totalCount / ITEMS_PER_PAGE) > 5 && (
-                                <span className="text-slate-300 mx-2">...</span>
-                            )}
                             <button
                                 disabled={currentPage >= Math.ceil(totalCount / ITEMS_PER_PAGE)}
                                 onClick={() => { setCurrentPage(prev => prev + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
