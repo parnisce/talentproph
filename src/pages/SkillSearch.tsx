@@ -313,7 +313,7 @@ const SkillSearch = () => {
 
             <div className="pt-24 pb-20">
                 {/* Dynamic Hero Section */}
-                <div className={`relative overflow-hidden mb-12 transition-all duration-700 ${searchQuery ? 'h-[400px]' : 'h-0 opacity-0 mb-0'}`}>
+                <div className={`relative overflow-hidden mb-12 transition-all duration-700 ${searchQuery ? 'h-[500px]' : 'h-0 opacity-0 mb-0'}`}>
                     <div className="absolute inset-0 bg-slate-900">
                         <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-secondary/20 mix-blend-overlay" />
                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(0,71,255,0.3),transparent_70%)]" />
